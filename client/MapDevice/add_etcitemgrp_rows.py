@@ -1,5 +1,5 @@
 """
-Adds the ten "Map (Tier N)" rows (object_id 50101-50110) and the three unique maps (50111-50113) to an EtcItemgrp.dat exported by
+Adds the ten "Map (Tier N)" rows (object_id 50101-50110) and the four unique maps (50111-50114) to an EtcItemgrp.dat exported by
 L2ClientDat as text (item_begin ... item_end, tab-separated key=value).
 
 Each new row is a copy of the retail Pirate's Treasure Map row (object_id 5915), so every field
@@ -20,7 +20,7 @@ import sys
 SOURCE_ID = 5915  # Pirate's Treasure Map
 FIRST_ID = 50101
 TIERS = 10
-UNIQUE_IDS = (50111, 50112, 50113)  # The Crimson Coliseum, The Gilded Vault, The Ossuary of Echoes
+UNIQUE_IDS = (50111, 50112, 50113, 50114)  # The Crimson Coliseum, The Gilded Vault, The Ossuary of Echoes, The Gambler's Den
 ICONS = {
 	"ivory": "{[icon.etc_map_ivory_i00]}",
 	"yellow": "{[icon.etc_map_yellow_i00]}",

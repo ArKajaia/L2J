@@ -109,4 +109,12 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
+	<item id="50114" type="EtcItem" name="Unique Map: The Gambler's Den">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
 </list>

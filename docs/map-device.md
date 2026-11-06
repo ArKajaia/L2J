@@ -2,7 +2,7 @@
 
 An endgame loop after the atlas of Path of Exile: high level monsters drop maps, a player opens them at the Map Device of their private hideout, feeds them Champion Medals for harder modifiers and better rewards, and fights through a fenced field of monsters that never respawn.
 
-Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
+Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs, the Gambler's Den Dealer), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
 
 ## How it plays
 
@@ -148,22 +148,57 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 
 ## Unique maps
 
-Three map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager`.
+Four map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager`.
 
 **Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; each unique boss drops another at 10% (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
 
-| | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) |
-|---|---|---|---|
-| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Silent Valley |
-| Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered |
-| The idea | An arms race: the monsters grow with every death, and so do you. | A heist against the clock. | The dead don't stay down. |
-| Twist | **Deathmatch: Mayhem.** Every kill (and every assist: `MayhemAssistShare` % of the damage) offers a strong passive, notables and keystones of the tree plus the Mayhem keystones, to stack **on top of your own tree**, working only inside the map (see below). The monsters come in three waves: 6, 10, 14. | **Borrowed Time and Greed.** The vault seals in 5 minutes; every kill adds 12 s (a claimed bounty 60 s) and 1% Greed, which raises the map's and the boss's drop chances (up to x2 at 100 kills). | **Echoes.** A quarter of the slain counted monsters leave an Echo (half HP, faster attacks, uncounted, its own drops). Every Echo still standing at the end feeds the boss +5% HP (up to +100%). |
-| Final encounter | The **Crimson Champion** (a Maluk Warlord, x25 HP, x1.5 defence) in the middle of the ring. At 75/50/25% HP the crowd roars: +10% attack each time and 3 **Challengers** (tier 2 Champions of the map's kinds, double HP), each another passive. | The **Gilded Mimic** (a Mutant Treasure Chest, x400 HP) wakes with at least 2 minutes on the clock. A coward: it runs, spills coins when struck (8% per hit), and at 80/60/40/20% HP vanishes to another corner, leaving 4 Vault Thieves behind. If the vault seals first, it escapes with the hoard. | **The Hollow King** (an Immortal Necromancer, x500 HP, x5 attack) is shielded while his **Bone Phylacteries** stand: 4 at the edges of the field, then 3 more at 60% HP, then 2 more at 30%. Each raises a Bone Servant every 20 s (up to 10). From 30% a **Death Nova** hits everyone within 900 for 12% of max HP every 15 s. |
-| Map drops | Champion Medal, Life Stones Lv 84, Scroll: Enchant Weapon (S), Giant's Codex | Adena, Ancient Adena, Gemstone S, Golden Apiga, Scroll: Enchant Armor (S) | Dark/Holy Stones, Mid-Grade Life Stone Lv 84, Dark/Holy Crystals, Giant's Codex - Oblivion |
-| Special drops | Challengers: Champion Medals, High-Grade Life Stone | Spilled coins: 100k-300k Adena, Golden Apiga | Echoes: Dark/Holy Stones and Crystals, High-Grade Life Stone |
-| Boss drops | Champion Medals, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Giant's Codex - Mastery, Vesper Ring, Elegia Ring, Ring of Baium (0.5%) | 15-30M Adena, 1-3M Ancient Adena, Gemstone S, Golden Apiga, Blessed Scrolls: Enchant Armor/Weapon (S), Vesper Earring/Necklace | Dark/Holy Crystals, Giant's Codex - Oblivion, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Vesper Earring, Elegia Ring |
+| | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) | The Gambler's Den (50114) |
+|---|---|---|---|---|
+| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Silent Valley | 50 of tier 5 (Lv. 81-84), Field of Whispers |
+| Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered | Champions' Rally, Glass Cannon, Deadly, Fragile, Elemental Chaos, Splitters |
+| The idea | An arms race: the monsters grow with every death, and so do you. | A heist against the clock. | The dead don't stay down. | Luck, both ways. |
+| Twist | **Deathmatch: Mayhem.** Every kill (and every assist: `MayhemAssistShare` % of the damage) offers a strong passive, notables and keystones of the tree plus the Mayhem keystones, to stack **on top of your own tree**, working only inside the map (see below). The monsters come in three waves: 6, 10, 14. | **Borrowed Time and Greed.** The vault seals in 5 minutes; every kill adds 12 s (a claimed bounty 60 s) and 1% Greed, which raises the map's and the boss's drop chances (up to x2 at 100 kills). | **Echoes.** A quarter of the slain counted monsters leave an Echo (half HP, faster attacks, uncounted, its own drops). Every Echo still standing at the end feeds the boss +5% HP (up to +100%). | **The Wheel of Fate and the Pot.** Every 12 counted kills the wheel spins one of 24 fortunes (below), which holds until the next spin, and gives a **bet**. The **Dealer** by the Return Portal takes bets: the Pot doubles or halves. The **Pot** (x1 to start, x0.25-x4) multiplies the Den's drop chances; past 100% the drops grow bigger. |
+| Final encounter | The **Crimson Champion** (a Maluk Warlord, x25 HP, x1.5 defence) in the middle of the ring. At 75/50/25% HP the crowd roars: +10% attack each time and 3 **Challengers** (tier 2 Champions of the map's kinds, double HP), each another passive. | The **Gilded Mimic** (a Mutant Treasure Chest, x400 HP) wakes with at least 2 minutes on the clock. A coward: it runs, spills coins when struck (8% per hit), and at 80/60/40/20% HP vanishes to another corner, leaving 4 Vault Thieves behind. If the vault seals first, it escapes with the hoard. | **The Hollow King** (an Immortal Necromancer, x500 HP, x5 attack) is shielded while his **Bone Phylacteries** stand: 4 at the edges of the field, then 3 more at 60% HP, then 2 more at 30%. Each raises a Bone Servant every 20 s (up to 10). From 30% a **Death Nova** hits everyone within 900 for 12% of max HP every 15 s. | **The House** (a Maluk Princess, x45 HP, x1.5 defence) takes the table in the middle once the den is cleared, with one more bet. The fortunes stop. At 80/60/40/20% HP it draws a card from a shuffled deck of 5 (below); a card holds until the next. |
+| Map drops | Champion Medal, Life Stones Lv 84, Scroll: Enchant Weapon (S), Giant's Codex | Adena, Ancient Adena, Gemstone S, Champion Medal, Scroll: Enchant Armor (S) | Dark/Holy Stones, Mid-Grade Life Stone Lv 84, Dark/Holy Crystals, Giant's Codex - Oblivion | 30k-90k Adena, Gemstone S, Champion Medal, Mid-Grade Life Stone Lv 84, Scroll: Enchant Weapon (S) |
+| Special drops | Challengers: Champion Medals, High-Grade Life Stone | Spilled coins: 100k-300k Adena, Champion Medal | Echoes: Dark/Holy Stones and Crystals, High-Grade Life Stone | Jackpot Chest (3 rolls), Bluffs, Lucky Seven: 600k-1.5M Adena, Champion Medals, Blessed Scroll: Enchant Armor (S) |
+| Boss drops | Champion Medals, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Giant's Codex - Mastery, Vesper Ring, Elegia Ring, Ring of Baium (0.5%) | 15-30M Adena, 1-3M Ancient Adena, Gemstone S, 5-10 Champion Medals, Blessed Scrolls: Enchant Armor/Weapon (S), Vesper Earring/Necklace | Dark/Holy Crystals, Giant's Codex - Oblivion, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Vesper Earring, Elegia Ring | 30-60M Adena, 8-15 Champion Medals, Top-Grade Life Stones, Blessed Scrolls: Enchant Weapon/Armor (S), Vesper Ring, Elegia Ring, Ring of Baium (0.5%) |
 
-Exact chances and amounts are in the XML. The boss of each takes the map's tier and modifier multipliers too, then its own (`bossHp`, `bossAttack`, `bossDefence`); the boss, Challengers and phylacteries count toward the clear, so the map completes when the last of them falls. Bosses and the other encounter monsters never split or rise again.
+Exact chances and amounts are in the XML. The boss of each takes the map's tier and modifier multipliers too, then its own (`bossHp`, `bossAttack`, `bossDefence`); the boss, Challengers, phylacteries, Card Guards and the Den's Raise the Stakes Champions count toward the clear, so the map completes when the last of them falls. Bosses and the other encounter monsters never split or rise again.
+
+**Server rates**: the unique maps' own drops (the map, special and boss groups of the XML) are not the monsters' normal drop lists, so they don't go through `Rates.ini`: the Coliseum, the Vault and the Ossuary drop exactly what the XML says. **The Gambler's Den is the exception**: its drops take the rates a normal death drop takes (`DropChanceMultiplierByItemId` / `DropAmountMultiplierByItemId` for the items listed there, else `DeathDropChanceMultiplier` / `DeathDropAmountMultiplier`; the rated chance stops at 100%, as for any monster), then the Pot. With the shipped `Rates.ini` that is chance x4 and Adena amount x5, so the House's 30-60M Adena comes to 150-300M before the Pot. Champion and premium bonuses don't apply. The monsters' own retail drops (and the map drops) work as in any map.
+
+### The Gambler's Den
+
+**The Wheel of Fate** spins every 12 counted kills of the field (Splitters' copies and Raise the Stakes Champions count). Its 24 fortunes come from a shuffled bag: none comes twice before all 24 have come. A fortune holds until the next spin; when the House takes the table every fortune ends. Every spin gives a bet. "Pot +25%" adds 0.25 to the Pot.
+
+| | Blessings | Curses |
+|---|---|---|
+| 1 | Lucky Streak: players deal +30% damage | Cold Deck: players deal 20% less damage |
+| 2 | Golden Touch: Pot +25% | Bad Beat: Pot -15% |
+| 3 | Second Wind: everyone inside healed to full HP/MP/CP | Bust: everyone loses 30% of current HP (never kills) |
+| 4 | Jackpot: a Jackpot Chest (a Mutant Treasure Chest, triple HP, uncounted) stands somewhere for 30 s: three rolls of the special drops | Raise the Stakes: 6 Champions (tier 1-2, the map's kinds, counted) rush one player |
+| 5 | Sleight of Hand: monsters -25% P./M. Def. | Iron Skin: monsters +40% P./M. Def. |
+| 6 | Fold: monsters -20% P./M. Atk. | Loaded Dice: monsters +30% P./M. Atk. |
+| 7 | Free Spin: Pot +10%, and the wheel spins again 3 s later | Cracked Dice: monsters attack and cast 25% faster |
+| 8 | Hot Table: the Den's drop chances x2 | Cold Streak: the Den's drop chances x0.5 |
+| 9 | Card Counter: every kill adds 2% to the Pot | Short Stack: one bet in hand is lost |
+| 10 | Lucky Seven: every 7th kill also rolls the special drops | Pickpockets: 3 thieves (uncounted) grab for the Pot: each slain Pot +5%, each still loose after 45 s escapes with 5% |
+| 11 | Comp'd Drinks: players heal 5% HP and MP every 5 s | Hangover: players lose 4% of max HP every 5 s (never below 1 HP) |
+| 12 | High Roller: one more bet | House Rules: the map's monsters heal 3% HP every 5 s |
+
+Monster HP is never changed by a fortune, so a monster's HP can't end up above its maximum. The fortunes reach the boss too (from the Joker), but never the Jackpot Chest.
+
+**The Dealer** (npc `MapDealerNpcId`, 900703, the Lottery Ticket Seller's look) stands beside the Return Portal. His table shows the Pot, the bets in hand, the kills to the next spin, the fortune and the House's card. **Bet the Pot**: even odds, x2 (up to x4) or x0.5 (down to x0.25). The bets belong to the map: anyone inside may place one. The device window shows the same.
+
+**The House's cards** (one deck of 5, shuffled when the House appears, 4 drawn):
+
+| Card | |
+|---|---|
+| Ace of Blades | The House hits 40% harder and attacks 30% faster. |
+| King of Shields | The House is invulnerable until its 3 Card Guards (the map's kinds, double HP, counted) fall. |
+| Queen of Mirrors | 2 Bluffs: copies of the House under the same title, at 15% of its HP and half its attack, uncounted. Each slain gives Pot +10% and a roll of the special drops. |
+| Jack of Thieves | The House vanishes to another corner, leaving 4 Card Sharps (thieves) behind. |
+| Joker | The wheel spins for the House (no bet); that fortune holds until the next card. |
 
 ### The Coliseum's passives
 
@@ -231,8 +266,8 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 | `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
 | `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
 | `//mapdevice unique [list]` | The unique maps. |
-| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY> [count]` | Give a unique map to your target (or you). |
-| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY>` | In your own hideout: open that unique map for free. |
+| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY\|DEN> [count]` | Give a unique map to your target (or you). |
+| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY\|DEN>` | In your own hideout: open that unique map for free. |
 | `//mapdevice pool <tier>` | The monsters a map of that tier may hold, with their strength and each stat against the standard monster of their level. |
 | `//mapdevice score` | The strength of your target, and which tiers it fits and drops. |
 | `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |

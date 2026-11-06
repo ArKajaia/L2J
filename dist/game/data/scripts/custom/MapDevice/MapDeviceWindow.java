@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.managers.MapQuestManager;
 import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
+import org.l2jmobius.gameserver.managers.UniqueMapManager;
 import org.l2jmobius.gameserver.managers.MapQuestManager.Step;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -375,6 +376,26 @@ public final class MapDeviceWindow
 		if ((unique != null) && (unique.type() == UniqueMap.Type.COLISEUM))
 		{
 			row(sb, "Your map passives", text(COLOR_UNIQUE, String.valueOf(PassiveDeathmatchManager.getInstance().getMapPickCount(player))) + text(COLOR_MUTED, " (." + PassiveDeathmatchManager.COMMAND + " to pick)"), false);
+		}
+		if ((unique != null) && (unique.type() == UniqueMap.Type.DEN))
+		{
+			final UniqueMapManager den = UniqueMapManager.getInstance();
+			row(sb, "Pot / bets in hand", text(COLOR_UNIQUE, "x" + two(den.getPot(run))) + text(COLOR_MUTED, " / ") + text(COLOR_VALUE, String.valueOf(den.getBets(run))), false);
+			final int toSpin = den.getKillsToSpin(run);
+			if (toSpin > 0)
+			{
+				row(sb, "Next spin in", toSpin + (toSpin == 1 ? " kill" : " kills"), true);
+			}
+			final String fortune = den.getFortuneText(run);
+			if (fortune != null)
+			{
+				row(sb, "Fortune", text(den.isFortuneBlessing(run) ? COLOR_POSITIVE : COLOR_NEGATIVE, fortune), false);
+			}
+			final String card = den.getCardText(run);
+			if (card != null)
+			{
+				row(sb, "The House holds", text(COLOR_CREATIVE, card), true);
+			}
 		}
 		sb.append("</table><br>");
 

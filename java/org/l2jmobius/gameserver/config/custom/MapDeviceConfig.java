@@ -47,6 +47,7 @@ public class MapDeviceConfig
 	public static int DEVICE_NPC_ID;
 	public static int PORTAL_NPC_ID;
 	public static int RETURN_PORTAL_NPC_ID;
+	public static int DEALER_NPC_ID;
 
 	// Opening a map.
 	public static int MEDAL_ITEM_ID;
@@ -107,6 +108,7 @@ public class MapDeviceConfig
 		DEVICE_NPC_ID = config.getInt("MapDeviceNpcId", 900700);
 		PORTAL_NPC_ID = config.getInt("MapPortalNpcId", 900701);
 		RETURN_PORTAL_NPC_ID = config.getInt("MapReturnPortalNpcId", 900702);
+		DEALER_NPC_ID = config.getInt("MapDealerNpcId", 900703);
 
 		MEDAL_ITEM_ID = config.getInt("MedalItemId", 6393);
 		MAX_MEDALS = Math.max(0, Math.min(50, config.getInt("MaxMedals", 8)));
