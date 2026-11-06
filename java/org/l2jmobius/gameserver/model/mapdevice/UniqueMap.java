@@ -57,7 +57,9 @@ public record UniqueMap(Type type, String name, int itemId, int tier, int monste
 		/** The Ossuary of Echoes: the slain leave Echoes behind, then the Hollow King behind his phylacteries. */
 		OSSUARY,
 		/** The Gambler's Den: a Wheel of Fate every 12 kills, a Dealer's double-or-half bets on the Pot, then the House and its deck of cards. */
-		DEN
+		DEN,
+		/** The Primal Crucible: the players evolve through four transformations into Titans while the monsters eat each other into Alphas, then the Primordial. */
+		CRUCIBLE
 	}
 
 	/**

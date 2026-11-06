@@ -1,5 +1,6 @@
 """
-Adds the ten "Map (Tier N)" rows (object_id 50101-50110) and the four unique maps (50111-50114) to an EtcItemgrp.dat exported by
+Adds the ten "Map (Tier N)" rows (object_id 50101-50110), the five unique maps (50111-50115) and the Primal Crucible's
+Primal Essence (50116) and Titan Scroll (50117) to an EtcItemgrp.dat exported by
 L2ClientDat as text (item_begin ... item_end, tab-separated key=value).
 
 Each new row is a copy of the retail Pirate's Treasure Map row (object_id 5915), so every field
@@ -8,6 +9,8 @@ Each new row is a copy of the retail Pirate's Treasure Map row (object_id 5915),
   icon              tiers 1-5 the ivory map, tiers 6-10 the yellow map (the same icons as the server XML)
   weight            0, like the server
   related_quest_id  cleared
+Primal Essence and the Titan Scroll copy other retail rows the same way, keeping their icons: Blood of Eva (3835) and
+Transformation Scroll: Zaken (17140).
 
   python add_etcitemgrp_rows.py EtcItemgrp.txt            -> writes EtcItemgrp.patched.txt
   python add_etcitemgrp_rows.py EtcItemgrp.txt --in-place -> overwrites EtcItemgrp.txt
@@ -20,7 +23,8 @@ import sys
 SOURCE_ID = 5915  # Pirate's Treasure Map
 FIRST_ID = 50101
 TIERS = 10
-UNIQUE_IDS = (50111, 50112, 50113, 50114)  # The Crimson Coliseum, The Gilded Vault, The Ossuary of Echoes, The Gambler's Den
+UNIQUE_IDS = (50111, 50112, 50113, 50114, 50115)  # The Crimson Coliseum, The Gilded Vault, The Ossuary of Echoes, The Gambler's Den, The Primal Crucible
+COPIES = {50116: 3835, 50117: 17140}  # Primal Essence (Blood of Eva), Titan Scroll (Transformation Scroll: Zaken): new id -> retail row
 ICONS = {
 	"ivory": "{[icon.etc_map_ivory_i00]}",
 	"yellow": "{[icon.etc_map_yellow_i00]}",
@@ -52,7 +56,7 @@ def main():
 	encoding = "utf-16" if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else "utf-8-sig" if raw[:3] == b"\xef\xbb\xbf" else "utf-8"
 	lines = raw.decode(encoding).splitlines(keepends=True)
 
-	new_ids = set(range(FIRST_ID, FIRST_ID + TIERS)) | set(UNIQUE_IDS)
+	new_ids = set(range(FIRST_ID, FIRST_ID + TIERS)) | set(UNIQUE_IDS) | set(COPIES)
 	lines = [line for line in lines if object_id(line) not in new_ids]
 	source = next((line for line in lines if object_id(line) == SOURCE_ID), None)
 	if source is None:
@@ -61,21 +65,27 @@ def main():
 	ending = "\r\n" if source.endswith("\r\n") else "\n"
 	if lines and not lines[-1].endswith(("\n", "\r\n")):
 		lines[-1] += ending
-	rows = [(FIRST_ID + tier - 1, ICONS["ivory" if tier <= 5 else "yellow"]) for tier in range(1, TIERS + 1)]
-	rows += [(item_id, ICONS["yellow"]) for item_id in UNIQUE_IDS]
-	for item_id, icon in rows:
-		fields, keys = parse(source)
+	rows = [(FIRST_ID + tier - 1, ICONS["ivory" if tier <= 5 else "yellow"], source) for tier in range(1, TIERS + 1)]
+	rows += [(item_id, ICONS["yellow"], source) for item_id in UNIQUE_IDS]
+	for item_id, source_id in COPIES.items():
+		copy = next((line for line in lines if object_id(line) == source_id), None)
+		if copy is None:
+			sys.exit("Row not found for object_id %d - is this EtcItemgrp.dat?" % source_id)
+		rows.append((item_id, None, copy))
+	for item_id, icon, base in rows:
+		fields, keys = parse(base)
 		values = {
 			"object_id": str(item_id),
-			"icon": icon,
 			"weight": "0",
 			"related_quest_id": "{}",
 		}
+		if icon is not None:
+			values["icon"] = icon
 		for key, value in values.items():
 			if key in keys:
 				fields[keys[key]] = key + "=" + value
 			elif key == "object_id":
-				sys.exit("object_id %d has no object_id field" % SOURCE_ID)
+				sys.exit("object_id %d has no object_id field" % object_id(base))
 		row = "\t".join(fields) + ending
 		lines.append(row)
 		print(row.rstrip("\r\n"))

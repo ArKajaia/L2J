@@ -117,4 +117,29 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
+	<item id="50115" type="EtcItem" name="Unique Map: The Primal Crucible">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<!-- The Primal Crucible's reward (PrimalCrucibleManager): 30 of it buy a Titan Scroll (.crucible in town). Based on Blood of Eva (3835). -->
+	<item id="50116" type="EtcItem" name="Primal Essence">
+		<set name="icon" val="icon.etc_dragon_blood_i00" />
+		<set name="displayId" val="3835" />
+		<set name="material" val="LIQUID" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+	</item>
+	<!-- Your Titan form of the Primal Crucible, giant, for 30 minutes in town: looks only. Based on Transformation Scroll: Zaken (17140). -->
+	<item id="50117" type="EtcItem" name="Titan Scroll">
+		<set name="icon" val="icon.etc_trans_4f_s_b_01" />
+		<set name="displayId" val="17140" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="TitanScroll" />
+	</item>
 </list>

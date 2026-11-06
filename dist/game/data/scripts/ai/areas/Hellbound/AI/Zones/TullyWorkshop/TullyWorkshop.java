@@ -1452,7 +1452,8 @@ public class TullyWorkshop extends Script
 			-1,
 			-1
 		};
-		if (npc != null)
+		// A Sin Warden of a Map Device map has no spawn and stands in no room of the workshop.
+		if ((npc != null) && (npc.getSpawn() != null))
 		{
 			final Spawn spawn = npc.getSpawn();
 			final int x = spawn.getX();

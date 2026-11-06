@@ -86,6 +86,8 @@
 
 	<!-- ================================================================ Unique maps ================================================================ -->
 
+	<!-- Unique maps never drop raid-only items: everything here can also be had without raids (an ordinary monster drops it, or a player shop or recipe makes it). -->
+
 	<!-- The Crimson Coliseum: Deathmatch: Mayhem against monsters. The crowd wants blood, and the monsters grow with every death (Rising Dread, Soul Eaters, Berserkers)... but so do you. -->
 	<uniqueMap type="COLISEUM" name="The Crimson Coliseum" itemId="50111" tier="5" monsters="30" arena="Ruins of Despair" reward="2.0"
 		modifiers="BRUTAL,FORTIFIED,HUNTERS,BERSERKERS,RISING_DREAD,SOUL_EATERS"
@@ -105,8 +107,8 @@
 		<drop group="boss" id="6577" min="1" max="1" chance="25" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
 		<drop group="boss" id="9627" min="1" max="1" chance="20" /> <!-- Giant's Codex - Mastery -->
 		<drop group="boss" id="14165" min="1" max="1" chance="12" /> <!-- Vesper Ring -->
-		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
-		<drop group="boss" id="6658" min="1" max="1" chance="0.5" /> <!-- Ring of Baium -->
+		<drop group="boss" id="14163" min="1" max="1" chance="2" /> <!-- Vesper Earring (was the raid-only Elegia Ring) -->
+		<drop group="boss" id="14164" min="1" max="1" chance="0.5" /> <!-- Vesper Necklace (was the raid-only Ring of Baium) -->
 	</uniqueMap>
 
 	<!-- The Gilded Vault: a heist against the clock. Thieves everywhere (Thieves' Guild), quick and slippery (Fleet, Elusive, Skittish), a bounty to chase, a speedrun to make. -->
@@ -157,7 +159,7 @@
 		<drop group="boss" id="14169" min="1" max="2" chance="50" /> <!-- Top-Grade Life Stone - Level 84 -->
 		<drop group="boss" id="6577" min="1" max="1" chance="20" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
 		<drop group="boss" id="14163" min="1" max="1" chance="12" /> <!-- Vesper Earring -->
-		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
+		<drop group="boss" id="14165" min="1" max="1" chance="2" /> <!-- Vesper Ring (was the raid-only Elegia Ring) -->
 	</uniqueMap>
 
 	<!-- The Gambler's Den: luck both ways. Champions everywhere (Champions' Rally) and random elements (Elemental Chaos), big crits for both sides (Glass Cannon, Deadly, Fragile), kills that split (Splitters). -->
@@ -184,8 +186,37 @@
 		<drop group="boss" id="6578" min="1" max="1" chance="25" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
 		<drop group="boss" id="6577" min="1" max="1" chance="20" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
 		<drop group="boss" id="14165" min="1" max="1" chance="10" /> <!-- Vesper Ring -->
-		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
-		<drop group="boss" id="6658" min="1" max="1" chance="0.5" /> <!-- Ring of Baium -->
+		<drop group="boss" id="14163" min="1" max="1" chance="2" /> <!-- Vesper Earring (was the raid-only Elegia Ring) -->
+		<drop group="boss" id="14164" min="1" max="1" chance="0.5" /> <!-- Vesper Necklace (was the raid-only Ring of Baium) -->
+	</uniqueMap>
+
+	<!-- The Primal Crucible: evolve, or be eaten (PrimalCrucibleManager). The players evolve through four transformations into Titans; the monsters eat each other into Alphas and Apex Predators. -->
+	<!-- Quick and venomous (Fleet, Venomous), fierce when hurt (Berserkers, Vampiric, Lacerating), tough (Fortified). Soloable: tier 5, no Hunters or Pack Hunters (live tests showed a geared solo Duelist dying to whole packs, and dying even at tier 6 without them), Stage I free on entering. -->
+	<!-- arena: the event map "primeval_isle" (make it with //mapdevice on Primeval Isle, fill it with its dinosaurs); until it exists, any arena of tier 5. -->
+	<uniqueMap type="CRUCIBLE" name="The Primal Crucible" itemId="50115" tier="5" monsters="60" arena="primeval_isle" reward="2.4"
+		modifiers="FLEET,VENOMOUS,BERSERKERS,VAMPIRIC,FORTIFIED,LACERATING"
+		boss="22215" bossName="The Primordial" bossHp="3.5" bossAttack="1.6" bossDefence="1.5">
+		<description>A valley older than Aden, where everything eats everything. You come in as yourself. You may leave as a Titan, if you are not eaten first.</description>
+		<twist>Evolve, or be eaten. You walk in as a Beast (Stage I is free); every kill gives Essence to the players near it, and at 100, 200 and 330 you evolve again. Pick one of three forms (a fighter, a caster, a support), or defy and stay yourself: a Beast, a Monster, a Legend, then a giant Titan with a burning aura and a Rampage. Meanwhile the monsters eat each other: three meals make an Alpha (Essence and a Mutation for everyone who kills it), six an Apex Predator that hunts the strongest of you. Every meal also feeds the Primordial.</twist>
+		<finale>The Primordial rises once the valley is cleared, +4% HP for every meal the field ate. At 60% and 20% of its HP it lays 3 eggs that hatch into Alphas after 20 seconds unless smashed; at 40% it goes into a frenzy. Everyone inside when it falls gets Primal Essence, three times as much if a Titan stood in the Crucible.</finale>
+		<drop group="map" id="6393" min="1" max="1" chance="8" /> <!-- Champion Medal -->
+		<drop group="map" id="14167" min="1" max="1" chance="6" /> <!-- Mid-Grade Life Stone - Level 84 -->
+		<drop group="map" id="14168" min="1" max="1" chance="2" /> <!-- High-Grade Life Stone - Level 84 -->
+		<drop group="map" id="959" min="1" max="1" chance="1.5" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="map" id="6622" min="1" max="1" chance="1" /> <!-- Giant's Codex -->
+		<drop group="special" id="6393" min="1" max="3" chance="50" /> <!-- Champion Medal (Alphas, Apex Predators, hatchlings; more the more they ate) -->
+		<drop group="special" id="14168" min="1" max="1" chance="20" /> <!-- High-Grade Life Stone - Level 84 (Alphas) -->
+		<drop group="special" id="14169" min="1" max="1" chance="5" /> <!-- Top-Grade Life Stone - Level 84 (Alphas) -->
+		<drop group="special" id="6578" min="1" max="1" chance="3" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) (Alphas) -->
+		<drop group="special" id="9627" min="1" max="1" chance="2" /> <!-- Giant's Codex - Mastery (Alphas) -->
+		<drop group="boss" id="6393" min="8" max="15" chance="100" /> <!-- Champion Medal -->
+		<drop group="boss" id="14169" min="1" max="3" chance="60" /> <!-- Top-Grade Life Stone - Level 84 -->
+		<drop group="boss" id="6578" min="1" max="1" chance="30" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
+		<drop group="boss" id="6577" min="1" max="1" chance="25" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="boss" id="9627" min="1" max="1" chance="25" /> <!-- Giant's Codex - Mastery -->
+		<drop group="boss" id="14165" min="1" max="1" chance="10" /> <!-- Vesper Ring -->
+		<drop group="boss" id="14163" min="1" max="1" chance="4" /> <!-- Vesper Earring -->
+		<drop group="boss" id="14164" min="1" max="1" chance="1" /> <!-- Vesper Necklace -->
 	</uniqueMap>
 
 	<excludedNpcs></excludedNpcs>

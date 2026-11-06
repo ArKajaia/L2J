@@ -148,7 +148,7 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 
 ## Unique maps
 
-Four map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager`.
+Five map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager` (the Primal Crucible's by `PrimalCrucibleManager`). The first four are compared in the table below; the Primal Crucible has its own section.
 
 **Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; each unique boss drops another at 10% (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
 
@@ -161,7 +161,9 @@ Four map items that always open the same map: its modifiers are chosen for it (n
 | Final encounter | The **Crimson Champion** (a Maluk Warlord, x25 HP, x1.5 defence) in the middle of the ring. At 75/50/25% HP the crowd roars: +10% attack each time and 3 **Challengers** (tier 2 Champions of the map's kinds, double HP), each another passive. | The **Gilded Mimic** (a Mutant Treasure Chest, x400 HP) wakes with at least 2 minutes on the clock. A coward: it runs, spills coins when struck (8% per hit), and at 80/60/40/20% HP vanishes to another corner, leaving 4 Vault Thieves behind. If the vault seals first, it escapes with the hoard. | **The Hollow King** (an Immortal Necromancer, x500 HP, x5 attack) is shielded while his **Bone Phylacteries** stand: 4 at the edges of the field, then 3 more at 60% HP, then 2 more at 30%. Each raises a Bone Servant every 20 s (up to 10). From 30% a **Death Nova** hits everyone within 900 for 12% of max HP every 15 s. | **The House** (a Maluk Princess, x45 HP, x1.5 defence) takes the table in the middle once the den is cleared, with one more bet. The fortunes stop. At 80/60/40/20% HP it draws a card from a shuffled deck of 5 (below); a card holds until the next. |
 | Map drops | Champion Medal, Life Stones Lv 84, Scroll: Enchant Weapon (S), Giant's Codex | Adena, Ancient Adena, Gemstone S, Champion Medal, Scroll: Enchant Armor (S) | Dark/Holy Stones, Mid-Grade Life Stone Lv 84, Dark/Holy Crystals, Giant's Codex - Oblivion | 5k-7.5k Adena, Gemstone S, Champion Medal, Mid-Grade Life Stone Lv 84, Scroll: Enchant Weapon (S) |
 | Special drops | Challengers: Champion Medals, High-Grade Life Stone | Spilled coins: 100k-300k Adena, Champion Medal | Echoes: Dark/Holy Stones and Crystals, High-Grade Life Stone | Jackpot Chest (3 rolls), Bluffs, Lucky Seven: 75k-125k Adena, Champion Medals, Blessed Scroll: Enchant Armor (S) |
-| Boss drops | Champion Medals, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Giant's Codex - Mastery, Vesper Ring, Elegia Ring, Ring of Baium (0.5%) | 15-30M Adena, 1-3M Ancient Adena, Gemstone S, 5-10 Champion Medals, Blessed Scrolls: Enchant Armor/Weapon (S), Vesper Earring/Necklace | Dark/Holy Crystals, Giant's Codex - Oblivion, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Vesper Earring, Elegia Ring | 1.5-2.25M Adena, 8-15 Champion Medals, Top-Grade Life Stones, Blessed Scrolls: Enchant Weapon/Armor (S), Vesper Ring, Elegia Ring, Ring of Baium (0.5%) |
+| Boss drops | Champion Medals, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Giant's Codex - Mastery, Vesper Ring, Vesper Earring (2%), Vesper Necklace (0.5%) | 15-30M Adena, 1-3M Ancient Adena, Gemstone S, 5-10 Champion Medals, Blessed Scrolls: Enchant Armor/Weapon (S), Vesper Earring/Necklace | Dark/Holy Crystals, Giant's Codex - Oblivion, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Vesper Earring, Vesper Ring (2%) | 1.5-2.25M Adena, 8-15 Champion Medals, Top-Grade Life Stones, Blessed Scrolls: Enchant Weapon/Armor (S), Vesper Ring, Vesper Earring (2%), Vesper Necklace (0.5%) |
+
+**No raid-only drops**: a unique map's boss is a fight, not a raid, so nothing a unique map drops is only obtainable from raids. Every item can also be had without raids: an ordinary monster drops it, or a player shop or recipe makes it (the GM store doesn't count). Ring of Baium (grand bosses only) and Elegia Ring (its sealed form comes only from a grand boss) were swapped for Vesper jewelry at the same chance; the sealed Vesper pieces drop from Dragon Knights, Tardyons, Kaionas and Divinity Protectors.
 
 Exact chances and amounts are in the XML. The boss of each takes the map's tier and modifier multipliers too, then its own (`bossHp`, `bossAttack`, `bossDefence`); the boss, Challengers, phylacteries, Card Guards and the Den's Raise the Stakes Champions count toward the clear, so the map completes when the last of them falls. Bosses and the other encounter monsters never split or rise again.
 
@@ -201,6 +203,32 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 | Queen of Mirrors | 2 Bluffs: copies of the House under the same title, at 15% of its HP and half its attack, uncounted. Each slain gives Pot +10% and a roll of the special drops. |
 | Jack of Thieves | The House vanishes to another corner, leaving 4 Card Sharps (thieves) behind. |
 | Joker | The wheel spins for the House (no bet); that fortune holds until the next card. |
+
+### The Primal Crucible (50115)
+
+*Evolve, or be eaten.* 60 monsters of tier 5 (the toughest solo tier), on the event map `primeval_isle`; until that map exists, in any arena of tier 5 (see *Setting up its arena* below). Modifiers: Fleet, Venomous, Berserkers, Vampiric, Fortified, Lacerating. It is tuned to be soloable: in live server tests a geared solo level 85 Duelist died to whole packs with Hunters and Pack Hunters (even at tier 5), and still died every 30 seconds at tier 6 without them, while a plain tier 5 map was safe. So: tier 5, no Hunters or Pack Hunters, and Stage I comes free. Code: `PrimalCrucibleManager`, called from `UniqueMapManager`. The players type **`.crucible`** for their evolution (it also opens by itself when a choice comes up).
+
+**Essence and Evolution.** Every counted kill gives 10 Essence to each living player inside within 2,000 of it, and 5 more to the killer (double during a Rampage). An Alpha gives everyone 60 more, an Apex Predator 150. **Stage I is free**: entering the map offers the Beast forms at once. Then at **100, 200 and 330** Essence the player evolves again: one form of each path is offered (retail H5 transformations, with their own models and skill bars), or Defiance.
+
+| Stage | Fighter | Caster | Support | HP and damage |
+|---|---|---|---|---|
+| I Beast | Saber Tooth Tiger or Doll Blader | Veil Master | Heretic | x1.2 |
+| II Monster | Dragon Bomber, Lilim Knight, Golem Guardian or Oel Mahum | Inferno Drake | Unicorn or Grail Apostle | x1.5 |
+| III Legend | Zaken, Kechi, Gordon, Venom or Demon Prince | Anakim, Ranku or Divine Wizard | Divine Healer, Divine Knight or Divine Enchanter | x2 |
+| IV **Titan** | your Legend form and two other Legends | | | x3, giant (BIG_BODY), burning aura, Rampage |
+
+- **Defiance**: refuse the forms and stay yourself, with your own skills: +15% HP and damage for every refusal, on top of the stage. Defying at stage IV makes a **Defiant Titan**: yourself, giant.
+- **The Titan**: the aura burns every monster within 250 for 1% of its max HP every 2 s (0.2% for the Primordial). **Rampage** (`.crucible rampage`, good in a macro; once a minute): 10 s of +50% damage that splashes 30% onto the monsters within 200 of the target, double P. Def. and M. Def., +20% attack speed and double Essence.
+- **Mutations**: everyone inside is offered 1 of 3 when an Alpha, an Apex Predator or a hatchling dies, for the rest of the run: Horns (+20% P. Atk.), Arcane Gland (+20% M. Atk.), Adrenal Surge (+15% attack and casting speed), Thick Hide (+25% P./M. Def.), Wings (+25% speed), Predator's Eye (+30% critical rate), Hunger (heal 3% of max HP per kill), Regeneration (triple HP regeneration).
+- **The forms never leave the map**, like the Coliseum's passives: dying, going back or the map closing takes the form, the giant look, Rampage and every bonus off (and a sweep every second catches anyone who slips out). Coming back puts them on again. After *Transform Dispel*, `.crucible form` (or the button) takes the form again.
+
+**The Food Chain.** Every 40 s, the monster with the most meals (not fighting) eats one with no more meals within 800; a monster that has eaten already **hunts** farther: it walks up to 3,000 to its next meal (announced, given up after 30 s or if players attack it), so Alphas grow even when the monsters are spread out. The meal vanishes (it no longer counts toward the clear), the eater heals and grows (+40% HP, +12% attack, +5% defence per meal). **3 meals: an Alpha** (giant, "[Alpha]"), which drops the special drops, more often the more it ate. **6 meals: an Apex Predator**, which hunts the player with the most Essence. At most 12 meals a run, and none once 6 monsters or fewer are left. Every meal is announced, with where it happened.
+
+**The Primordial** (a Tyrannosaurus, x3.5 HP, about 4-5M with Fortified, the random passives and a full +48%, x1.6 attack, x1.5 defence) rises once the valley is cleared, **+4% HP for every meal the field ate**. At 60% and 20% of its HP it lays **3 eggs** (Ancient Eggs, uncounted) at the edges of the field; each hatches after 20 s into a **hatchling Alpha** unless smashed. At 40% it goes into a **frenzy** (+25% attack and attack speed).
+
+**Rewards.** The drops are in the XML (the special group is the Alphas'). When the Primordial dies everyone inside gets **Primal Essence** (50116): 10, 12 if a Legend stood in the Crucible, 30 if a Titan did. **30 Primal Essence buy a Titan Scroll** (50117, `.crucible` outside the map, *Buy a Titan Scroll*). The **Titan Scroll** shows your last Titan form, giant, for 30 minutes in a town or another peace zone. It is looks only: the form is a non-combat copy (`data/stats/transformations/09xxx.xml`, id 9000 + the form's id, its `displayId` the real form), with no stats of its own. It ends when you leave the peace zone, use Transform Dispel, or the time runs out. A Defiant Titan is just giant. It needs a Titan reached once (player variable `CRUCIBLE_TITAN_FORM`).
+
+**Setting up its arena.** In game on Primeval Isle, type `//mapdevice`, *New map here*, give it the id **`primeval_isle`**, tick *Map Device*, place the fence and the entry, and under *Monsters that fill it* list the island's dinosaurs (Velociraptor, Ornithomimus, Deinonychus, Pachycephalosaurus, Tyrannosaurus...): they are made stronger by tier 5. Save. From then on the Crucible opens there.
 
 ### The Coliseum's passives
 
@@ -257,6 +285,7 @@ A saved map takes part at once: the next map item opened (of a tier it allows) m
 | `.hideout back` | From a map, back to the hideout (not while fighting). |
 | `.hideout leave` | From the hideout, back to where you came from. |
 | `.hideout quest` | The quest "A Map of Your Own". |
+| `.crucible` | The Primal Crucible: inside it your stage, Essence, Mutations and choices (`evolve <n>`, `mutate <n>`, `rampage`, `form`); outside, the Titan Scroll exchange (`exchange`). |
 
 GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 
@@ -268,8 +297,8 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 | `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
 | `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
 | `//mapdevice unique [list]` | The unique maps. |
-| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY\|DEN> [count]` | Give a unique map to your target (or you). |
-| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY\|DEN>` | In your own hideout: open that unique map for free. |
+| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE> [count]` | Give a unique map to your target (or you). |
+| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE>` | In your own hideout: open that unique map for free. |
 | `//mapdevice pool <tier>` | The monsters a map of that tier may hold, with their strength and each stat against the standard monster of their level. |
 | `//mapdevice score` | The strength of your target, and which tiers it fits and drops. |
 | `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |

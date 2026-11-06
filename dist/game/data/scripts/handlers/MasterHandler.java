@@ -268,6 +268,7 @@ import handlers.chat.commands.voiced.CombatLogVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
 import handlers.chat.commands.voiced.GuideVoiced;
+import handlers.chat.commands.voiced.CrucibleVoiced;
 import handlers.chat.commands.voiced.HideoutVoiced;
 import handlers.chat.commands.voiced.Lang;
 import handlers.chat.commands.voiced.CraftingGoalVoiced;
@@ -309,6 +310,7 @@ import handlers.items.ItemSkills;
 import handlers.items.ItemSkillsTemplate;
 import handlers.items.LifeStone;
 import handlers.items.MapItem;
+import handlers.items.TitanScroll;
 import handlers.items.Maps;
 import handlers.items.MercTicket;
 import handlers.items.NicknameColor;
@@ -602,6 +604,7 @@ public class MasterHandler
 			ItemSkillsTemplate.class,
 			LifeStone.class,
 			MapItem.class,
+			TitanScroll.class,
 			Maps.class,
 			MercTicket.class,
 			NicknameColor.class,
@@ -678,6 +681,7 @@ public class MasterHandler
 			VillageSiegeConfig.ENABLED ? VillageSiegeVoiced.class : null,
 			AdventurersGuideConfig.ENABLED ? GuideVoiced.class : null,
 			MapDeviceConfig.ENABLED ? HideoutVoiced.class : null,
+			MapDeviceConfig.ENABLED ? CrucibleVoiced.class : null,
 		},
 		{
 			// Target Handlers
