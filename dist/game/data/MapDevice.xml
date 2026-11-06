@@ -162,21 +162,23 @@
 
 	<!-- The Gambler's Den: luck both ways. Champions everywhere (Champions' Rally) and random elements (Elemental Chaos), big crits for both sides (Glass Cannon, Deadly, Fragile), kills that split (Splitters). -->
 	<!-- Unlike the other unique maps, the Den's own drops follow the server rates (Rates.ini: DeathDrop*Multiplier and the per-item multipliers), then its Pot. -->
+	<!-- Adena: one run pays at most GamblersDenMaxAdena (MapDevice.ini, 150M). With Adena x5 in Rates.ini and at most x8 more from the Pot (x4) and Hot Table (x2), -->
+	<!-- the amounts below are worth up to 40x: the House 90M, the 6 special rolls 30M, the ~94 monster kills (Splitters copies count half) 30M. -->
 	<uniqueMap type="DEN" name="The Gambler's Den" itemId="50114" tier="5" monsters="50" arena="Field of Whispers" reward="2.0"
 		modifiers="CHAMPIONS_RALLY,GLASS_CANNON,DEADLY,FRAGILE,ELEMENTAL_CHAOS,SPLITTERS"
 		boss="22841" bossName="The House" bossHp="45" bossAttack="1.0" bossDefence="1.5">
 		<description>A gambling den in the Field of Whispers, where the stakes are your life and the house always wants its cut. A Dealer waits at the door.</description>
 		<twist>The Wheel of Fate and the Pot. Every 12 kills the wheel spins: one of 24 fortunes, a blessing or a curse, holds until the next spin, and no fortune comes twice before all have come. The Pot (x1 to start, x0.25 to x4) multiplies every drop of the Den; at 100% it makes them bigger. Each spin gives a bet: at the Dealer, a bet doubles the Pot or halves it.</twist>
 		<finale>The House takes the table once the den is cleared, with one more bet for you. At 80%, 60%, 40% and 20% of its HP it draws a card from a deck of five: Ace of Blades (it hits harder and faster), King of Shields (invulnerable behind 3 Card Guards), Queen of Mirrors (2 Bluffs, each slain +10% Pot), Jack of Thieves (it vanishes, leaving thieves behind) or the Joker (a spin of the wheel).</finale>
-		<drop group="map" id="57" min="30000" max="90000" chance="100" /> <!-- Adena -->
+		<drop group="map" id="57" min="5000" max="7500" chance="100" /> <!-- Adena -->
 		<drop group="map" id="2134" min="3" max="10" chance="12" /> <!-- Gemstone S -->
 		<drop group="map" id="6393" min="1" max="1" chance="8" /> <!-- Champion Medal -->
 		<drop group="map" id="14167" min="1" max="1" chance="5" /> <!-- Mid-Grade Life Stone - Level 84 -->
 		<drop group="map" id="959" min="1" max="1" chance="1" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
-		<drop group="special" id="57" min="600000" max="1500000" chance="100" /> <!-- Adena (Jackpot Chest, Bluffs, Lucky Seven) -->
+		<drop group="special" id="57" min="75000" max="125000" chance="100" /> <!-- Adena (Jackpot Chest, Bluffs, Lucky Seven) -->
 		<drop group="special" id="6393" min="1" max="3" chance="60" /> <!-- Champion Medal (Jackpot Chest, Bluffs, Lucky Seven) -->
 		<drop group="special" id="6578" min="1" max="1" chance="3" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) (Jackpot Chest, Bluffs, Lucky Seven) -->
-		<drop group="boss" id="57" min="30000000" max="60000000" chance="100" /> <!-- Adena -->
+		<drop group="boss" id="57" min="1500000" max="2250000" chance="100" /> <!-- Adena -->
 		<drop group="boss" id="6393" min="8" max="15" chance="100" /> <!-- Champion Medal -->
 		<drop group="boss" id="14169" min="1" max="2" chance="50" /> <!-- Top-Grade Life Stone - Level 84 -->
 		<drop group="boss" id="6578" min="1" max="1" chance="25" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->

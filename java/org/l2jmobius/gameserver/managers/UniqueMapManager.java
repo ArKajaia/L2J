@@ -200,6 +200,7 @@ public class UniqueMapManager
 	private static final double BLUFF_POT = 0.10;
 	private static final int DEN_THIEVES = 4;
 	private static final int DEALER_OFFSET = 150;
+	private static final int ADENA_ID = 57;
 
 	/** The fortunes of the Den's Wheel of Fate. The lasting ones hold until the next spin (or, from the Joker, the next card); the others happen once, when the wheel stops. */
 	private enum Fortune
@@ -308,6 +309,8 @@ public class UniqueMapManager
 		volatile long _jackpotUntil;
 		final Set<Integer> _bluffs = ConcurrentHashMap.newKeySet();
 		final Set<Integer> _cardGuards = ConcurrentHashMap.newKeySet();
+		/** The Adena the Den's own drops gave so far ({@link MapDeviceConfig#GAMBLERS_DEN_MAX_ADENA}). */
+		long _adena;
 		/** Pickpockets by object id, with the time they escape. */
 		final Map<Integer, Long> _pickpockets = new ConcurrentHashMap<>();
 	}
@@ -1445,19 +1448,19 @@ public class UniqueMapManager
 				case 0, ROLE_THIEF, ROLE_CARD_GUARD, ROLE_PICKPOCKET ->
 				{
 					final boolean spawnling = victim.getVariables().getBoolean("MAP_SPLIT", false) || victim.getVariables().getBoolean("MAP_MINION", false);
-					drop(victim, player, unique.drops(), greed * (spawnling ? 0.5 : 1), den);
+					drop(victim, player, unique.drops(), greed * (spawnling ? 0.5 : 1), den ? state : null);
 				}
-				case ROLE_CHALLENGER, ROLE_ECHO, ROLE_BLUFF -> drop(victim, player, unique.specialDrops(), den ? greed : 1, den);
+				case ROLE_CHALLENGER, ROLE_ECHO, ROLE_BLUFF -> drop(victim, player, unique.specialDrops(), den ? greed : 1, den ? state : null);
 				case ROLE_JACKPOT ->
 				{
 					for (int i = 0; i < JACKPOT_ROLLS; i++)
 					{
-						drop(victim, player, unique.specialDrops(), greed, true);
+						drop(victim, player, unique.specialDrops(), greed, state);
 					}
 				}
 				case ROLE_BOSS ->
 				{
-					drop(victim, player, unique.bossDrops(), greed, den);
+					drop(victim, player, unique.bossDrops(), greed, den ? state : null);
 					if ((Rnd.nextDouble() * 100) < MapDeviceConfig.UNIQUE_MAP_BOSS_CHANCE)
 					{
 						dropUniqueMap(run, victim, player);
@@ -1591,7 +1594,7 @@ public class UniqueMapManager
 				}
 				if (seven && (player != null))
 				{
-					drop(victim, player, unique.specialDrops(), denDropFactor(state), true);
+					drop(victim, player, unique.specialDrops(), denDropFactor(state), state);
 					player.sendPacket(new ExShowScreenMessage("Lucky Seven!", 2000));
 				}
 				if (spin && !run.getMonsters().isEmpty())
@@ -1984,17 +1987,18 @@ public class UniqueMapManager
 	 */
 	private static void drop(Attackable victim, Player player, List<UniqueMap.Drop> drops, double chanceMultiplier)
 	{
-		drop(victim, player, drops, chanceMultiplier, false);
+		drop(victim, player, drops, chanceMultiplier, null);
 	}
 
 	/**
 	 * Rolls a list of drops for a kill.
 	 * @param chanceMultiplier multiplies every chance
-	 * @param denRules {@code true} for the Gambler's Den: the server rates apply first, as to a monster's own death drop ({@link RatesConfig}: the item's own multipliers, else the death drop ones), and a chance the multiplier lifts past
-	 *            100% makes the drop bigger instead
+	 * @param den the Gambler's Den's state, {@code null} for any other map. In the Den the server rates apply first, as to a monster's own death drop ({@link RatesConfig}: the item's own multipliers, else the death drop ones), a chance the
+	 *            multiplier lifts past 100% makes the drop bigger instead, and the Adena of the whole run stops at {@link MapDeviceConfig#GAMBLERS_DEN_MAX_ADENA}
 	 */
-	private static void drop(Attackable victim, Player player, List<UniqueMap.Drop> drops, double chanceMultiplier, boolean denRules)
+	private static void drop(Attackable victim, Player player, List<UniqueMap.Drop> drops, double chanceMultiplier, State den)
 	{
+		final boolean denRules = den != null;
 		for (UniqueMap.Drop drop : drops)
 		{
 			if (ItemData.getInstance().getTemplate(drop.itemId()) == null)
@@ -2019,7 +2023,19 @@ public class UniqueMapManager
 			if ((Rnd.nextDouble() * 100) < Math.min(100, chance))
 			{
 				final long count = drop.max() > drop.min() ? Rnd.get(drop.min(), drop.max() + 1) : drop.min();
-				final long rated = Math.max(1, Math.round(count * amount));
+				long rated = Math.max(1, Math.round(count * amount));
+				if (denRules && (drop.itemId() == ADENA_ID) && (MapDeviceConfig.GAMBLERS_DEN_MAX_ADENA > 0))
+				{
+					synchronized (den)
+					{
+						rated = Math.min(rated, MapDeviceConfig.GAMBLERS_DEN_MAX_ADENA - den._adena);
+						if (rated <= 0)
+						{
+							continue; // The house is out of Adena.
+						}
+						den._adena += rated;
+					}
+				}
 				victim.dropOrAutoLoot(player, new ItemHolder(drop.itemId(), rated));
 			}
 		}

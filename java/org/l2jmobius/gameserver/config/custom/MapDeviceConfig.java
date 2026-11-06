@@ -91,6 +91,7 @@ public class MapDeviceConfig
 	public static double UNIQUE_MAP_COMPLETION_CHANCE;
 	public static double UNIQUE_MAP_CHANCE_PER_MEDAL;
 	public static double UNIQUE_MAP_BOSS_CHANCE;
+	public static long GAMBLERS_DEN_MAX_ADENA;
 
 	// The quest.
 	public static boolean QUEST_ENABLED;
@@ -162,6 +163,7 @@ public class MapDeviceConfig
 		UNIQUE_MAP_COMPLETION_CHANCE = Math.max(0, config.getDouble("UniqueMapCompletionChance", 2.0));
 		UNIQUE_MAP_CHANCE_PER_MEDAL = Math.max(0, config.getDouble("UniqueMapChancePerMedal", 0.5));
 		UNIQUE_MAP_BOSS_CHANCE = Math.max(0, config.getDouble("UniqueMapBossChance", 10.0));
+		GAMBLERS_DEN_MAX_ADENA = Math.max(0, config.getLong("GamblersDenMaxAdena", 150000000));
 
 		QUEST_ENABLED = config.getBoolean("MapQuestEnabled", true);
 		QUEST_REWARD_MEDALS = Math.max(0, config.getInt("MapQuestRewardMedals", 5));
