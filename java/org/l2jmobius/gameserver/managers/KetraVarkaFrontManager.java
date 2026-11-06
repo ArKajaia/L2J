@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.conquest.ConquestCapture;
@@ -105,8 +106,9 @@ public class KetraVarkaFrontManager
 		"the Middle Totem",
 		"the Far Totem"
 	};
-	/** How far from its totem a sector's monsters stand. */
+	/** How far from its totem a sector's monsters stand, at most: on a smaller field (UniqueMapDensity), half the gap between two totems. */
 	private static final int SECTOR_RADIUS = 2000;
+	private static final int MIN_SECTOR_RADIUS = 800;
 	private static final int MONSTER_SPACING = 250;
 	private static final int CAMP_DISTANCE = 700;
 	private static final int BANNER_OFFSET = 150;
@@ -358,6 +360,7 @@ public class KetraVarkaFrontManager
 		final List<NpcTemplate> varka = kindsOf(run, Side.VARKA);
 		final List<NpcTemplate> any = run.getMonsterKinds();
 		final int count = Math.max(TOTEM_SHARES.length, (int) Math.round(run.getUnique().monsterCount() * run.getPackSize()));
+		final int sectorRadius = Math.max(MIN_SECTOR_RADIUS, Math.min(SECTOR_RADIUS, (int) ((length * (TOTEM_SHARES[1] - TOTEM_SHARES[0])) / 2)));
 		final List<Location> taken = new ArrayList<>();
 		for (int i = 0; i < count; i++)
 		{
@@ -367,7 +370,7 @@ public class KetraVarkaFrontManager
 			{
 				break;
 			}
-			final Location spot = MapDeviceManager.spacedSpot(() -> around(run, totem._spot, SECTOR_RADIUS), taken, MONSTER_SPACING);
+			final Location spot = MapDeviceManager.spacedSpot(() -> around(run, totem._spot, sectorRadius, true), taken, MONSTER_SPACING);
 			taken.add(spot);
 			final Monster monster = MapDeviceManager.getInstance().spawnMapMonster(run, kinds.get(Rnd.get(kinds.size())), spot);
 			if (monster != null)
@@ -413,6 +416,15 @@ public class KetraVarkaFrontManager
 	 */
 	private static Location around(MapRun run, Location center, int range)
 	{
+		return around(run, center, range, false);
+	}
+
+	/**
+	 * @param awayFromEntry {@code true} to keep {@link MapDeviceConfig#SAFE_RADIUS} away from where the players come in, too
+	 * @return a spot on the ground within {@code range} of a spot, inside the field
+	 */
+	private static Location around(MapRun run, Location center, int range, boolean awayFromEntry)
+	{
 		final MapArena arena = run.getArena();
 		final GeoEngine geo = GeoEngine.getInstance();
 		int x = center.getX();
@@ -425,7 +437,7 @@ public class KetraVarkaFrontManager
 			y = center.getY() + (int) (Math.sin(angle) * distance);
 			final double ex = (x - arena.x()) / (double) arena.radiusX();
 			final double ey = (y - arena.y()) / (double) arena.radiusY();
-			if (((ex * ex) + (ey * ey)) <= 0.8)
+			if ((((ex * ex) + (ey * ey)) <= 0.8) && (!awayFromEntry || (Math.hypot(x - arena.getEntryX(), y - arena.getEntryY()) >= MapDeviceConfig.SAFE_RADIUS)))
 			{
 				break;
 			}

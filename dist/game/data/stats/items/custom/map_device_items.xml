@@ -4,7 +4,7 @@
 	     Dropped by monsters of level 78 and up; double-click one in your hideout (.hideout) to put it in the Map Device.
 	     displayId: until the client knows these ids (client/MapDevice), it shows them as the retail "Pirate's Treasure Map" (5915).
 	     Once ItemName-e.dat and EtcItemgrp.dat have the rows of client/MapDevice, remove the displayId lines so each tier shows its own name. -->
-	<item id="50101" type="EtcItem" name="Map (Tier 1)">
+	<item id="18101" type="EtcItem" name="Map (Tier 1)">
 		<set name="icon" val="icon.etc_map_ivory_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -12,7 +12,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50102" type="EtcItem" name="Map (Tier 2)">
+	<item id="18102" type="EtcItem" name="Map (Tier 2)">
 		<set name="icon" val="icon.etc_map_ivory_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -20,7 +20,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50103" type="EtcItem" name="Map (Tier 3)">
+	<item id="18103" type="EtcItem" name="Map (Tier 3)">
 		<set name="icon" val="icon.etc_map_ivory_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -28,7 +28,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50104" type="EtcItem" name="Map (Tier 4)">
+	<item id="18104" type="EtcItem" name="Map (Tier 4)">
 		<set name="icon" val="icon.etc_map_ivory_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -36,7 +36,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50105" type="EtcItem" name="Map (Tier 5)">
+	<item id="18105" type="EtcItem" name="Map (Tier 5)">
 		<set name="icon" val="icon.etc_map_ivory_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -44,7 +44,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50106" type="EtcItem" name="Map (Tier 6)">
+	<item id="18106" type="EtcItem" name="Map (Tier 6)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -52,7 +52,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50107" type="EtcItem" name="Map (Tier 7)">
+	<item id="18107" type="EtcItem" name="Map (Tier 7)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -60,7 +60,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50108" type="EtcItem" name="Map (Tier 8)">
+	<item id="18108" type="EtcItem" name="Map (Tier 8)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -68,7 +68,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50109" type="EtcItem" name="Map (Tier 9)">
+	<item id="18109" type="EtcItem" name="Map (Tier 9)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -76,7 +76,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50110" type="EtcItem" name="Map (Tier 10)">
+	<item id="18110" type="EtcItem" name="Map (Tier 10)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -85,7 +85,7 @@
 		<set name="handler" val="MapItem" />
 	</item>
 	<!-- Unique maps (data/MapDevice.xml <uniqueMap>): always the same map, its own modifiers, twist, final encounter and drops. -->
-	<item id="50111" type="EtcItem" name="Unique Map: The Crimson Coliseum (Tier 5)">
+	<item id="18111" type="EtcItem" name="Unique Map: The Crimson Coliseum (Tier 5)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -93,7 +93,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50112" type="EtcItem" name="Unique Map: The Gilded Vault (Tier 4)">
+	<item id="18112" type="EtcItem" name="Unique Map: The Gilded Vault (Tier 4)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -101,7 +101,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50113" type="EtcItem" name="Unique Map: The Ossuary of Echoes (Tier 6)">
+	<item id="18113" type="EtcItem" name="Unique Map: The Ossuary of Echoes (Tier 6)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -109,7 +109,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50114" type="EtcItem" name="Unique Map: The Gambler's Den (Tier 5)">
+	<item id="18114" type="EtcItem" name="Unique Map: The Gambler's Den (Tier 5)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -117,7 +117,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50115" type="EtcItem" name="Unique Map: The Primal Crucible (Tier 5)">
+	<item id="18115" type="EtcItem" name="Unique Map: The Primal Crucible (Tier 5)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -126,7 +126,7 @@
 		<set name="handler" val="MapItem" />
 	</item>
 	<!-- The Primal Crucible's reward (PrimalCrucibleManager): 30 of it buy a Titan Scroll (.crucible in town). Based on Blood of Eva (3835). -->
-	<item id="50116" type="EtcItem" name="Primal Essence">
+	<item id="18116" type="EtcItem" name="Primal Essence">
 		<set name="icon" val="icon.etc_dragon_blood_i00" />
 		<set name="displayId" val="3835" />
 		<set name="material" val="LIQUID" />
@@ -134,7 +134,7 @@
 		<set name="is_sellable" val="false" />
 	</item>
 	<!-- Your Titan form of the Primal Crucible, giant, for 30 minutes in town: looks only. Based on Transformation Scroll: Zaken (17140). -->
-	<item id="50117" type="EtcItem" name="Titan Scroll">
+	<item id="18117" type="EtcItem" name="Titan Scroll">
 		<set name="icon" val="icon.etc_trans_4f_s_b_01" />
 		<set name="displayId" val="17140" />
 		<set name="material" val="PAPER" />
@@ -143,7 +143,7 @@
 		<set name="handler" val="TitanScroll" />
 	</item>
 	<!-- Unique maps of the low tiers: they drop on completing maps of tier 1-4 (dropMinTier/dropMaxTier of their <uniqueMap>). -->
-	<item id="50118" type="EtcItem" name="Unique Map: The Ketra-Varka Front (Tier 1)">
+	<item id="18118" type="EtcItem" name="Unique Map: The Ketra-Varka Front (Tier 1)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -151,7 +151,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50119" type="EtcItem" name="Unique Map: The Tomb Raiders (Tier 2)">
+	<item id="18119" type="EtcItem" name="Unique Map: The Tomb Raiders (Tier 2)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />

@@ -1113,6 +1113,7 @@ public class MapDeviceManager
 				arena = arenas.get(Rnd.get(arenas.size()));
 			}
 			final List<NpcTemplate> pool = unique.npcs().isEmpty() ? getArenaMonsters(arena, tier) : getUniqueMonsters(unique);
+			arena = uniqueField(arena, unique);
 			if (pool.isEmpty() || (NpcData.getInstance().getTemplate(unique.bossNpcId()) == null))
 			{
 				return "No monster fits " + unique.name() + ". Please contact an administrator.";
@@ -1176,6 +1177,27 @@ public class MapDeviceManager
 			}
 		}
 		return carried;
+	}
+
+	/**
+	 * The field a unique map opens on. A unique map holds fewer monsters than a normal map, so on the whole arena they would stand far apart: it takes a smaller copy of
+	 * the arena round the same middle, whose area makes its monsters stand {@code UniqueMapDensity} times as densely as {@code MonsterCount} monsters on the whole arena
+	 * (never smaller than {@code UniqueMapMinRadius}, never larger than the arena). An arena of the event map page keeps its hand-placed fence, entry and packs.
+	 * @param arena the arena picked for it
+	 * @param unique the unique map
+	 * @return the field
+	 */
+	static MapArena uniqueField(MapArena arena, UniqueMap unique)
+	{
+		if ((arena.source() != null) || (MapDeviceConfig.UNIQUE_MAP_DENSITY <= 0))
+		{
+			return arena;
+		}
+		// Area goes with the monsters: (factor^2 x area) / count = area / (MonsterCount x density).
+		double factor = Math.sqrt(unique.monsterCount() / (MapDeviceConfig.MONSTER_COUNT * MapDeviceConfig.UNIQUE_MAP_DENSITY));
+		final int smallest = Math.min(arena.radiusX(), arena.radiusY());
+		factor = Math.max(factor, MapDeviceConfig.UNIQUE_MAP_MIN_RADIUS / (double) Math.max(1, smallest));
+		return arena.scaled(factor);
 	}
 
 	/**

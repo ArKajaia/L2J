@@ -217,8 +217,8 @@ public class PrimalCrucibleManager
 	private static final int ROAR_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
 
 	// Rewards.
-	public static final int PRIMAL_ESSENCE = 50116;
-	public static final int TITAN_SCROLL = 50117;
+	public static final int PRIMAL_ESSENCE = 18116;
+	public static final int TITAN_SCROLL = 18117;
 	private static final int SCROLL_COST = 30;
 	/** Primal Essence for everyone inside when the Primordial dies, by the run's best stage. */
 	private static final int[] ESSENCE_REWARD =
