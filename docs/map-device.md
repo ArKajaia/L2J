@@ -6,7 +6,7 @@ Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps, with
 
 ## How it plays
 
-1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 0.3%, +1% per champion tier, 20% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
+1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 18101-18110; the Map Device's items are 18101-18119, inside the High Five client's retail id range: they were 50101-50119, which the client doesn't take, and the server moves items saved under the old ids at startup, `MapItemIds`). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 0.3%, +1% per champion tier, 20% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
 2. **`.hideout`** in a town (any peace zone) takes the player to their own hideout: a private copy of the Jinia Guild Hideout cabin with the **Map Device** in it.
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
 4. **Each medal** rolls one **modifier** out of 67 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
@@ -27,16 +27,16 @@ The first map a character gets starts the quest **A Map of Your Own** (see below
 
 | Tier | Item | Monster levels | Strength | Monsters | HP | Attack | Defence | Exp/drops | Drops from |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | 50101 | 78-79 | 0-1.0 | Ketra/Varka, the grazing beasts (48 kinds) | x1.00 | x1.00 | x1.00 | x1.00 | level 78 |
-| 2 | 50102 | 78-80 | 1.0-1.5 | the Imperial Tomb, the beetles (117) | x1.05 | x1.03 | x1.02 | x1.10 | level 78, strength 1.0 |
-| 3 | 50103 | 80-82 | 0.8-1.5 | Ragna Orcs, Grave Robbers, the dinosaurs (54) | x1.10 | x1.05 | x1.03 | x1.20 | level 80, strength 0.8 |
-| 4 | 50104 | 82-84 | 1.0-1.5 | Sel Mahum, Mucrokian, Solina (41) | x1.20 | x1.10 | x1.05 | x1.30 | level 82, strength 1.0 |
-| 5 | 50105 | 81-84 | 1.5-2.6 | tough solo monsters: Spiked Stakato, Tanta Lizardmen, Contaminated Batur (23) | x1.10 | x1.05 | x1.03 | x1.45 | level 81, strength 1.5 |
-| 6 | 50106 | 82-85 | 2.6-3.8 | light party: Hellbound scouts and mystics, Drake Scout/Mage (11) | x1.00 | x1.00 | x1.00 | x1.60 | level 82, strength 2.6 |
-| 7 | 50107 | 82-85 | 3.8-5.0 | Drakos, Divinity, Dragon Valley scouts, Hellbound watchers (23) | x1.00 | x1.00 | x1.00 | x1.80 | level 82, strength 3.8 |
-| 8 | 50108 | 82-85 | 5.0-6.5 | Maluks, Dragon Knights, Drake Leader, Tully's Workshop (21) | x1.00 | x1.00 | x1.00 | x2.00 | level 82, strength 5.0 |
-| 9 | 50109 | 82-86 | 6.5-9.0 | Batwing Drake, Bloody Karik, the Lesser Giants, Hellbound masters (17) | x1.00 | x1.00 | x1.00 | x2.30 | level 82, strength 6.5 |
-| 10 | 50110 | 83-87 | 9.0+ | the Seed of Annihilation elites, Knoriks (11) | x1.05 | x1.03 | x1.02 | x2.70 | level 85, strength 9.0 |
+| 1 | 18101 | 78-79 | 0-1.0 | Ketra/Varka, the grazing beasts (48 kinds) | x1.00 | x1.00 | x1.00 | x1.00 | level 78 |
+| 2 | 18102 | 78-80 | 1.0-1.5 | the Imperial Tomb, the beetles (117) | x1.05 | x1.03 | x1.02 | x1.10 | level 78, strength 1.0 |
+| 3 | 18103 | 80-82 | 0.8-1.5 | Ragna Orcs, Grave Robbers, the dinosaurs (54) | x1.10 | x1.05 | x1.03 | x1.20 | level 80, strength 0.8 |
+| 4 | 18104 | 82-84 | 1.0-1.5 | Sel Mahum, Mucrokian, Solina (41) | x1.20 | x1.10 | x1.05 | x1.30 | level 82, strength 1.0 |
+| 5 | 18105 | 81-84 | 1.5-2.6 | tough solo monsters: Spiked Stakato, Tanta Lizardmen, Contaminated Batur (23) | x1.10 | x1.05 | x1.03 | x1.45 | level 81, strength 1.5 |
+| 6 | 18106 | 82-85 | 2.6-3.8 | light party: Hellbound scouts and mystics, Drake Scout/Mage (11) | x1.00 | x1.00 | x1.00 | x1.60 | level 82, strength 2.6 |
+| 7 | 18107 | 82-85 | 3.8-5.0 | Drakos, Divinity, Dragon Valley scouts, Hellbound watchers (23) | x1.00 | x1.00 | x1.00 | x1.80 | level 82, strength 3.8 |
+| 8 | 18108 | 82-85 | 5.0-6.5 | Maluks, Dragon Knights, Drake Leader, Tully's Workshop (21) | x1.00 | x1.00 | x1.00 | x2.00 | level 82, strength 5.0 |
+| 9 | 18109 | 82-86 | 6.5-9.0 | Batwing Drake, Bloody Karik, the Lesser Giants, Hellbound masters (17) | x1.00 | x1.00 | x1.00 | x2.30 | level 82, strength 6.5 |
+| 10 | 18110 | 83-87 | 9.0+ | the Seed of Annihilation elites, Knoriks (11) | x1.05 | x1.03 | x1.02 | x2.70 | level 85, strength 9.0 |
 
 The monsters of a map are plain open world monsters of the tier's levels **and** strength, with a respawning world spawn (no quest, event, instance-only or raid monster, nothing that gives no experience or lies still like the cocoons). Exclude more with `<excludedNpcs>`. Tiers 1-5 are solo maps; from tier 6 the monsters are party monsters, whose own strength is the step up, so the tier multipliers stay near 1. `//mapdevice pool <tier>` lists a tier's monsters with their strength.
 
@@ -154,7 +154,19 @@ Seven map items that always open the same map: its modifiers are chosen for it (
 
 **Their difficulty** shows like a normal map's: every unique map has a tier (its monsters' levels and strength, and the tier's multipliers), in its item name ("Unique Map: The Crimson Coliseum (Tier 5)"), in the device's list and windows, and on its portals. Tiers: the Ketra-Varka Front 1; the Tomb Raiders 2; the Gilded Vault 4; the Crimson Coliseum, the Gambler's Den and the Primal Crucible 5; the Ossuary of Echoes 6.
 
-| | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) | The Gambler's Den (50114) |
+**Their field is packed tight.** A unique map holds 30-80 monsters where a normal map holds 100 on the whole arena, so on the whole arena they would stand far apart. A unique map opens on a smaller copy of its arena instead (`MapDeviceManager.uniqueField`): the fence is pulled in round the same middle, with the entry, until its monsters stand **twice as densely** as a normal map's (`UniqueMapDensity` = 2.0 in `MapDevice.ini`; 1.0 as dense as a normal map, 0 the whole arena), never smaller than a radius of `UniqueMapMinRadius` (3,000). Everything a twist places as a share of the field comes in with it: the Coliseum's waves, the Front's totems, the Tomb's reliquaries, the Ossuary's phylacteries, the Vault's corners. The Front's sectors shrink with their totems (half the gap between two, 2,000 at most) and keep clear of the entry. An arena of the event map page (the Crucible's `primeval_isle`) keeps its hand-placed fence, entry and packs. With the defaults:
+
+| Unique map | Monsters | Arena | Whole arena | Its field |
+|---|---|---|---|---|
+| The Crimson Coliseum | 30 (waves) | Ruins of Despair | 9,600 x 8,800 | 3,720 x 3,410 |
+| The Gilded Vault | 60 | Fields of Massacre | 6,000 x 6,000 | 3,290 x 3,290 |
+| The Ossuary of Echoes | 70 | Silent Valley | 8,000 x 8,000 | 4,730 x 4,730 |
+| The Gambler's Den | 50 | Field of Whispers | 8,000 x 7,000 | 4,000 x 3,500 |
+| The Primal Crucible | 60 | `primeval_isle` (as placed); a tier 5 arena until it exists | | 55% of that arena's |
+| The Ketra-Varka Front | 80 | Ruins of Despair | 9,600 x 8,800 | 6,070 x 5,570 |
+| The Tomb Raiders | 70 | Silent Valley | 8,000 x 8,000 | 4,730 x 4,730 |
+
+| | The Crimson Coliseum (18111) | The Gilded Vault (18112) | The Ossuary of Echoes (18113) | The Gambler's Den (18114) |
 |---|---|---|---|---|
 | Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Silent Valley | 50 of tier 5 (Lv. 81-84), Field of Whispers |
 | Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered | Champions' Rally, Glass Cannon, Deadly, Fragile, Elemental Chaos, Splitters |
@@ -206,7 +218,7 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 | Jack of Thieves | The House vanishes to another corner, leaving 4 Card Sharps (thieves) behind. |
 | Joker | The wheel spins for the House (no bet); that fortune holds until the next card. |
 
-### The Primal Crucible (50115)
+### The Primal Crucible (18115)
 
 *Evolve, or be eaten.* 60 monsters of tier 5 (the toughest solo tier), on the event map `primeval_isle`; until that map exists, in any arena of tier 5 (see *Setting up its arena* below). Modifiers: Fleet, Venomous, Berserkers, Vampiric, Fortified, Lacerating. It is tuned to be soloable: in live server tests a geared solo level 85 Duelist died to whole packs with Hunters and Pack Hunters (even at tier 5), and still died every 30 seconds at tier 6 without them, while a plain tier 5 map was safe. So: tier 5, no Hunters or Pack Hunters, and Stage I comes free. Code: `PrimalCrucibleManager`, called from `UniqueMapManager`. The players type **`.crucible`** for their evolution (it also opens by itself when a choice comes up).
 
@@ -228,11 +240,11 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 
 **The Primordial** (a Tyrannosaurus, x3.5 HP, about 4-5M with Fortified, the random passives and a full +48%, x1.6 attack, x1.5 defence) rises once the valley is cleared, **+4% HP for every meal the field ate**. At 60% and 20% of its HP it lays **3 eggs** (Ancient Eggs, uncounted) at the edges of the field; each hatches after 20 s into a **hatchling Alpha** unless smashed. At 40% it goes into a **frenzy** (+25% attack and attack speed).
 
-**Rewards.** The drops are in the XML (the special group is the Alphas'). When the Primordial dies everyone inside gets **Primal Essence** (50116): 10, 12 if a Legend stood in the Crucible, 30 if a Titan did. **30 Primal Essence buy a Titan Scroll** (50117, `.crucible` outside the map, *Buy a Titan Scroll*). The **Titan Scroll** shows your last Titan form, giant, for 30 minutes in a town or another peace zone. It is looks only: the form is a non-combat copy (`data/stats/transformations/09xxx.xml`, id 9000 + the form's id, its `displayId` the real form), with no stats of its own. It ends when you leave the peace zone, use Transform Dispel, or the time runs out. A Defiant Titan is just giant. It needs a Titan reached once (player variable `CRUCIBLE_TITAN_FORM`).
+**Rewards.** The drops are in the XML (the special group is the Alphas'). When the Primordial dies everyone inside gets **Primal Essence** (18116): 10, 12 if a Legend stood in the Crucible, 30 if a Titan did. **30 Primal Essence buy a Titan Scroll** (18117, `.crucible` outside the map, *Buy a Titan Scroll*). The **Titan Scroll** shows your last Titan form, giant, for 30 minutes in a town or another peace zone. It is looks only: the form is a non-combat copy (`data/stats/transformations/09xxx.xml`, id 9000 + the form's id, its `displayId` the real form), with no stats of its own. It ends when you leave the peace zone, use Transform Dispel, or the time runs out. A Defiant Titan is just giant. It needs a Titan reached once (player variable `CRUCIBLE_TITAN_FORM`).
 
 **Setting up its arena.** In game on Primeval Isle, type `//mapdevice`, *New map here*, give it the id **`primeval_isle`**, tick *Map Device*, place the fence and the entry, and under *Monsters that fill it* list the island's dinosaurs (Velociraptor, Ornithomimus, Deinonychus, Pachycephalosaurus, Tyrannosaurus...): they are made stronger by tier 5. Save. From then on the Crucible opens there.
 
-### The Ketra-Varka Front (50118)
+### The Ketra-Varka Front (18118)
 
 *Pick a side. Then maybe pick the other one.* Tier 1, 80 monsters, both factions (the Ketra Orcs and the Varka Silenos of level 77-78, without the Commanders, Head Shamans and Prophets whose guards would follow them: `npcs` of its `<uniqueMap>`), in the Ruins of Despair. Modifiers: War Priests, Summoners, Bounty Mark, Fleet. Code: `KetraVarkaFrontManager`. The players type **`.front`** (the War Banner, the envoy and the totems open the same window).
 
@@ -246,7 +258,7 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 - **The title**: everyone inside when the Warlord falls is named **Hero of Ketra**, **Hero of Varka**, or **the Twice-Sworn** after a betrayal, for 7 days (player variables `FRONT_TITLE`, `FRONT_TITLE_END`). It shows only over an empty title, through the title-carrying packets (`LuckyLootManager.decorateTitle`): the saved title never changes. `.front` outside the map shows it and its end.
 - **The alliance**: the Ketra and Varka of any map (the Front, and the tier 1 maps) are not the barracks': killing them costs no Ketra or Varka alliance, and the marks of an alliance don't keep them from attacking you (`ai/others/VarkaKetra`).
 
-### The Tomb Raiders (50119)
+### The Tomb Raiders (18119)
 
 *You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in Silent Valley. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
 

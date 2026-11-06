@@ -194,6 +194,7 @@ import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.OnServerStart;
 import org.l2jmobius.gameserver.model.groups.matching.PartyMatchRoomList;
 import org.l2jmobius.gameserver.model.groups.matching.PartyMatchWaitingList;
+import org.l2jmobius.gameserver.model.mapdevice.MapItemIds;
 import org.l2jmobius.gameserver.model.olympiad.Hero;
 import org.l2jmobius.gameserver.model.olympiad.Olympiad;
 import org.l2jmobius.gameserver.model.sevensigns.SevenSigns;
@@ -283,6 +284,7 @@ public class GameServer
 		
 		printSection("Items");
 		ItemData.getInstance();
+		MapItemIds.renumberStoredItems(); // Before any inventory or warehouse loads.
 		EnchantItemGroupsData.getInstance();
 		EnchantItemData.getInstance();
 		EnchantItemOptionsData.getInstance();

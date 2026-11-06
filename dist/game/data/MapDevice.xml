@@ -41,7 +41,8 @@
 	  itemId    the item that opens it (data/stats/items/custom/map_device_items.xml).
 	  tier      the tier whose monsters fill it (their levels and strength) and whose multipliers they get.
 	  monsters  how many monsters it holds before the final encounter.
-	  arena     the arena of this file (or the id of an event map) it opens in; any of the tier's if unknown.
+	  arena     the arena of this file (or the id of an event map) it opens in; any of the tier's if unknown. An arena of this file is shrunk
+	            round its middle for it, so its fewer monsters stand UniqueMapDensity times as densely as a normal map's (MapDevice.ini).
 	  modifiers the map's modifiers (MapModifier names, see docs/map-device.md).
 	  npcs      optional: the monsters that fill it (type="Monster" npc ids, comma separated), all of them, instead of 6 kinds of the tier's.
 	  dropMinTier, dropMaxTier  optional: the tiers of map whose completion may drop it (default UniqueMapMinTier of MapDevice.ini to 10).
@@ -64,19 +65,19 @@
 
 	<!-- Ordinary monsters, a little stronger every tier. 1: Ketra/Varka, the grazing beasts (0.4-1.0). 2: the Imperial Tomb, the beetles (1.0-1.5). 3: Ragna Orcs, Grave Robbers, the dinosaurs.
 	     4: Sel Mahum, Mucrokian, Solina. 5: tough solo monsters: Spiked Stakato, Tanta Lizardmen, Contaminated Batur (1.5-2.6). -->
-	<tier tier="1" itemId="50101" minLevel="78" maxLevel="79" minScore="0" maxScore="1.0" dropLevel="78" hp="1.00" attack="1.00" defence="1.00" reward="1.00" />
-	<tier tier="2" itemId="50102" minLevel="78" maxLevel="80" minScore="1.0" maxScore="1.5" dropLevel="78" hp="1.05" attack="1.03" defence="1.02" reward="1.10" />
-	<tier tier="3" itemId="50103" minLevel="80" maxLevel="82" minScore="0.8" maxScore="1.5" dropLevel="80" hp="1.10" attack="1.05" defence="1.03" reward="1.20" />
-	<tier tier="4" itemId="50104" minLevel="82" maxLevel="84" minScore="1.0" maxScore="1.5" dropLevel="82" hp="1.20" attack="1.10" defence="1.05" reward="1.30" />
-	<tier tier="5" itemId="50105" minLevel="81" maxLevel="84" minScore="1.5" maxScore="2.6" dropLevel="81" hp="1.10" attack="1.05" defence="1.03" reward="1.45" />
+	<tier tier="1" itemId="18101" minLevel="78" maxLevel="79" minScore="0" maxScore="1.0" dropLevel="78" hp="1.00" attack="1.00" defence="1.00" reward="1.00" />
+	<tier tier="2" itemId="18102" minLevel="78" maxLevel="80" minScore="1.0" maxScore="1.5" dropLevel="78" hp="1.05" attack="1.03" defence="1.02" reward="1.10" />
+	<tier tier="3" itemId="18103" minLevel="80" maxLevel="82" minScore="0.8" maxScore="1.5" dropLevel="80" hp="1.10" attack="1.05" defence="1.03" reward="1.20" />
+	<tier tier="4" itemId="18104" minLevel="82" maxLevel="84" minScore="1.0" maxScore="1.5" dropLevel="82" hp="1.20" attack="1.10" defence="1.05" reward="1.30" />
+	<tier tier="5" itemId="18105" minLevel="81" maxLevel="84" minScore="1.5" maxScore="2.6" dropLevel="81" hp="1.10" attack="1.05" defence="1.03" reward="1.45" />
 	<!-- Party monsters. 6: Hellbound scouts and mystics, Drake Scout/Mage (2.8-3.7). 7: Drakos, Divinity, Dragon Valley scouts, Hellbound watchers (3.9-5.0).
 	     8: Maluks, Dragon Knights, Drake Leader, Tully's Workshop (5.0-6.1). 9: Batwing Drake, Bloody Karik, the Lesser Giants, Hellbound masters (6.6-8.8).
 	     10: the Seed of Annihilation elites and Knoriks (10.3-10.6). Their own strength is the step up, so the multipliers stay near 1. -->
-	<tier tier="6" itemId="50106" minLevel="82" maxLevel="85" minScore="2.6" maxScore="3.8" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="1.60" />
-	<tier tier="7" itemId="50107" minLevel="82" maxLevel="85" minScore="3.8" maxScore="5.0" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="1.80" />
-	<tier tier="8" itemId="50108" minLevel="82" maxLevel="85" minScore="5.0" maxScore="6.5" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="2.00" />
-	<tier tier="9" itemId="50109" minLevel="82" maxLevel="86" minScore="6.5" maxScore="9.0" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="2.30" />
-	<tier tier="10" itemId="50110" minLevel="83" maxLevel="87" minScore="9.0" maxScore="0" dropLevel="85" hp="1.05" attack="1.03" defence="1.02" reward="2.70" />
+	<tier tier="6" itemId="18106" minLevel="82" maxLevel="85" minScore="2.6" maxScore="3.8" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="1.60" />
+	<tier tier="7" itemId="18107" minLevel="82" maxLevel="85" minScore="3.8" maxScore="5.0" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="1.80" />
+	<tier tier="8" itemId="18108" minLevel="82" maxLevel="85" minScore="5.0" maxScore="6.5" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="2.00" />
+	<tier tier="9" itemId="18109" minLevel="82" maxLevel="86" minScore="6.5" maxScore="9.0" dropLevel="82" hp="1.00" attack="1.00" defence="1.00" reward="2.30" />
+	<tier tier="10" itemId="18110" minLevel="83" maxLevel="87" minScore="9.0" maxScore="0" dropLevel="85" hp="1.05" attack="1.03" defence="1.02" reward="2.70" />
 
 	<!-- The Ruins of Despair: the Team vs Team ring and the ground round it. -->
 	<arena name="Ruins of Despair" x="-17800" y="142600" z="-3900" radiusX="9600" radiusY="8800" entryAngle="0" />
@@ -92,7 +93,7 @@
 	<!-- Unique maps never drop raid-only items: everything here can also be had without raids (an ordinary monster drops it, or a player shop or recipe makes it). -->
 
 	<!-- The Crimson Coliseum: Deathmatch: Mayhem against monsters. The crowd wants blood, and the monsters grow with every death (Rising Dread, Soul Eaters, Berserkers)... but so do you. -->
-	<uniqueMap type="COLISEUM" name="The Crimson Coliseum" itemId="50111" tier="5" monsters="30" arena="Ruins of Despair" reward="2.0"
+	<uniqueMap type="COLISEUM" name="The Crimson Coliseum" itemId="18111" tier="5" monsters="30" arena="Ruins of Despair" reward="2.0"
 		modifiers="BRUTAL,FORTIFIED,HUNTERS,BERSERKERS,RISING_DREAD,SOUL_EATERS"
 		boss="22839" bossName="Crimson Champion" bossHp="25" bossAttack="1.0" bossDefence="1.5">
 		<description>The old ring of the Ruins of Despair, filled once more for the crowd. Thirty fighters come through its gates, the Crimson Champion last.</description>
@@ -115,7 +116,7 @@
 	</uniqueMap>
 
 	<!-- The Gilded Vault: a heist against the clock. Thieves everywhere (Thieves' Guild), quick and slippery (Fleet, Elusive, Skittish), a bounty to chase, a speedrun to make. -->
-	<uniqueMap type="VAULT" name="The Gilded Vault" itemId="50112" tier="4" monsters="60" arena="Fields of Massacre" reward="1.8"
+	<uniqueMap type="VAULT" name="The Gilded Vault" itemId="18112" tier="4" monsters="60" arena="Fields of Massacre" reward="1.8"
 		modifiers="THIEVES_GUILD,FLEET,ELUSIVE,SKITTISH,BOUNTY_MARK,SPEEDRUN"
 		boss="18822" bossName="Gilded Mimic" bossHp="400" bossAttack="3.0" bossDefence="2.0">
 		<description>A vault of stolen gold, open for five minutes before its wards seal it again. Every thief in Aden is already inside.</description>
@@ -139,7 +140,7 @@
 	</uniqueMap>
 
 	<!-- The Ossuary of Echoes: the dead don't stay down (Undying Legion, Linked Souls), they burst (Volatile) and curse (Death Curse), and nothing heals you well here (Desecrated, Withered). -->
-	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="50113" tier="6" monsters="70" arena="Silent Valley" reward="2.2"
+	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="18113" tier="6" monsters="70" arena="Silent Valley" reward="2.2"
 		modifiers="UNDYING_LEGION,VOLATILE,DEATH_CURSE,LINKED_SOULS,DESECRATED,WITHERED"
 		boss="22821" bossName="The Hollow King" bossHp="500" bossAttack="5.0" bossDefence="2.5">
 		<description>A valley of bones that remembers every death in it. Its king waits under it for the field to fall silent.</description>
@@ -169,7 +170,7 @@
 	<!-- Unlike the other unique maps, the Den's own drops follow the server rates (Rates.ini: DeathDrop*Multiplier and the per-item multipliers), then its Pot. -->
 	<!-- Adena: one run pays at most GamblersDenMaxAdena (MapDevice.ini, 150M). With Adena x5 in Rates.ini and at most x8 more from the Pot (x4) and Hot Table (x2), -->
 	<!-- the amounts below are worth up to 40x: the House 90M, the 6 special rolls 30M, the ~94 monster kills (Splitters copies count half) 30M. -->
-	<uniqueMap type="DEN" name="The Gambler's Den" itemId="50114" tier="5" monsters="50" arena="Field of Whispers" reward="2.0"
+	<uniqueMap type="DEN" name="The Gambler's Den" itemId="18114" tier="5" monsters="50" arena="Field of Whispers" reward="2.0"
 		modifiers="CHAMPIONS_RALLY,GLASS_CANNON,DEADLY,FRAGILE,ELEMENTAL_CHAOS,SPLITTERS"
 		boss="22841" bossName="The House" bossHp="45" bossAttack="1.0" bossDefence="1.5">
 		<description>A gambling den in the Field of Whispers, where the stakes are your life and the house always wants its cut. A Dealer waits at the door.</description>
@@ -196,7 +197,7 @@
 	<!-- The Primal Crucible: evolve, or be eaten (PrimalCrucibleManager). The players evolve through four transformations into Titans; the monsters eat each other into Alphas and Apex Predators. -->
 	<!-- Quick and venomous (Fleet, Venomous), fierce when hurt (Berserkers, Vampiric, Lacerating), tough (Fortified). Soloable: tier 5, no Hunters or Pack Hunters (live tests showed a geared solo Duelist dying to whole packs, and dying even at tier 6 without them), Stage I free on entering. -->
 	<!-- arena: the event map "primeval_isle" (make it with //mapdevice on Primeval Isle, fill it with its dinosaurs); until it exists, any arena of tier 5. -->
-	<uniqueMap type="CRUCIBLE" name="The Primal Crucible" itemId="50115" tier="5" monsters="60" arena="primeval_isle" reward="2.4"
+	<uniqueMap type="CRUCIBLE" name="The Primal Crucible" itemId="18115" tier="5" monsters="60" arena="primeval_isle" reward="2.4"
 		modifiers="FLEET,VENOMOUS,BERSERKERS,VAMPIRIC,FORTIFIED,LACERATING"
 		boss="22215" bossName="The Primordial" bossHp="3.5" bossAttack="1.6" bossDefence="1.5">
 		<description>A valley older than Aden, where everything eats everything. You come in as yourself. You may leave as a Titan, if you are not eaten first.</description>
@@ -224,7 +225,7 @@
 
 	<!-- The Ketra-Varka Front (KetraVarkaFrontManager): the first unique map, tier 1. Swear to a side, take its war totems with its warriors, maybe betray it, then hold the camp.
 	     Its field is both factions (no Commander, Head Shaman or Prophet: their guards would follow them); the Ketra Orc General is the Warlord if you swore to Varka, else the Varka Silenos General (21366). -->
-	<uniqueMap type="FRONT" name="The Ketra-Varka Front" itemId="50118" tier="1" monsters="80" arena="Ruins of Despair" reward="1.4"
+	<uniqueMap type="FRONT" name="The Ketra-Varka Front" itemId="18118" tier="1" monsters="80" arena="Ruins of Despair" reward="1.4"
 		modifiers="WAR_PRIESTS,SUMMONERS,BOUNTY_MARK,FLEET"
 		npcs="21324,21327,21328,21329,21331,21332,21334,21335,21336,21338,21340,21342,21350,21351,21353,21354,21355,21357,21358,21360,21361,21362,21364,21365,21368"
 		dropMinTier="1" dropMaxTier="4"
@@ -251,7 +252,7 @@
 
 	<!-- The Tomb Raiders (TombRaidersManager): tier 2. A rival party of adventurers (fake players) races you for 5 Sealed Reliquaries in the Imperial Tomb's dead.
 	     Its field is the Imperial Tomb (the guards, royal guards and healers); the Imperial Commander is the Undying Emperor. -->
-	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="50119" tier="2" monsters="70" arena="Silent Valley" reward="1.5"
+	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="18119" tier="2" monsters="70" arena="Silent Valley" reward="1.5"
 		modifiers="SHIELDBEARERS,ARMOURED,WAR_PRIESTS,VOLATILE"
 		npcs="18132,18166,18167,18168,18169,18170,18171,18172,21417,21418,21419"
 		dropMinTier="1" dropMaxTier="4"

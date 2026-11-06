@@ -2,12 +2,22 @@ Maps of the Map Device - client additions (High Five)
 =====================================================
 
 New items (data/stats/items/custom/map_device_items.xml):
-  50101 .. 50110  Map (Tier 1) .. Map (Tier 10)
-  50111 .. 50115  Unique Map: The Crimson Coliseum, The Gilded Vault,
+  18101 .. 18110  Map (Tier 1) .. Map (Tier 10)
+  18111 .. 18115  Unique Map: The Crimson Coliseum, The Gilded Vault,
                   The Ossuary of Echoes, The Gambler's Den, The Primal Crucible
-  50116           Primal Essence (shown as Blood of Eva without the patch)
-  50117           Titan Scroll (shown as Transformation Scroll: Zaken without the patch)
-  50118 .. 50119  Unique Map: The Ketra-Varka Front, The Tomb Raiders
+  18116           Primal Essence (shown as Blood of Eva without the patch)
+  18117           Titan Scroll (shown as Transformation Scroll: Zaken without the patch)
+  18118 .. 18119  Unique Map: The Ketra-Varka Front, The Tomb Raiders
+
+Why 181xx: these items used to be 50101-50119, which the High Five client
+does not take. 18101-18119 lie inside the retail id range (retail H5 items
+stop at 22567) in a stretch it leaves empty (17300-19999 has no item), so
+the client takes them and they clash with nothing. Tier N is 18100 + N, as
+it was 50100 + N. The server moves the items players already hold to the
+new ids by itself at startup (MapItemIds); if your client was patched with
+the old 501xx rows, remove them (add_etcitemgrp_rows.py does that for
+EtcItemgrp.dat; delete the id=50101 .. id=50119 rows of ItemName-e.dat by
+hand).
 
 Without these rows the server still works: the item XML gives each map
 displayId 5915, so an unpatched client shows every tier as the retail
@@ -19,13 +29,16 @@ shows its own name and description:
   add_etcitemgrp_rows.py    -> EtcItemgrp.dat
 
 L2ClientDat key=value text format, tab-separated, one item per line, no
-header line. These ids are new: add the rows, they replace nothing.
+header line. These ids are new: add the rows, they replace nothing. Put
+them in id order, after the row of the highest id below 18101 (so between
+the 17xxx and 20xxx rows), like the retail rows round them.
 
 EtcItemgrp.dat
 --------------
 add_etcitemgrp_rows.py copies the retail Pirate's Treasure Map row
 (object_id 5915) of your own EtcItemgrp.dat text export (L2ClientDat: open
-EtcItemgrp.dat, save as text) ten times, as object_id 50101-50110:
+EtcItemgrp.dat, save as text) ten times, as object_id 18101-18110 (and
+the unique maps 18111-18115, 18118-18119), in id order:
   python add_etcitemgrp_rows.py EtcItemgrp.txt    -> EtcItemgrp.patched.txt
 It prints the new rows. What it changes on the copies:
   icon              tiers 1-5 icon.etc_map_ivory_i00, tiers 6-10

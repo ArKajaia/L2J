@@ -95,6 +95,23 @@ public record MapArena(String id, String name, int x, int y, int z, int radiusX,
 	}
 
 	/**
+	 * A smaller copy of this field, round the same middle: the fence's radii times {@code factor}, and the entry pulled in towards the middle by as much (same heading).
+	 * Everything placed as a share of the radius (the monsters, a twist's totems, reliquaries, phylacteries, eggs) comes in with it.
+	 * @param factor the share of the radius to keep (0-1); 1 or more gives this arena back
+	 * @return the smaller field, under the same id and name
+	 */
+	public MapArena scaled(double factor)
+	{
+		if ((factor >= 1) || (factor <= 0))
+		{
+			return this;
+		}
+		final Location scaledEntry = new Location(x + (int) Math.round((entry.getX() - x) * factor), y + (int) Math.round((entry.getY() - y) * factor), entry.getZ(), entry.getHeading());
+		final Location scaledGuardian = guardian == null ? null : new Location(x + (int) Math.round((guardian.getX() - x) * factor), y + (int) Math.round((guardian.getY() - y) * factor), guardian.getZ(), guardian.getHeading());
+		return new MapArena(id, name, x, y, z, (int) Math.round(radiusX * factor), (int) Math.round(radiusY * factor), scaledEntry, scaledGuardian, packs, minTier, maxTier, monsterCount, monsters, source);
+	}
+
+	/**
 	 * @param tier a map tier
 	 * @return {@code true} if a map of that tier may open here
 	 */
