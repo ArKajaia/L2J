@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.model.events.holders.actor.npc.attackable.OnAtta
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.repeatablehunt.RepeatableHunt;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestSound;
@@ -61,7 +62,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * offer, once out of the fight.</li>
  * <li>Kills count for every party member near the kill who has the hunt; a dropped item goes to one of them. Players more than {@code countLevelGap} levels above the hunt's range count
  * nothing.</li>
- * <li>Reporting pays adena per unit, plus a bonus for a big report, times the server's quest adena rate, and the hunt goes on.</li>
+ * <li>Reporting pays adena per unit, plus a bonus for a big report, times the server's quest adena rate and adena drop amount rate, and the hunt goes on.</li>
  * </ul>
  * Progress is kept in player variables (kills) and the inventory (items).
  * @author Mobius
@@ -179,9 +180,19 @@ public class RepeatableHuntManager
 	}
 
 	/**
+	 * @return the multiplier of every hunt's adena: the server's quest adena rate times its adena drop amount rate ({@code DropAmountMultiplierByItemId} for adena), as the hunts pay a
+	 *         share of the monsters' adena
+	 */
+	public static double getAdenaRate()
+	{
+		final Float adenaDropRate = RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(Inventory.ADENA_ID);
+		return RatesConfig.RATE_QUEST_REWARD_ADENA * (adenaDropRate != null ? adenaDropRate : 1);
+	}
+	
+	/**
 	 * @param hunt a hunt
 	 * @param count the units reported
-	 * @return the adena paid for them, the server's quest adena rate included
+	 * @return the adena paid for them, the server's quest and adena rates included
 	 */
 	public static long getPayout(RepeatableHunt hunt, long count)
 	{
@@ -190,7 +201,7 @@ public class RepeatableHuntManager
 			return 0;
 		}
 		final long base = (count * hunt.getPerUnit()) + (((hunt.getBonusMin() > 0) && (count >= hunt.getBonusMin())) ? hunt.getBonus() : 0);
-		return (long) (base * RatesConfig.RATE_QUEST_REWARD_ADENA);
+		return (long) (base * getAdenaRate());
 	}
 
 	private static boolean canCount(Player player, RepeatableHunt hunt)
@@ -643,12 +654,12 @@ public class RepeatableHuntManager
 
 	private static String terms(RepeatableHunt hunt)
 	{
-		final long rate = (long) (hunt.getPerUnit() * RatesConfig.RATE_QUEST_REWARD_ADENA);
+		final long rate = (long) (hunt.getPerUnit() * getAdenaRate());
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<font color=\"99CC99\">Pays ").append(String.format("%,d", rate)).append(" adena per ").append(hunt.getUnitName());
 		if ((hunt.getBonus() > 0) && (hunt.getBonusMin() > 0))
 		{
-			sb.append(", and ").append(String.format("%,d", (long) (hunt.getBonus() * RatesConfig.RATE_QUEST_REWARD_ADENA))).append(" more for a report of ").append(hunt.getBonusMin()).append(" or more");
+			sb.append(", and ").append(String.format("%,d", (long) (hunt.getBonus() * getAdenaRate()))).append(" more for a report of ").append(hunt.getBonusMin()).append(" or more");
 		}
 		sb.append(".</font>");
 		return sb.toString();

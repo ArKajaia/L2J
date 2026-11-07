@@ -11,7 +11,8 @@
 
 	Rewards follow retail repeatables such as Alligator Hunter (60 adena a pelt, about 12% of an alligator's adena, and 3430 for 10 or more):
 	about 14% of the monsters' average base adena per kill (an item pays that divided by its drop chance), and a bonus of five kills' adena for
-	a report of 25 kills or 12 items. Both are multiplied by RateQuestRewardAdena (config/Rates.ini), like any quest's adena.
+	a report of 25 kills or 12 items. Both are multiplied by RateQuestRewardAdena, like any quest's adena, and by the adena rate of
+	DropAmountMultiplierByItemId (item 57), as the monsters' adena is (both in config/Rates.ini).
 	The items are retail quest items no quest of the server uses, so the client knows them; they can't be traded or dropped.
 
 	settings  enabled, giverNpc, courierNpc (data/stats/npcs/custom/RepeatableHunts.xml), courierKills (kills without the hunt before a
