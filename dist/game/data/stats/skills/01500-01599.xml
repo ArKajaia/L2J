@@ -250,7 +250,7 @@
 		<abnormalTime>10</abnormalTime>
 		<abnormalType>ROOT_MAGICALLY</abnormalType>
 		<abnormalVisualEffect>ROOT</abnormalVisualEffect>
-		<activateRate>50</activateRate>
+		<activateRate>90</activateRate>
 		<affectLimit>10-10</affectLimit>
 		<affectRange>200</affectRange>
 		<basicProperty>MEN</basicProperty>
@@ -1628,7 +1628,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpConsume_Init</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>1000</reuseDelay>
+		<reuseDelay>1200</reuseDelay>
 		<enchant1 name="magicLevel">#enchMagicLvl</enchant1>
 		<enchant2 name="elementPower">#enchElementPower</enchant2>
 		<enchant2 name="magicLevel">#enchMagicLvl</enchant2>
@@ -2670,8 +2670,8 @@
 		<icon>icon.skill1560</icon>
 		<operateType>A1</operateType>
 		<targetType>ONE</targetType>
-		<baseCritRate>10</baseCritRate>
-		<blowChance>30</blowChance>
+		<baseCritRate>30</baseCritRate>
+		<blowChance>60</blowChance>
 		<castRange>40</castRange>
 		<effectPoint>-337</effectPoint>
 		<effectRange>400</effectRange>
@@ -2689,8 +2689,8 @@
 		<effects>
 			<effect name="FatalBlow" />
 			<effect name="Lethal">
-				<halfLethal>10</halfLethal>
-				<fullLethal>5</fullLethal>
+				<halfLethal>8</halfLethal>
+				<fullLethal>0.1</fullLethal>
 			</effect>
 			<effect name="Spoil" />
 		</effects>
@@ -2807,7 +2807,7 @@
 				<minAttackerLevel>1</minAttackerLevel>
 				<maxAttackerLevel>100</maxAttackerLevel>
 				<minDamage>1</minDamage>
-				<chance>50</chance>
+				<chance>10</chance>
 				<skillId>6921</skillId>
 				<skillLevel>1</skillLevel> <!-- Penetration Attack -->
 				<targetType>ONE</targetType>

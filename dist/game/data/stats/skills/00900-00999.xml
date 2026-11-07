@@ -862,8 +862,8 @@
 		<icon>icon.skill0928_1</icon>
 		<operateType>A1</operateType>
 		<targetType>ONE</targetType>
-		<baseCritRate>20</baseCritRate>
-		<blowChance>40</blowChance>
+		<baseCritRate>30</baseCritRate>
+		<blowChance>60</blowChance>
 		<castRange>40</castRange>
 		<effectPoint>-337</effectPoint>
 		<effectRange>400</effectRange>
@@ -881,8 +881,8 @@
 		<effects>
 			<effect name="FatalBlow" />
 			<effect name="Lethal">
-				<fullLethal>1</fullLethal>
-				<halfLethal>8</halfLethal> <!-- FIXME: full lethal rate unconfirmed -->
+				<fullLethal>0.1</fullLethal>
+				<halfLethal>8</halfLethal>
 			</effect>
 		</effects>
 	</skill>
@@ -1401,7 +1401,7 @@
 			</effect>
 			<effect name="TriggerSkillBySkill">
 				<castSkillId>997</castSkillId> <!-- Crushing Strike -->
-				<chance>30</chance>
+				<chance>33</chance>
 				<skillId>6920</skillId>
 				<skillLevel>1</skillLevel> <!-- Collector's Fortune -->
 				<targetType>SELF</targetType>
@@ -2511,7 +2511,7 @@
 		<abnormalLevel>3</abnormalLevel>
 		<abnormalTime>10</abnormalTime>
 		<abnormalType>SPEED_DOWN</abnormalType>
-		<activateRate>40</activateRate>
+		<activateRate>80</activateRate>
 		<baseCritRate>15</baseCritRate>
 		<basicProperty>MEN</basicProperty>
 		<castRange>300</castRange>
@@ -2750,6 +2750,7 @@
 		<abnormalTime>3</abnormalTime>
 		<abnormalType>MULTI_DEBUFF_G</abnormalType>
 		<activateRate>80</activateRate>
+		<baseCritRate>5</baseCritRate>
 		<basicProperty>MEN</basicProperty>
 		<castRange>40</castRange>
 		<coolTime>200</coolTime>
@@ -2757,7 +2758,7 @@
 		<effectRange>400</effectRange>
 		<hitTime>800</hitTime>
 		<isDebuff>true</isDebuff>
-		<lvlBonusRate>1</lvlBonusRate>
+		<lvlBonusRate>2</lvlBonusRate>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
 		<nextActionAttack>true</nextActionAttack>

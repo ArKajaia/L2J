@@ -31,15 +31,15 @@ import org.l2jmobius.gameserver.network.SystemMessageId;
  */
 public class Lethal extends AbstractEffect
 {
-	private final int _fullLethal;
-	private final int _halfLethal;
+	private final double _fullLethal;
+	private final double _halfLethal;
 	
 	public Lethal(Condition attachCond, Condition applyCond, StatSet set, StatSet params)
 	{
 		super(attachCond, applyCond, set, params);
 		
-		_fullLethal = params.getInt("fullLethal", 0);
-		_halfLethal = params.getInt("halfLethal", 0);
+		_fullLethal = params.getDouble("fullLethal", 0);
+		_halfLethal = params.getDouble("halfLethal", 0);
 	}
 	
 	@Override
@@ -69,7 +69,7 @@ public class Lethal extends AbstractEffect
 		final double chanceMultiplier = Formulas.calcAttributeBonus(effector, effected, skill) * Formulas.calcGeneralTraitBonus(effector, effected, skill.getTraitType(), false);
 		
 		// Lethal Strike
-		if (Rnd.get(100) < (_fullLethal * chanceMultiplier))
+		if (Rnd.get(100d) < (_fullLethal * chanceMultiplier))
 		{
 			// for Players CP and HP is set to 1.
 			if (effected.isPlayer())
@@ -89,7 +89,7 @@ public class Lethal extends AbstractEffect
 			effector.sendPacket(SystemMessageId.YOUR_LETHAL_STRIKE_WAS_SUCCESSFUL);
 		}
 		// Half-Kill
-		else if (Rnd.get(100) < (_halfLethal * chanceMultiplier))
+		else if (Rnd.get(100d) < (_halfLethal * chanceMultiplier))
 		{
 			// for Players CP is set to 1.
 			if (effected.isPlayer())
