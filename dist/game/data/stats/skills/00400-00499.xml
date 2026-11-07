@@ -1174,7 +1174,7 @@
 		<abnormalLevel>#abnormalLevels</abnormalLevel>
 		<abnormalTime>10</abnormalTime>
 		<abnormalType>ALL_SPEED_DOWN</abnormalType>
-		<activateRate>50</activateRate>
+		<activateRate>80</activateRate>
 		<affectLimit>6-12</affectLimit>
 		<affectRange>150</affectRange>
 		<baseCritRate>10</baseCritRate>
@@ -1220,7 +1220,7 @@
 		<abnormalLevel>#abnormalLevels</abnormalLevel>
 		<abnormalTime>10</abnormalTime>
 		<abnormalType>ALL_ATTACK_DOWN</abnormalType>
-		<activateRate>50</activateRate>
+		<activateRate>80</activateRate>
 		<affectLimit>6-12</affectLimit>
 		<affectRange>150</affectRange>
 		<baseCritRate>10</baseCritRate>
@@ -2206,7 +2206,7 @@
 		<itemConsumeId>1661</itemConsumeId> <!-- Thief Key -->
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
-		<reuseDelay>600000</reuseDelay>
+		<reuseDelay>1800000</reuseDelay>
 		<conditions msgId="129">
 			<and>
 				<player invSize="10" />

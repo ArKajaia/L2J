@@ -4554,10 +4554,10 @@
 		<abnormalTime>10</abnormalTime>
 		<abnormalType>METEOR</abnormalType>
 		<abnormalVisualEffect>DOT_BLEEDING</abnormalVisualEffect>
-		<activateRate>40</activateRate>
+		<activateRate>80</activateRate>
 		<affectLimit>10-10</affectLimit>
 		<affectRange>150</affectRange>
-		<basicProperty>CON</basicProperty>
+		<basicProperty>MEN</basicProperty>
 		<castRange>600</castRange>
 		<effectPoint>-679</effectPoint>
 		<effectRange>1100</effectRange>
@@ -4566,7 +4566,7 @@
 		<hitTime>3000</hitTime>
 		<isDebuff>true</isDebuff>
 		<isMagic>1</isMagic> <!-- Magic Skill -->
-		<lvlBonusRate>1</lvlBonusRate>
+		<lvlBonusRate>2</lvlBonusRate>
 		<magicLevel>81</magicLevel>
 		<mpInitialConsume>72</mpInitialConsume>
 		<power>117</power>
@@ -4588,17 +4588,17 @@
 		<abnormalTime>10</abnormalTime>
 		<abnormalType>METEOR</abnormalType>
 		<abnormalVisualEffect>DOT_BLEEDING</abnormalVisualEffect>
-		<activateRate>40</activateRate>
+		<activateRate>80</activateRate>
 		<affectLimit>10-10</affectLimit>
 		<affectRange>150</affectRange>
-		<basicProperty>CON</basicProperty>
+		<basicProperty>MEN</basicProperty>
 		<castRange>600</castRange>
 		<effectPoint>-679</effectPoint>
 		<effectRange>1100</effectRange>
 		<hitTime>3000</hitTime>
 		<isDebuff>true</isDebuff>
 		<isMagic>1</isMagic> <!-- Magic Skill -->
-		<lvlBonusRate>1</lvlBonusRate>
+		<lvlBonusRate>2</lvlBonusRate>
 		<magicLevel>81</magicLevel>
 		<mpInitialConsume>72</mpInitialConsume>
 		<power>117</power>
@@ -6624,7 +6624,7 @@
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalTime>10</abnormalTime>
 		<abnormalType>ULTIMATE_DEBUFF</abnormalType>
-		<activateRate>90</activateRate>
+		<activateRate>100</activateRate>
 		<affectLimit>10-10</affectLimit>
 		<affectRange>200</affectRange>
 		<basicProperty>MEN</basicProperty>

@@ -1643,7 +1643,7 @@
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalTime>60</abnormalTime>
 		<abnormalType>TOUCH_OF_DEATH</abnormalType>
-		<activateRate>70</activateRate>
+		<activateRate>90</activateRate>
 		<affectLimit>5-12</affectLimit>
 		<affectRange>300</affectRange>
 		<baseCritRate>50</baseCritRate>
@@ -2042,7 +2042,7 @@
 		<abnormalTime>8</abnormalTime>
 		<abnormalType>TURN_FLEE</abnormalType>
 		<abnormalVisualEffect>TURN_FLEE</abnormalVisualEffect>
-		<activateRate>80</activateRate>
+		<activateRate>90</activateRate>
 		<affectLimit>10-10</affectLimit>
 		<affectRange>200</affectRange>
 		<basicProperty>MEN</basicProperty>
@@ -2104,7 +2104,7 @@
 		<abnormalTime>20</abnormalTime>
 		<abnormalType>FORCE_OF_DESTRUCTION</abnormalType>
 		<abnormalVisualEffect>DOT_POISON</abnormalVisualEffect>
-		<activateRate>80</activateRate>
+		<activateRate>90</activateRate>
 		<baseCritRate>20</baseCritRate>
 		<basicProperty>CON</basicProperty>
 		<castRange>40</castRange>

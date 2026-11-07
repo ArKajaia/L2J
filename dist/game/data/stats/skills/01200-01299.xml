@@ -1033,7 +1033,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>1000</reuseDelay>
+		<reuseDelay>1200</reuseDelay>
 		<effects>
 			<effect name="MagicalDamage" />
 		</effects>
@@ -2857,7 +2857,7 @@
 		<enchant3 name="abnormalLevel">1</enchant3>
 		<enchant3 name="abnormalTime">60</enchant3>
 		<enchant3 name="abnormalType">HOLY_ATTACK</enchant3>
-		<enchant3 name="activateRate">40</enchant3>
+		<enchant3 name="activateRate">60</enchant3>
 		<enchant3 name="basicProperty">MEN</enchant3>
 		<enchant3 name="isDebuff">true</enchant3>
 		<enchant3 name="lvlBonusRate">1</enchant3>
@@ -3049,7 +3049,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>1000</reuseDelay>
+		<reuseDelay>1200</reuseDelay>
 		<enchant1 name="magicLevel">#enchMagicLvl</enchant1>
 		<enchant1 name="power">#ench1Power</enchant1>
 		<enchant2 name="magicLevel">#enchMagicLvl</enchant2>
@@ -3247,7 +3247,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>1000</reuseDelay>
+		<reuseDelay>1200</reuseDelay>
 		<enchant1 name="magicLevel">#enchMagicLvl</enchant1>
 		<enchant1 name="power">#ench1Power</enchant1>
 		<enchant2 name="magicLevel">#enchMagicLvl</enchant2>
@@ -5854,7 +5854,7 @@
 		<table name="#mpInitialConsume">8 9 10 11 11 11 12 12 13 13 13 14 14</table>
 		<table name="#power">47 52 57 63 66 68 71 74 77 79 82 84 87</table>
 		<table name="#vuln">5 5 5 10 10 10 15 15 15 20 20 25 25</table>
-		<table name="#ench1ActivateRates">90 91 92 92 93 94 94 95 96 96 97 98 98 99 100 100 101 102 102 103 104 104 105 106 106 107 108 108 109 110</table>
+		<table name="#ench1ActivateRates">101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130</table>
 		<table name="#ench1Vuln">26 27 28 29 30 30 31 32 33 34 34 35 36 37 38 38 39 40 41 42 42 43 44 45 46 46 47 48 49 50</table>
 		<table name="#ench2AbnormalTimes">31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60</table>
 		<table name="#ench2mpConsume">54 54 53 53 52 52 51 51 50 50 49 49 48 48 47 47 46 46 45 45 44 44 43 43 42 42 41 41 40 40</table>
@@ -5866,7 +5866,7 @@
 		<abnormalLevel>3</abnormalLevel>
 		<abnormalTime>30</abnormalTime>
 		<abnormalType>MD_DOWN</abnormalType>
-		<activateRate>90</activateRate>
+		<activateRate>100</activateRate>
 		<basicProperty>MEN</basicProperty>
 		<castRange>900</castRange>
 		<effectPoint>#effectPoints</effectPoint>

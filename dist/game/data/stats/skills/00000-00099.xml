@@ -4802,7 +4802,7 @@
 		<activateRate>50</activateRate>
 		<affectLimit>6-12</affectLimit>
 		<affectRange>150</affectRange>
-		<baseCritRate>15</baseCritRate>
+		<baseCritRate>10</baseCritRate>
 		<basicProperty>CON</basicProperty>
 		<coolTime>720</coolTime>
 		<effectPoint>#effectPoints</effectPoint>
@@ -6539,7 +6539,7 @@
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalType>STUN</abnormalType>
 		<abnormalVisualEffect>STUN</abnormalVisualEffect>
-		<baseCritRate>15</baseCritRate>
+		<baseCritRate>20</baseCritRate>
 		<castRange>40</castRange>
 		<coolTime>440</coolTime>
 		<effectPoint>#effectPoints</effectPoint>
@@ -7856,7 +7856,7 @@
 		<effectRange>400</effectRange>
 		<hitTime>2000</hitTime>
 		<isDebuff>true</isDebuff>
-		<lvlBonusRate>1</lvlBonusRate>
+		<lvlBonusRate>2</lvlBonusRate>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
 		<overHit>true</overHit>

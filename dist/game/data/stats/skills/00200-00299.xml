@@ -4868,7 +4868,7 @@
 		<abnormalType>STUN</abnormalType>
 		<abnormalVisualEffect>STUN</abnormalVisualEffect>
 		<activateRate>50</activateRate>
-		<baseCritRate>15</baseCritRate>
+		<baseCritRate>10</baseCritRate>
 		<basicProperty>CON</basicProperty>
 		<castRange>40</castRange>
 		<coolTime>720</coolTime>
@@ -7590,7 +7590,7 @@
 		<abnormalType>STUN</abnormalType>
 		<abnormalVisualEffect>STUN</abnormalVisualEffect>
 		<activateRate>50</activateRate>
-		<baseCritRate>15</baseCritRate>
+		<baseCritRate>10</baseCritRate>
 		<basicProperty>CON</basicProperty>
 		<castRange>40</castRange>
 		<coolTime>#coolTime</coolTime>
