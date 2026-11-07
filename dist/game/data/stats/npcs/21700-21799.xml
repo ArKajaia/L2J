@@ -1083,7 +1083,6 @@
 			</drop>
 			<spoil>
 				<item id="5549" min="1" max="1" chance="28.3133" /> <!-- Metallic Thread -->
-				<item id="4602" min="1" max="1" chance="0.6292" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 				<item id="1539" min="1" max="1" chance="62.9184" /> <!-- Greater Healing Potion -->
 			</spoil>
 		</dropLists>
@@ -2018,7 +2017,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="4601" min="1" max="1" chance="1.4396" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 				<item id="1539" min="1" max="3" chance="71.9788" /> <!-- Greater Healing Potion -->
 			</spoil>
 		</dropLists>
@@ -2447,7 +2445,6 @@
 			<spoil>
 				<item id="1867" min="1" max="15" chance="85.1364" /> <!-- Animal Skin -->
 				<item id="1881" min="1" max="1" chance="68.1091" /> <!-- Coarse Bone Powder -->
-				<item id="4614" min="1" max="1" chance="0.7046" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 			</spoil>
 		</dropLists>
 		<collision>

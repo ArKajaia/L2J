@@ -1199,7 +1199,6 @@
 			<spoil>
 				<item id="1874" min="1" max="1" chance="25.0765" /> <!-- Oriharukon Ore -->
 				<item id="1875" min="1" max="1" chance="25.0765" /> <!-- Stone of Purity -->
-				<item id="4601" min="1" max="1" chance="0.8359" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2607,7 +2606,6 @@
 			<spoil>
 				<item id="5220" min="1" max="1" chance="5.8852" /> <!-- Metal Hardener -->
 				<item id="1885" min="1" max="1" chance="12.2609" /> <!-- High-Grade Suede -->
-				<item id="4469" min="1" max="1" chance="0.8407" /> <!-- Dye of STR <Str+1 Con-1> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2854,7 +2852,6 @@
 					<item id="1881" min="1" max="1" chance="4.5707" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="2.2853" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.2981" /> <!-- Mold Hardener -->
-					<item id="4618" min="1" max="1" chance="0.0473" /> <!-- Greater Dye of DEX <Dex+4 Con-4> -->
 					<item id="4999" min="1" max="1" chance="0.4264" /> <!-- Recipe: Sealed Doom Boots (60%) -->
 					<item id="4163" min="1" max="1" chance="0.227" /> <!-- Recipe: Blue Wolf Stockings (100%) -->
 					<item id="8728" min="1" max="1" chance="0.5713" /> <!-- Life Stone - Level 61 -->
@@ -2866,7 +2863,6 @@
 			<spoil>
 				<item id="1875" min="1" max="1" chance="34.4772" /> <!-- Stone of Purity -->
 				<item id="1986" min="1" max="1" chance="5.4648" /> <!-- Full Plate Armor Temper -->
-				<item id="4613" min="1" max="1" chance="0.7133" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5326,7 +5322,6 @@
 			<spoil>
 				<item id="2161" min="1" max="1" chance="15.3276" /> <!-- Recipe: Aquastone Ring -->
 				<item id="2047" min="1" max="1" chance="1.3879" /> <!-- Claymore Blade -->
-				<item id="4469" min="1" max="1" chance="0.9021" /> <!-- Dye of STR <Str+1 Con-1> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5402,7 +5397,6 @@
 					<item id="1889" min="1" max="1" chance="2.1439" /> <!-- Compound Braid -->
 					<item id="2998" min="1" max="1" chance="2.4179" /> <!-- Recipe: Chain Shield -->
 					<item id="737" min="1" max="1" chance="3.2158" /> <!-- Scroll of Resurrection -->
-					<item id="4557" min="1" max="1" chance="0.1286" /> <!-- Greater Dye of DEX <Dex+1 Str-1> -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="20" /> <!-- Herb of Life -->

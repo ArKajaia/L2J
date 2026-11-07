@@ -349,7 +349,6 @@
 			<spoil>
 				<item id="1874" min="1" max="1" chance="13.9115" /> <!-- Oriharukon Ore -->
 				<item id="2960" min="1" max="1" chance="11.3625" /> <!-- Drake Leather Boots Design -->
-				<item id="4613" min="1" max="1" chance="0.2878" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1287,7 +1286,6 @@
 					<item id="1889" min="1" max="1" chance="2.3833" /> <!-- Compound Braid -->
 					<item id="4044" min="1" max="1" chance="1.1916" /> <!-- Thons -->
 					<item id="4129" min="1" max="1" chance="0.3869" /> <!-- Recipe: Earrings of Black Ore (100%) -->
-					<item id="4624" min="1" max="1" chance="0.0493" /> <!-- Greater Dye of WIT <Wit+4 Men-4> -->
 					<item id="8729" min="1" max="1" chance="0.4767" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.1192" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0119" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -2585,7 +2583,6 @@
 			</drop>
 			<spoil>
 				<item id="4040" min="1" max="1" chance="5.1678" /> <!-- Mold Lubricant -->
-				<item id="4613" min="1" max="1" chance="0.3564" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 				<item id="947" min="1" max="1" chance="0.1034" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
 			</spoil>
 		</dropLists>
@@ -2707,7 +2704,6 @@
 			<spoil>
 				<item id="4049" min="1" max="1" chance="13.8069" /> <!-- Adamantite Earring Gemstone -->
 				<item id="947" min="1" max="1" chance="0.1053" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
-				<item id="4613" min="1" max="1" chance="0.3631" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -4125,7 +4121,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="4617" min="1" max="1" chance="0.8254" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
 				<item id="4049" min="1" max="1" chance="31.3879" /> <!-- Adamantite Earring Gemstone -->
 				<item id="4129" min="1" max="1" chance="6.4763" /> <!-- Recipe: Earrings of Black Ore (100%) -->
 			</spoil>
@@ -4823,7 +4818,6 @@
 					<item id="5549" min="1" max="1" chance="9.4537" /> <!-- Metallic Thread -->
 					<item id="1889" min="1" max="1" chance="6.3025" /> <!-- Compound Braid -->
 					<item id="4044" min="1" max="1" chance="3.1512" /> <!-- Thons -->
-					<item id="4613" min="1" max="1" chance="0.1304" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 					<item id="729" min="1" max="1" chance="0.0105" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
 					<item id="8731" min="1" max="1" chance="0.8753" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.2188" /> <!-- Mid-Grade Life Stone - Level 70 -->
@@ -5077,7 +5071,6 @@
 					<item id="1877" min="1" max="1" chance="3.2008" /> <!-- Adamantite Nugget -->
 					<item id="4041" min="1" max="1" chance="0.6958" /> <!-- Mold Hardener -->
 					<item id="4040" min="1" max="1" chance="1.6004" /> <!-- Mold Lubricant -->
-					<item id="4619" min="1" max="1" chance="0.1104" /> <!-- Greater Dye of INT <Int+4 Men-4> -->
 					<item id="5422" min="1" max="1" chance="0.0777" /> <!-- Recipe: Sealed Majestic Plate Armor(60%) -->
 					<item id="729" min="1" max="1" chance="0.0089" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
 					<item id="8731" min="1" max="1" chance="0.7409" /> <!-- Life Stone - Level 70 -->
@@ -6710,7 +6703,6 @@
 					<item id="1880" min="1" max="1" chance="12.0159" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="1.6021" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="4.0053" /> <!-- Asofe -->
-					<item id="4614" min="1" max="1" chance="0.1657" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 					<item id="6037" min="9" max="27" chance="13.351" /> <!-- Waking Scroll -->
 					<item id="729" min="1" max="1" chance="0.0134" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
 					<item id="8731" min="1" max="1" chance="1.1126" /> <!-- Life Stone - Level 70 -->

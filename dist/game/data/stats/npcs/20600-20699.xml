@@ -546,7 +546,6 @@
 			<spoil>
 				<item id="2323" min="1" max="1" chance="0.4611" /> <!-- Recipe: Elemental Bow -->
 				<item id="2322" min="1" max="1" chance="0.4611" /> <!-- Recipe: Soulfire Dirk -->
-				<item id="4553" min="1" max="1" chance="0.5293" /> <!-- Greater Dye of STR <Str+1 Con-1> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2325,7 +2324,6 @@
 					<item id="4039" min="1" max="1" chance="22.5835" /> <!-- Mold Glue -->
 					<item id="4041" min="1" max="1" chance="5.8913" /> <!-- Mold Hardener -->
 					<item id="4044" min="1" max="1" chance="22.5835" /> <!-- Thons -->
-					<item id="4614" min="1" max="1" chance="0.9345" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 					<item id="4402" min="1" max="1" chance="1.355" /> <!-- Blue Dimensional Stone -->
 					<item id="4999" min="1" max="1" chance="8.4267" /> <!-- Recipe: Sealed Doom Boots (60%) -->
 					<item id="8728" min="1" max="1" chance="11.2917" /> <!-- Life Stone - Level 61 -->
@@ -2417,7 +2415,6 @@
 					<item id="1876" min="1" max="1" chance="6.8443" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="9.7775" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="0.5704" /> <!-- Enria -->
-					<item id="4623" min="1" max="1" chance="0.0472" /> <!-- Greater Dye of WIT <Wit+4 Int-4> -->
 					<item id="8729" min="1" max="1" chance="0.4563" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.1141" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0114" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -3617,7 +3614,6 @@
 			<spoil>
 				<item id="2313" min="1" max="1" chance="0.5351" /> <!-- Recipe: Orcish Glaive -->
 				<item id="2212" min="1" max="1" chance="4.392" /> <!-- Recipe: Plated Leather Gaiters -->
-				<item id="4469" min="1" max="1" chance="0.7002" /> <!-- Dye of STR <Str+1 Con-1> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -4646,7 +4642,6 @@
 					<item id="1876" min="1" max="1" chance="2.8579" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="4.0828" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="0.2382" /> <!-- Enria -->
-					<item id="4606" min="1" max="1" chance="0.0318" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 					<item id="3017" min="1" max="1" chance="0.3992" /> <!-- Recipe: Divine Gloves -->
 					<item id="3015" min="1" max="1" chance="0.3992" /> <!-- Recipe: Drake Leather Gloves -->
 					<item id="8725" min="1" max="1" chance="0.3969" /> <!-- Life Stone - Level 52 -->
@@ -4691,7 +4686,6 @@
 			<spoil>
 				<item id="2103" min="1" max="1" chance="0.9533" /> <!-- Sage's Staff Head -->
 				<item id="2358" min="1" max="1" chance="0.2759" /> <!-- Recipe: Great Pata -->
-				<item id="4602" min="1" max="1" chance="0.3758" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5492,7 +5486,6 @@
 			<spoil>
 				<item id="4049" min="1" max="1" chance="18.8177" /> <!-- Adamantite Earring Gemstone -->
 				<item id="4195" min="1" max="1" chance="0.2739" /> <!-- Recipe: Art of Battle Axe (100%) -->
-				<item id="4613" min="1" max="1" chance="0.4948" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5804,7 +5797,6 @@
 					<item id="4039" min="1" max="1" chance="20.3795" /> <!-- Mold Glue -->
 					<item id="4041" min="1" max="1" chance="5.3164" /> <!-- Mold Hardener -->
 					<item id="4044" min="1" max="1" chance="20.3795" /> <!-- Thons -->
-					<item id="4624" min="1" max="1" chance="0.8433" /> <!-- Greater Dye of WIT <Wit+4 Men-4> -->
 					<item id="8729" min="1" max="1" chance="8.1518" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="2.038" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.2038" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -7101,7 +7093,6 @@
 					<item id="1874" min="1" max="1" chance="3.0618" /> <!-- Oriharukon Ore -->
 					<item id="4043" min="1" max="1" chance="1.5309" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="1.5309" /> <!-- Mold Glue -->
-					<item id="4607" min="1" max="1" chance="0.1021" /> <!-- Greater Dye of INT <Int+3 Men-3> -->
 					<item id="4609" min="1" max="1" chance="0.1021" /> <!-- Greater Dye of MEN <Men+3 Int-3> -->
 					<item id="8725" min="1" max="1" chance="1.2758" /> <!-- Life Stone - Level 52 -->
 					<item id="8735" min="1" max="1" chance="0.3189" /> <!-- Mid-Grade Life Stone - Level 52 -->
@@ -7143,7 +7134,6 @@
 			<spoil>
 				<item id="1977" min="1" max="1" chance="2.778" /> <!-- Composite Armor Temper -->
 				<item id="1884" min="1" max="3" chance="57.7821" /> <!-- Cord -->
-				<item id="4606" min="1" max="1" chance="0.4173" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7493,7 +7483,6 @@
 			<spoil>
 				<item id="4057" min="1" max="1" chance="6.0231" /> <!-- Zubei's Gaiter Material -->
 				<item id="4198" min="1" max="1" chance="0.1644" /> <!-- Recipe: Bellion Cestus (100%) -->
-				<item id="4589" min="1" max="1" chance="0.7177" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8088,7 +8077,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="2.5482" /> <!-- Enria -->
 				<item id="1539" min="1" max="1" chance="33.9759" /> <!-- Greater Healing Potion -->
-				<item id="4602" min="1" max="1" chance="0.3398" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 			</spoil>
 		</dropLists>
 		<collision>

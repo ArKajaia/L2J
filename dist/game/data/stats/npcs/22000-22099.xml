@@ -3241,7 +3241,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="4553" min="1" max="1" chance="0.5824" /> <!-- Greater Dye of STR <Str+1 Con-1> -->
 				<item id="1908" min="1" max="1" chance="13.7871" /> <!-- Moonstone Earring Wire -->
 				<item id="2163" min="1" max="1" chance="7.4282" /> <!-- Recipe: Earring of Protection -->
 			</spoil>
@@ -4107,7 +4106,6 @@
 			</drop>
 			<spoil>
 				<item id="4041" min="1" max="1" chance="1.209" /> <!-- Mold Hardener -->
-				<item id="4589" min="1" max="1" chance="0.4634" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 				<item id="1913" min="1" max="1" chance="8.4545" /> <!-- Necklace of Protection Gemstone -->
 			</spoil>
 		</dropLists>
@@ -4242,7 +4240,6 @@
 			</drop>
 			<spoil>
 				<item id="4041" min="1" max="1" chance="2.0152" /> <!-- Mold Hardener -->
-				<item id="4589" min="1" max="1" chance="0.7725" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 				<item id="1913" min="1" max="1" chance="14.0926" /> <!-- Necklace of Protection Gemstone -->
 			</spoil>
 		</dropLists>
@@ -4370,7 +4367,6 @@
 			</drop>
 			<spoil>
 				<item id="4041" min="1" max="1" chance="1.8481" /> <!-- Mold Hardener -->
-				<item id="4589" min="1" max="1" chance="0.7084" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 				<item id="1913" min="1" max="1" chance="12.9237" /> <!-- Necklace of Protection Gemstone -->
 			</spoil>
 		</dropLists>
@@ -4508,7 +4504,6 @@
 			</drop>
 			<spoil>
 				<item id="4041" min="1" max="1" chance="2.0152" /> <!-- Mold Hardener -->
-				<item id="4589" min="1" max="1" chance="0.7725" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 				<item id="1913" min="1" max="1" chance="14.0926" /> <!-- Necklace of Protection Gemstone -->
 			</spoil>
 		</dropLists>
@@ -4638,7 +4633,6 @@
 			</drop>
 			<spoil>
 				<item id="4041" min="1" max="1" chance="1.4198" /> <!-- Mold Hardener -->
-				<item id="4589" min="1" max="1" chance="0.5442" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 				<item id="1913" min="1" max="1" chance="9.9284" /> <!-- Necklace of Protection Gemstone -->
 			</spoil>
 		</dropLists>
@@ -4879,7 +4873,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="4553" min="1" max="1" chance="0.2196" /> <!-- Greater Dye of STR <Str+1 Con-1> -->
 				<item id="1908" min="1" max="1" chance="5.1995" /> <!-- Moonstone Earring Wire -->
 				<item id="2163" min="1" max="1" chance="2.8014" /> <!-- Recipe: Earring of Protection -->
 			</spoil>
@@ -5107,7 +5100,6 @@
 			<spoil>
 				<item id="1875" min="1" max="1" chance="3.0323" /> <!-- Stone of Purity -->
 				<item id="1879" min="1" max="1" chance="7.5807" /> <!-- Cokes -->
-				<item id="4469" min="1" max="1" chance="0.2599" /> <!-- Dye of STR <Str+1 Con-1> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5467,7 +5459,6 @@
 			</drop>
 			<spoil>
 				<item id="1894" min="1" max="1" chance="4.2869" /> <!-- Crafted Leather -->
-				<item id="4589" min="1" max="1" chance="0.4073" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 				<item id="1911" min="1" max="1" chance="9.0871" /> <!-- Earring of Protection Gemstone -->
 			</spoil>
 		</dropLists>
@@ -5856,7 +5847,6 @@
 			</drop>
 			<spoil>
 				<item id="1884" min="1" max="3" chance="55.8523" /> <!-- Cord -->
-				<item id="4590" min="1" max="1" chance="0.6051" /> <!-- Greater Dye of STR <Str+2 Dex-2> -->
 				<item id="1966" min="1" max="1" chance="6.6272" /> <!-- Plated Leather Fragment -->
 			</spoil>
 		</dropLists>
@@ -6215,7 +6205,6 @@
 			</drop>
 			<spoil>
 				<item id="1875" min="1" max="1" chance="9.2483" /> <!-- Stone of Purity -->
-				<item id="4601" min="1" max="1" chance="0.3083" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 				<item id="1539" min="1" max="1" chance="30.8276" /> <!-- Greater Healing Potion -->
 			</spoil>
 		</dropLists>
@@ -6539,7 +6528,6 @@
 			</drop>
 			<spoil>
 				<item id="1870" min="1" max="11" chance="82.0524" /> <!-- Coal -->
-				<item id="4602" min="1" max="1" chance="1.094" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 				<item id="1539" min="1" max="3" chance="54.7016" /> <!-- Greater Healing Potion -->
 			</spoil>
 		</dropLists>
@@ -9373,7 +9361,6 @@
 			</drop>
 			<spoil>
 				<item id="1867" min="1" max="5" chance="70.5071" /> <!-- Animal Skin -->
-				<item id="4613" min="1" max="1" chance="0.2188" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 				<item id="4051" min="1" max="1" chance="6.1524" /> <!-- Adamantite Necklace Chain -->
 			</spoil>
 		</dropLists>
@@ -9705,7 +9692,6 @@
 			</drop>
 			<spoil>
 				<item id="1869" min="1" max="5" chance="66.4016" /> <!-- Iron Ore -->
-				<item id="4614" min="1" max="1" chance="0.2748" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 				<item id="8306" min="1" max="1" chance="0.1521" /> <!-- Recipe: Wizard's Tear (60%) -->
 			</spoil>
 		</dropLists>

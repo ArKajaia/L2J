@@ -2044,7 +2044,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="4480" min="1" max="1" chance="0.5103" /> <!-- Dye of WIT <Wit+1 Men-1> -->
 				<item id="2054" min="1" max="1" chance="0.7601" /> <!-- Light Crossbow Shaft -->
 			</spoil>
 		</dropLists>
@@ -2317,7 +2316,6 @@
 			<spoil>
 				<item id="1970" min="1" max="1" chance="3.6908" /> <!-- Robe of Seal Fabric -->
 				<item id="5550" min="1" max="1" chance="2.2037" /> <!-- Durable Metal Plate -->
-				<item id="4589" min="1" max="1" chance="0.5509" /> <!-- Greater Dye of STR <Str+2 Con-2> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2410,7 +2408,6 @@
 			<spoil>
 				<item id="2233" min="1" max="1" chance="1.2171" /> <!-- Recipe: Divine Tunic -->
 				<item id="2109" min="1" max="1" chance="0.7302" /> <!-- Akat Longbow Shaft -->
-				<item id="4601" min="1" max="1" chance="0.2894" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2743,7 +2740,6 @@
 			<spoil>
 				<item id="1868" min="1" max="3" chance="89.7692" /> <!-- Thread -->
 				<item id="1876" min="1" max="1" chance="17.9538" /> <!-- Mithril Ore -->
-				<item id="4601" min="1" max="1" chance="0.1995" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3543,7 +3539,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="4613" min="1" max="1" chance="0.2805" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 				<item id="4049" min="1" max="1" chance="10.6679" /> <!-- Adamantite Earring Gemstone -->
 				<item id="1869" min="1" max="5" chance="67.7943" /> <!-- Iron Ore -->
 			</spoil>
@@ -4574,7 +4569,6 @@
 					<item id="4039" min="1" max="1" chance="2.9664" /> <!-- Mold Glue -->
 					<item id="4041" min="1" max="1" chance="0.7739" /> <!-- Mold Hardener -->
 					<item id="4044" min="1" max="1" chance="2.9664" /> <!-- Thons -->
-					<item id="4617" min="1" max="1" chance="0.1227" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
 					<item id="6037" min="1" max="3" chance="88.9932" /> <!-- Waking Scroll -->
 					<item id="8731" min="1" max="1" chance="0.824" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.206" /> <!-- Mid-Grade Life Stone - Level 70 -->
@@ -5347,7 +5341,6 @@
 					<item id="1875" min="1" max="1" chance="4.9805" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.6496" /> <!-- Mold Hardener -->
 					<item id="4982" min="1" max="1" chance="0.3717" /> <!-- Recipe: Blue Wolf Gaiters (60%) -->
-					<item id="4624" min="1" max="1" chance="0.103" /> <!-- Greater Dye of WIT <Wit+4 Men-4> -->
 					<item id="8314" min="1" max="1" chance="0.0408" /> <!-- Recipe: Spiritual Eye (60%) -->
 					<item id="8731" min="1" max="1" chance="0.6917" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.1729" /> <!-- Mid-Grade Life Stone - Level 70 -->
@@ -7842,7 +7835,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="4601" min="1" max="1" chance="0.3371" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 				<item id="1539" min="1" max="1" chance="33.7056" /> <!-- Greater Healing Potion -->
 				<item id="1915" min="1" max="1" chance="13.3634" /> <!-- Ring of Ages Gemstone -->
 			</spoil>

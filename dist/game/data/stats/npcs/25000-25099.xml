@@ -502,8 +502,6 @@
 				<item id="300" min="1" max="1" chance="5.21711509637833" /> <!-- Great Axe -->
 				<item id="4113" min="12" max="36" chance="37.363584824276" /> <!-- Great Axe Head -->
 				<item id="4622" min="1" max="3" chance="38.9480781299591" /> <!-- Greater Dye of MEN <Men+4 Wit-4> -->
-				<item id="4623" min="2" max="4" chance="25.9654185691071" /> <!-- Greater Dye of WIT <Wit+4 Int-4> -->
-				<item id="4624" min="2" max="6" chance="19.4739893412781" /> <!-- Greater Dye of WIT <Wit+4 Men-4> -->
 				<item id="6572" min="1" max="1" chance="15.0599169137573" /> <!-- Blessed Scroll: Enchant Armor (B-Grade) -->
 			</drop>
 		</dropLists>
@@ -654,8 +652,6 @@
 				<item id="300" min="1" max="1" chance="4.37952327628326" /> <!-- Great Axe -->
 				<item id="4113" min="12" max="36" chance="31.3649759302597" /> <!-- Great Axe Head -->
 				<item id="4604" min="2" max="6" chance="26.3376513746796" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
-				<item id="4605" min="3" max="7" chance="21.0701050965042" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
-				<item id="4606" min="3" max="9" chance="17.5584342497864" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="21" max="63" chance="15.0500064836197" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
@@ -804,8 +800,6 @@
 				<item id="4096" min="293" max="877" chance="2.29735042183685" /> <!-- Sealed Blue Wolf Gloves Fabric -->
 				<item id="268" min="1" max="1" chance="3.55971812360764" /> <!-- Bellion Cestus -->
 				<item id="4120" min="12" max="36" chance="32.7028818214607" /> <!-- Bellion Cestus Edge -->
-				<item id="4619" min="5" max="15" chance="8.02865849884033" /> <!-- Greater Dye of INT <Int+4 Men-4> -->
-				<item id="4620" min="2" max="4" chance="26.7621428992004" /> <!-- Greater Dye of INT <Int+4 Wit-4> -->
 				<item id="4621" min="2" max="6" chance="20.0715681016998" /> <!-- Greater Dye of MEN <Men+4 Int-4> -->
 				<item id="947" min="1" max="1" chance="23.283031501236" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
 			</drop>
@@ -1312,8 +1306,6 @@
 				<item id="2917" min="40" max="120" chance="15.1091528224182" /> <!-- Ring of Seal Gemstone -->
 				<item id="286" min="1" max="1" chance="4.01818530876923" /> <!-- Eminence Bow -->
 				<item id="2121" min="3" max="9" chance="72.5814164368363" /> <!-- Eminence Bow Shaft -->
-				<item id="4607" min="1" max="3" chance="34.0992802313995" /> <!-- Greater Dye of INT <Int+3 Men-3> -->
-				<item id="4608" min="2" max="4" chance="22.7328281783676" /> <!-- Greater Dye of INT <Int+3 Wit-3> -->
 				<item id="4609" min="2" max="6" chance="17.0496401156998" /> <!-- Greater Dye of MEN <Men+3 Int-3> -->
 				<item id="6573" min="1" max="1" chance="2.04594770256042" /> <!-- Blessed Scroll: Enchant Weapon (C-Grade) -->
 			</drop>
@@ -1461,8 +1453,6 @@
 				<item id="4072" min="293" max="877" chance="2.20104447283173" /> <!-- Avadon Circlet Pattern -->
 				<item id="284" min="1" max="1" chance="5.14954623903275" /> <!-- Dark Elven Long Bow -->
 				<item id="4112" min="12" max="36" chance="40.5774549511528" /> <!-- Dark Elven Longbow Shaft -->
-				<item id="4613" min="5" max="15" chance="7.68872260314941" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
-				<item id="4614" min="2" max="4" chance="25.6290254526978" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 				<item id="4615" min="2" max="6" chance="19.2217316711731" /> <!-- Greater Dye of CON <Con+4 Str-4> -->
 				<item id="947" min="1" max="1" chance="22.2972207124329" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
 			</drop>
@@ -2226,8 +2216,6 @@
 				<item id="228" min="1" max="1" chance="3.73323626815796" /> <!-- Crystal Dagger -->
 				<item id="2119" min="3" max="9" chance="66.8196659535217" /> <!-- Crystal Dagger Blade -->
 				<item id="4604" min="2" max="6" chance="15.8405688961945" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
-				<item id="4605" min="3" max="7" chance="12.6724454919357" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
-				<item id="4606" min="3" max="9" chance="10.5603792641296" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="21" max="63" chance="9.05170552986908" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
@@ -2390,8 +2378,6 @@
 				<item id="228" min="1" max="1" chance="4.01818351931763" /> <!-- Crystal Dagger -->
 				<item id="2119" min="3" max="9" chance="71.9198200207214" /> <!-- Crystal Dagger Blade -->
 				<item id="4610" min="1" max="3" chance="34.0992843842468" /> <!-- Greater Dye of MEN <Men+3 Wit-3> -->
-				<item id="4611" min="2" max="4" chance="22.7328562561645" /> <!-- Greater Dye of WIT <Wit+3 Int-3> -->
-				<item id="4612" min="2" max="6" chance="17.0496421921234" /> <!-- Greater Dye of WIT <Wit+3 Men-3> -->
 				<item id="6574" min="1" max="1" chance="17.5367199750824" /> <!-- Blessed Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
@@ -2543,8 +2529,6 @@
 				<item id="300" min="1" max="1" chance="2.77009811120796" /> <!-- Great Axe -->
 				<item id="4113" min="12" max="36" chance="19.8387027768536" /> <!-- Great Axe Head -->
 				<item id="4610" min="1" max="3" chance="33.3178077437897" /> <!-- Greater Dye of MEN <Men+3 Wit-3> -->
-				<item id="4611" min="2" max="4" chance="22.2118718291931" /> <!-- Greater Dye of WIT <Wit+3 Int-3> -->
-				<item id="4612" min="2" max="6" chance="16.6589038718948" /> <!-- Greater Dye of WIT <Wit+3 Men-3> -->
 				<item id="6574" min="1" max="1" chance="17.1348189599075" /> <!-- Blessed Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
@@ -2913,8 +2897,6 @@
 				<item id="2106" min="4" max="12" chance="27.6249715026398" /> <!-- Grace Dagger Edge -->
 				<item id="2107" min="8" max="22" chance="14.7333275882416" /> <!-- Dark Screamer Edge -->
 				<item id="4604" min="2" max="6" chance="14.6026693589706" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
-				<item id="4605" min="3" max="7" chance="11.6821166010361" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
-				<item id="4606" min="3" max="9" chance="9.73514438288117" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="3" max="9" chance="58.4107718665848" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
@@ -3293,7 +3275,6 @@
 				<item id="2069" min="17" max="49" chance="2.06232959049225" /> <!-- Heavy Doom Axe Blade -->
 				<item id="4591" min="1" max="3" chance="37.5021847336121" /> <!-- Greater Dye of CON <Con+2 Str-2> -->
 				<item id="4592" min="2" max="4" chance="25.0014863014069" /> <!-- Greater Dye of CON <Con+2 Dex-2> -->
-				<item id="4593" min="2" max="6" chance="18.751092366806" /> <!-- Greater Dye of DEX <Dex+2 Str-2> -->
 				<item id="951" min="3" max="7" chance="8.18223305813599" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
 			</drop>
 		</dropLists>
@@ -3444,8 +3425,6 @@
 				<item id="4107" min="9" max="27" chance="17.7696890380173" /> <!-- Keshanberk Blade -->
 				<item id="4108" min="14" max="42" chance="11.4233572142258" /> <!-- Sword of Valhalla Blade -->
 				<item id="4604" min="2" max="6" chance="30.6652710919647" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
-				<item id="4605" min="3" max="7" chance="24.5321982407913" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
-				<item id="4606" min="3" max="9" chance="20.4435140613098" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="21" max="63" chance="17.522918888649" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
@@ -4325,8 +4304,6 @@
 				<item id="1914" min="81" max="243" chance="23.4348172053566" /> <!-- Earring of Seal Gemstone -->
 				<item id="1915" min="280" max="840" chance="10.6319580526085" /> <!-- Ring of Ages Gemstone -->
 				<item id="1916" min="240" max="720" chance="5.99081386229324" /> <!-- Necklace of Mermaid Teardrop -->
-				<item id="4601" min="6" max="18" chance="7.29998784404755" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
-				<item id="4602" min="2" max="4" chance="29.1999513761902" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 				<item id="4603" min="2" max="6" chance="21.8999635321426" /> <!-- Greater Dye of CON <Con+3 Str-3> -->
 				<item id="951" min="3" max="7" chance="14.3344951358032" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
 			</drop>
@@ -4543,8 +4520,6 @@
 				<item id="4117" min="9" max="27" chance="9.22863751596069" /> <!-- Art of Battle Axe Blade -->
 				<item id="4118" min="2" max="6" chance="39.3461988251648" /> <!-- Evil Spirit Head -->
 				<item id="4616" min="1" max="3" chance="25.4877852108765" /> <!-- Greater Dye of CON <Con+4 Dex-4> -->
-				<item id="4617" min="2" max="4" chance="16.9918785001831" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
-				<item id="4618" min="2" max="6" chance="12.74386006604" /> <!-- Greater Dye of DEX <Dex+4 Con-4> -->
 				<item id="6572" min="1" max="1" chance="9.85527260961914" /> <!-- Blessed Scroll: Enchant Armor (B-Grade) -->
 			</drop>
 		</dropLists>
@@ -5062,8 +5037,6 @@
 				<item id="2095" min="3" max="9" chance="11.8023517825317" /> <!-- Sword of Nightmare Blade -->
 				<item id="2096" min="4" max="10" chance="10.1163389865112" /> <!-- Sword of Whispering Death Blade -->
 				<item id="4604" min="2" max="6" chance="14.0369071362228" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
-				<item id="4605" min="3" max="7" chance="11.2295075545578" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
-				<item id="4606" min="3" max="9" chance="9.35796834818268" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="3" max="9" chance="56.1477193169937" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
