@@ -526,7 +526,8 @@ public abstract class AbstractObjective
 	 * @param from the origin
 	 * @param minDistance the minimum distance
 	 * @param maxDistance the maximum distance
-	 * @return a reachable point outside towns, away from monsters much stronger than the quest when possible
+	 * @return a point outside towns that can be walked to from the origin and back (so a monster spawned there can come to it), away from monsters much stronger than
+	 *         the quest when possible
 	 */
 	protected Location point(ILocational from, int minDistance, int maxDistance)
 	{
@@ -535,7 +536,7 @@ public abstract class AbstractObjective
 		Location location = null;
 		for (int attempt = 0; attempt < SAFE_POINT_ATTEMPTS; attempt++)
 		{
-			location = QuestSpawnUtil.findPoint(from, minDistance, maxDistance, false, 0);
+			location = QuestSpawnUtil.findPoint(from, minDistance, maxDistance, false, 0, true);
 			if (!WorldMonsterIndex.getInstance().isDangerous(location, level))
 			{
 				return location;
