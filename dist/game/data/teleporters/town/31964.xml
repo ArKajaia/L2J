@@ -18,6 +18,9 @@
 			<location name="Crypts of Disgrace" x="47692" y="-115745" z="-3744" feeCount="9600" />
 			<location name="Pavel Ruins" x="91280" y="-117152" z="-3928" feeCount="5300" />
 			<location name="Mithril Mines" x="171946" y="-173352" z="3440" feeCount="17000" />
+			<location name="Frost Lake" x="107577" y="-122392" z="-3632" feeCount="4600" />
+			<location name="Grave Robber Hideout" x="44221" y="-114232" z="-2784" feeCount="8200" />
+			<location name="Sky Wagon Relic" x="121618" y="-141554" z="-1496" feeCount="5500" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Frost Lake" x="107577" y="-122392" z="-3632" feeId="13722" feeCount="1" />

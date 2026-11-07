@@ -13,6 +13,7 @@
 			<location name="The Immortal Plateau" x="-10983" y="-117484" z="-2464" feeCount="960" />
 			<location name="Cave of Trials" x="9340" y="-112509" z="-2536" feeCount="1500" />
 			<location name="Frozen Waterfall" x="8652" y="-139941" z="-1144" feeCount="1600" />
+			<location name="Immortal Plateau, Northern Region" x="-25309" y="-131569" z="-680" feeCount="1100" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Gludin Arena" x="-87328" y="142266" z="-3640" feeId="13722" feeCount="1" />

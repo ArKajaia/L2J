@@ -16,6 +16,8 @@
 			<location name="Plains of Dion" x="630" y="179184" z="-3720" feeCount="1500" />
 			<location name="Bee Hive" x="34475" y="188095" z="-2976" feeCount="2900" />
 			<location name="Tanor Canyon" x="60374" y="164301" z="-2856" feeCount="3900" />
+			<location name="Execution Grounds" x="50568" y="152408" z="-2656" feeCount="2100" />
+			<location name="Floran Agricultural Area" x="26810" y="172787" z="-3376" feeCount="1200" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Gludin Arena" x="-87328" y="142266" z="-3640" feeId="13722" feeCount="1" />

@@ -21,6 +21,8 @@
 			<location name="Ruins of Despair" x="-19120" y="136816" z="-3752" feeCount="610" />
 			<location name="The Ant Nest" x="-9959" y="176184" z="-4160" feeCount="2100" />
 			<location name="Windawood Manor" x="-28327" y="155125" z="-3496" feeCount="1400" castleId="1" />
+			<location name="Evil Hunting Grounds" x="-6989" y="109503" z="-3040" feeCount="570" />
+			<location name="Altar of Rites" x="-44566" y="77508" z="-3736" feeCount="2200" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Gludin Arena" x="-87328" y="142266" z="-3640" feeId="13722" feeCount="1" />

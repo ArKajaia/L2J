@@ -14,6 +14,9 @@
 			<location name="Hardins Private Academy" x="105918" y="109759" z="-3192" feeCount="4400" castleId="3" />
 			<location name="Devil's Isle" x="43408" y="206881" z="-3752" feeCount="5700" />
 			<location name="Breka's Stronghold" x="85546" y="131328" z="-3672" feeCount="1000" />
+			<location name="Dragon Valley" x="73024" y="118485" z="-3696" feeCount="4900" />
+			<location name="Antharas's Lair" x="131557" y="114509" z="-3712" feeCount="9300" />
+			<location name="Gorgon Flower Garden" x="113553" y="134813" z="-3540" feeCount="3200" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Gludin Arena" x="-87328" y="142266" z="-3640" feeId="13722" feeCount="1" />
