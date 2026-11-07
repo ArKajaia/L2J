@@ -5356,72 +5356,10 @@ public class Player extends Playable
 			nemesis.broadcastPacket(new org.l2jmobius.gameserver.network.serverpackets.NpcSay(nemesis, org.l2jmobius.gameserver.network.enums.ChatType.NPC_GENERAL, getName() + " was weak! Who is next?!"));
 		}
 		
-		// Survival Arena System: calculate final reward and return the player to town
-		
-		// Guarded by ARENA_RUN_ENDED so a stray extra doDie() call for the same run (e.g. a DOT
-		// tick racing this same death) can never grant the reward twice. This is belt-and-braces:
-		// the player no longer gets revived while still standing next to a live challenger (see
-		// custom.ArenaMaster.ArenaMaster.finishArenaRun()), so a second death shouldn't happen at all.
-		if (RatesConfig.ARENA_SYSTEM_ENABLED && (killer != null) && killer.isMonster() && RatesConfig.ARENA_CHALLENGER_NPC_IDS.contains(killer.getId()) && killer.asMonster().getVariables().getBoolean("IS_ARENA_CHALLENGER", false) && !killer.asMonster().getVariables().getBoolean("ARENA_RUN_ENDED", false))
+		// Survival Arena: dying inside a run - whatever the killer - ends it and pays it; the player is taken to town 3 seconds later and gets back what the death cost.
+		if (RatesConfig.ARENA_SYSTEM_ENABLED)
 		{
-			final org.l2jmobius.gameserver.model.actor.instance.Monster arenaChallenger = (org.l2jmobius.gameserver.model.actor.instance.Monster) killer;
-			arenaChallenger.getVariables().set("ARENA_RUN_ENDED", true);
-
-			final int finalWave = arenaChallenger.getVariables().getInt("ARENA_WAVE", 0);
-			final long reward = org.l2jmobius.gameserver.model.actor.instance.Monster.calculateArenaReward(finalWave);
-			final int arenaInstanceId = arenaChallenger.getInstanceId();
-
-			if (reward > 0)
-			{
-				addItem(ItemProcessType.REWARD, RatesConfig.ARENA_CURRENCY_ITEM_ID, reward, arenaChallenger, true);
-			}
-
-			// Personal best tracking (shown by the Arena Master), with the level it was reached at.
-			final int previousBest = getVariables().getInt("ARENA_BEST_WAVE", 0);
-			if (finalWave > previousBest)
-			{
-				getVariables().set("ARENA_BEST_WAVE", finalWave);
-				getVariables().set("ARENA_BEST_WAVE_LEVEL", getLevel());
-				sendMessage("New personal best! You reached Wave " + finalWave + ".");
-			}
-			
-			// The best payout of a single run is also what a quick run (a medal exchanged at the Arena Master) pays.
-			if (reward > getVariables().getLong("ARENA_BEST_REWARD", 0))
-			{
-				getVariables().set("ARENA_BEST_REWARD", reward);
-				getVariables().set("ARENA_BEST_REWARD_LEVEL", getLevel());
-			}
-			
-			getVariables().set("ARENA_LAST_WAVE", finalWave);
-			getVariables().set("ARENA_RUNS", getVariables().getInt("ARENA_RUNS", 0) + 1);
-			getVariables().set("ARENA_TOTAL_REWARD", getVariables().getLong("ARENA_TOTAL_REWARD", 0) + reward);
-
-			sendMessage("Your Arena Challenge has ended at Wave " + finalWave + ". You earned " + reward + " Dragon Coins.");
-
-			ThreadPool.schedule(() ->
-			{
-				try
-				{
-					teleToLocation(TeleportWhereType.TOWN);
-				}
-				catch (Exception e)
-				{
-					// A failed teleport must never also silently cost the player their
-					// pre-death buffs/XP below - log it and keep going.
-					LOGGER.warning("Arena: failed to teleport " + getName() + " to town after their run ended - " + e);
-				}
-
-				// Only NOW - safely out of the instance, away from the challenger - restore the
-				// XP/SP/buffs snapshotted from just before death. Doing this earlier (while still
-				// dead inside the arena) used to revive the player right next to a still-live
-				// monster, which could kill them a second time before this callback even ran.
-				// Unconditional (outside the try above) so a teleport failure can never also
-				// swallow the restore.
-				org.l2jmobius.gameserver.managers.ArenaSurvivalManager.getInstance().finishArenaRun(this);
-
-				org.l2jmobius.gameserver.managers.InstanceManager.getInstance().destroyInstance(arenaInstanceId);
-			}, 3000);
-
+			org.l2jmobius.gameserver.managers.ArenaSurvivalManager.getInstance().onPlayerDeath(this);
 		}
 		
 		if (isMounted())

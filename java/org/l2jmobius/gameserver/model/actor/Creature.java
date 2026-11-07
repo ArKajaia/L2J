@@ -7546,6 +7546,12 @@ public abstract class Creature extends WorldObject
 			
 			// PvP combat log of the attacker.
 			CombatLogManager.onDamageDealt(this, attacker, skill, damage, critical, damageOverTime);
+			
+			// Survival Arena challenger under a Vampiric omen.
+			if (attacker.isMonster())
+			{
+				attacker.asMonster().onArenaDamageDealt(damage);
+			}
 		}
 		
 		// Auto attacks make you stand up.

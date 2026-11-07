@@ -20,8 +20,9 @@ existing rows with these, don't add a second row with the same id.
 
 The descriptions quote the default config values (cache contents,
 ChampionRewardMaxLevelDifference = 12, SealedCacheMaxLevelDifference = 8,
-22 Ancient Adena per Dragon Coin, 5 Common -> 1 Rare, 4 Rare -> 1 Epic,
-1 medal per skill and per arena run). If those change, change the text.
+11 Ancient Adena per Dragon Coin, 5 Common -> 1 Rare, 4 Rare -> 1 Epic,
+1 medal per skill and per staked arena run, 50 Adena shop price). If
+those change, change the text.
 
 EtcItemgrp.dat
 --------------

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
 	<!--
-	Night Market: Dragon Coins (hot zone coins) for Ancient Adena, 22 Ancient Adena per Dragon Coin.
-	Slightly worse than the standard way: a Dragon Coin sells to any shop for 100 Adena, and the Black Marketeer of Mammon
-	sells Ancient Adena at 4 Adena each (2,000,000 Adena for 500,000), which makes 25 Ancient Adena per Dragon Coin.
+	Night Market: Dragon Coins (hot zone coins) for Ancient Adena, 11 Ancient Adena per Dragon Coin.
+	Slightly worse than the standard way: a Dragon Coin sells to any shop for 50 Adena, and the Black Marketeer of Mammon
+	sells Ancient Adena at 4 Adena each (2,000,000 Adena for 500,000), which makes 12.5 Ancient Adena per Dragon Coin.
 	In exchange the Night Market has no daily limit and no level or hour requirement, other than being open at night.
 	-->
 	<npcs>
@@ -11,14 +11,14 @@
 	</npcs>
 	<item>
 		<ingredient count="10" id="3481" /> <!-- Dragon Coin -->
-		<production count="220" id="5575" /> <!-- Ancient Adena -->
+		<production count="110" id="5575" /> <!-- Ancient Adena -->
 	</item>
 	<item>
 		<ingredient count="100" id="3481" /> <!-- Dragon Coin -->
-		<production count="2200" id="5575" /> <!-- Ancient Adena -->
+		<production count="1100" id="5575" /> <!-- Ancient Adena -->
 	</item>
 	<item>
 		<ingredient count="1000" id="3481" /> <!-- Dragon Coin -->
-		<production count="22000" id="5575" /> <!-- Ancient Adena -->
+		<production count="11000" id="5575" /> <!-- Ancient Adena -->
 	</item>
 </list>
