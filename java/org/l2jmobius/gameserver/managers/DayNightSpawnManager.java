@@ -91,11 +91,11 @@ public class DayNightSpawnManager
 						continue;
 					}
 					
+					// Remove every NPC of the spawn, not only the last one (a spawn can hold count > 1).
 					spawn.stopRespawn();
-					final Npc last = spawn.getLastSpawn();
-					if (last != null)
+					for (Npc npc : new ArrayList<>(spawn.getSpawnedNpcs()))
 					{
-						last.deleteMe();
+						npc.deleteMe();
 						i++;
 					}
 				}
@@ -111,9 +111,16 @@ public class DayNightSpawnManager
 					continue;
 				}
 				
+				// Fill the spawn up to its count. NPCs still alive and respawns already scheduled are not doubled.
 				spawnDat.startRespawn();
-				spawnDat.doSpawn();
-				i++;
+				final int missing = spawnDat.getAmount() - spawnDat.getSpawnedNpcs().size() - spawnDat._scheduledCount;
+				for (int n = 0; n < missing; n++)
+				{
+					if (spawnDat.doSpawn() != null)
+					{
+						i++;
+					}
+				}
 			}
 			
 			LOGGER.info("DayNightSpawnManager: Spawned " + i + " " + spawnLogInfo + " creatures");
