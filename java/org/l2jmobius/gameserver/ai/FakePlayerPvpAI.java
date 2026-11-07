@@ -203,9 +203,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	/** A necromancer summons its new servitor (15 seconds) once the players it fights are this far, and runs on when one comes this close. */
 	private static final int SUMMON_SAFE_DISTANCE = 900;
 	private static final int SUMMON_ABORT_DISTANCE = 300;
-	/** It gives up running off to summon after this long (it fights on without a servitor), and tries again after this long. */
-	private static final long REGROUP_TIMEOUT = 60000;
-	private static final long REGROUP_RETRY = 30000;
+	/**
+	 * It gives up running off to summon after this long (it fights on without a servitor). Running off is once a fight: after a resummon, or after giving up, it doesn't run off again for this long, so a player who kills its servitor first doesn't just chase it around until it has a new one (the
+	 * summon has no real cooldown, 5 seconds).
+	 */
+	private static final long REGROUP_TIMEOUT = 20000;
+	private static final long REGROUP_COOLDOWN = 300000;
 	/** Transfer Pain never takes a servitor below 1 HP: below this HP ratio in a PvP it is spent, and sent away to summon a fresh one. */
 	private static final double SPENT_SERVITOR_HP = 0.1;
 	/** How long it sticks to the player it chose to focus in a fight against several. */
@@ -1480,7 +1483,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	
 	/**
 	 * A necromancer whose servitor died (or is worn down to nothing by Transfer Pain) in a PvP does what a player does: it runs off, summons a new one (15 seconds) once the players it fights are far enough, switches Transfer Pain back on and goes back to the fight. A player catching up interrupts the summon
-	 * (see {@link #thinkAttack}) and it runs on. Held in place it fights back, and cornered or still chased after {@link #REGROUP_TIMEOUT} it fights on without a servitor for a while.
+	 * (see {@link #thinkAttack}) and it runs on. Held in place it fights back, and cornered or still chased after {@link #REGROUP_TIMEOUT} it fights on without a servitor. It runs off once a fight ({@link #REGROUP_COOLDOWN}): a servitor killed again
+	 * stays dead until the fight is over.
 	 * @param npc the fake player
 	 * @param profile its profile
 	 * @param target the player it fights
@@ -1506,11 +1510,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		
 		if (!profile.needsServitor())
 		{
-			// Summoned: Transfer Pain on, back to the fight.
+			// Summoned: Transfer Pain on, back to the fight. It won't run off for a new one again this fight.
 			if (_regrouping)
 			{
 				_regrouping = false;
 				_returning = true;
+				_nextRegroupTime = now + REGROUP_COOLDOWN;
 				FakePlayerPvpManager.getInstance().switchLink(npc, profile, true);
 			}
 			return false;
@@ -1587,7 +1592,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private void stopRegroup(long now)
 	{
 		_regrouping = false;
-		_nextRegroupTime = now + REGROUP_RETRY;
+		_nextRegroupTime = now + REGROUP_COOLDOWN;
 	}
 	
 	/** It arrives with its servitor (see FakePlayerPvpManager#spawnFromTemplate): no summon cast this long after it spawned. */
