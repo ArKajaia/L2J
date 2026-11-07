@@ -218,6 +218,8 @@ public class CombatLogManager
 		if (TeamEventRules.isActive() && (attacker != null) && (damage > 0))
 		{
 			TeamEventRules.onDamageDealt(attacker);
+			// A batch of simulated matches counts who hit whom (see TeamVsTeamBatch).
+			TeamVsTeamManager.onDamage(target, attacker, damage);
 		}
 		
 		// Race Wars: how much the monsters of a match hurt its fighters.

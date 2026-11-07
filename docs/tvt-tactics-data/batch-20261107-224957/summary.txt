@@ -1,0 +1,7 @@
+batch-20261107-224957: 10/10 matches done.
+A = healer=0.0,assassin=0.0,nukerHealer=0.0,nukerDps=0.3,calls=0,standoff=0,wait=0,name=ignore
+B = healer=0.6,assassin=1.6,nukerHealer=0.0,nukerDps=0.4,calls=1,standoff=0,wait=0,name=split
+
+tactics                games   win %  kills-deaths heal dmg% heal tgt%  healer dth   rng dist  rng ahd%    damage
+ignore                    10   60±30    70.7-66.5        6.2       5.2       10.40        422      29.5   2779869
+split                     10   40±30    66.5-70.7       16.9      14.0        3.50        434      29.6   2542042

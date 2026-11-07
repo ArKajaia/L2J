@@ -22,7 +22,9 @@ package handlers.chat.commands.admin;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.l2jmobius.gameserver.data.xml.EventMapData;
 import org.l2jmobius.gameserver.config.custom.EventRotationConfig;
@@ -49,6 +51,7 @@ import custom.EventMaps.EventMapWeb;
  * <li>//tvt [status|detail]: registration and the matches going on (detail: every fighter).</li>
  * <li>//tvt open [map] | close: opens the registration now (on that map, else one of TvTMaps by chance), or closes it now (the matches start).</li>
  * <li>//tvt simulate [level] [map]: a match of fake players only, of the bracket of that level (the GM's by default), to watch.</li>
+ * <li>//tvt batch [count] [level=] [a=] [b=] [size=] [minutes=] [map=]: that many simulated matches at once, tactics a against tactics b on mirrored teams (see TeamVsTeamBatch, docs/tvt-tactics.md).</li>
  * <li>//tvt stop [match]: ends a match (all of them by default), without rewards.</li>
  * <li>//tvt watch [match]: goes into a match's instance, between the bases, to watch it (the fighters leave a GM outside the match alone).</li>
  * <li>//tvt dm open [map] | simulate [level] [map]: the same for a Deathmatch (every one for themselves); close, stop and watch work for both.</li>
@@ -74,7 +77,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		"admin_tvt"
 	};
 
-	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | dm open [map] | dm simulate [level] [map] | mayhem open [map] | mayhem simulate [level] [map] | rotation [next <event>] | stop [match] | watch [match] | detail | map [tvt|conquest|dm|racewars] | maps | show <map> [event] | hide | tp <map> <blue|red|dm|duel|final> <n> | set <map> <blue|red|dm|duel|final> <n|new> | remove <map> <blue|red|dm|duel|final> <n> | fence <map> [rx] [ry] | off | reload";
+	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | batch [count] [level=] [a=] [b=] [size=] [minutes=] [map=] | dm open [map] | dm simulate [level] [map] | mayhem open [map] | mayhem simulate [level] [map] | rotation [next <event>] | stop [match] | watch [match] | detail | map [tvt|conquest|dm|racewars] | maps | show <map> [event] | hide | tp <map> <blue|red|dm|duel|final> <n> | set <map> <blue|red|dm|duel|final> <n|new> | remove <map> <blue|red|dm|duel|final> <n> | fence <map> [rx] [ry] | off | reload";
 
 	@Override
 	public boolean onCommand(String command, Player activeChar)
@@ -156,6 +159,25 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 					}
 				}
 				activeChar.sendMessage(manager.simulate(mode, level, map));
+				break;
+			}
+			case "batch":
+			{
+				// //tvt batch [count=10] [level=80] [a=legacy] [b=best] [size=30] [minutes=20] [map=id]: matches all at once, two tactics against each other (see TeamVsTeamBatch).
+				final Map<String, String> params = new HashMap<>();
+				for (int i = 2; i < args.length; i++)
+				{
+					final int eq = args[i].indexOf('=');
+					if (eq > 0)
+					{
+						params.put(args[i].substring(0, eq).toLowerCase(), args[i].substring(eq + 1));
+					}
+					else if (args[i].matches("\\d+"))
+					{
+						params.put("count", args[i]);
+					}
+				}
+				activeChar.sendMessage(manager.simulateBatch(params, activeChar.getLevel()));
 				break;
 			}
 			case "stop":

@@ -130,6 +130,8 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * <li>A party stance ({@link FakePartyBrain#getStance}): while a member fights, every member does, not only the ones that saw the enemy.</li>
  * <li>#30: a healer in a fight stands as far behind its party's front as its heals still reach the members that fight ({@link FakePartyBrain#getCover}), so an archer or mage that wants it has to come deep into the party.</li>
  * <li>#31: the archer or mage shooting the healer is answered: a tank close by goes for it, and the archers and mages stop it from where they stand ({@link FakePartyBrain#getShooterOnHealer}).</li>
+ * <li>Team vs Team: each team plays its tactics ({@link FakeTvtTactics}, TvTFakeTactics): how much a healer is worth as a target, whether healers are called, nukers on the damage dealers, archers and mages
+ * staying back ({@link #holdsBehindFront}). Everywhere else {@link FakeTvtTactics#LEGACY}, the constants this class had (see docs/tvt-tactics.md).</li>
  * </ul>
  */
 public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
@@ -337,6 +339,10 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	// The player it focuses in a fight against several (the weakest one), and until when.
 	private Creature _focus = null;
 	private long _focusUntil = 0;
+	// Team vs Team standoff (FakeTvtTactics#standoff): the target it holds back from, and since when it holds (and last thought about it).
+	private Creature _standoffTarget;
+	private long _standoffSince;
+	private long _standoffLast;
 	
 	// Flagged and karma players passing by: when it looks next, and whom it already thought about (object id -> time).
 	private long _nextOpportunityScan = 0;
@@ -1236,15 +1242,33 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				}
 			}
 
-			if (canMove && (distance > (MAGE_RANGE + collision)))
+			// Team vs Team standoff: it holds at the edge of its reach (not 600 from its target), never past its party's front, and one too close ahead of its front steps back.
+			final boolean standoff = pvp && isStandoffShooter(npc);
+			final int hold = standoff ? getStandoffRange(npc, profile) : MAGE_RANGE;
+			if (standoff && canMove && ((distance - collision) < (hold - STANDOFF_TOO_CLOSE)) && ((distance - collision) < (getFrontDistance(npc, target) - STANDOFF_BEHIND)) && (now >= _nextKiteTime))
 			{
-				trace(Reason.MAGE_POSITION, target);
-				moveToPawn(target, MAGE_RANGE);
+				final Location point = pickRetreat(npc, target, STANDOFF_STEP, target, hold, null);
+				if (point != null)
+				{
+					trace(Reason.KITE_STEP, target, null, "STANDOFF");
+					_nextKiteTime = now + 1500;
+					npc.setRunning();
+					moveTo(point.getX(), point.getY(), point.getZ());
+					return;
+				}
+			}
+			if (canMove && (distance > (hold + collision)))
+			{
+				if (!standoff || !holdsBehindFront(npc, target, hold))
+				{
+					trace(Reason.MAGE_POSITION, target);
+					moveToPawn(target, hold);
+				}
 			}
 			else if (canMove && !GeoEngine.getInstance().canSeeTarget(npc, target))
 			{
 				trace(Reason.FIRING_POSITION, target, null, "MAGE");
-				moveToSee(npc, target, MAGE_RANGE);
+				moveToSee(npc, target, hold);
 			}
 			else
 			{
@@ -1265,7 +1289,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				{
 					moveToSee(npc, target, range);
 				}
-				else
+				else if (!holdsBehindFront(npc, target, range))
 				{
 					moveToPawn(target, range);
 				}
@@ -1903,15 +1927,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	
 	/** Enemies of the fight this far away are weighed as targets (in a party, not only the ones that hit it). */
 	static final int FOCUS_SCAN_RANGE = 1500;
-	/** How much more an enemy healer is worth as a target, and an enemy buffer, than a damage dealer (on a score where 1 is full HP). */
-	private static final double HEALER_PRIORITY = 0.6;
+	/** How much more an enemy buffer is worth as a target than a damage dealer (on a score where 1 is full HP). An enemy healer's worth is in the tactics ({@link FakeTvtTactics}: 0.6, a dagger 1.2, outside Team vs Team). */
 	private static final double SUPPORT_PRIORITY = 0.25;
 	/** An enemy tank is worth this much less as a target (a dagger's own penalty is bigger). */
 	private static final double TANK_PENALTY = 0.35;
 	/** An archer or mage weighs the enemies of the fight this far away (to see the backline behind a tank). */
 	private static final int RANGED_FOCUS_SCAN_RANGE = 1800;
-	/** A dagger weighs an enemy healer this many times more, a mage or archer this much more, and a tank this much less. */
-	private static final double ASSASSIN_HEALER_FACTOR = 2;
+	/** A dagger weighs an enemy mage or archer this much more, and a tank this much less. */
 	private static final double ASSASSIN_SQUISHY_PRIORITY = 0.3;
 	private static final double ASSASSIN_TANK_PENALTY = 0.5;
 	/** #7: an archer or mage weighs an enemy mage or archer this much more. */
@@ -1951,6 +1973,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
 		Creature called = partyBrain != null ? partyBrain.getCallFor(healer, tank, now) : null;
 		if ((called != null) && (profile != null) && profile.isSquadFighter() && !heedsCall(profile, called, now))
+		{
+			called = null;
+		}
+		// Team vs Team tactics: a nuker that weighs healers less than its party doesn't follow a call on one (it stays on the damage dealers).
+		final boolean skipsHealerCalls = skipsHealerCalls(npc, profile);
+		if ((called != null) && skipsHealerCalls && isHealer(called))
 		{
 			called = null;
 		}
@@ -2007,7 +2035,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			if ((call != null) && !isPlayedAround(npc, call) && ((profile == null) || !profile.isSquadFighter() || makesCall(profile, call)))
 			{
 				partyBrain.makeCall(npc, call, now);
-				if ((call != best) && !tank)
+				if ((call != best) && !tank && !(skipsHealerCalls && isHealer(call)))
 				{
 					if (!hates(npc, call, FakePlayerPvpManager.PVP_HATE))
 					{
@@ -2126,12 +2154,16 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final double walk = ranged ? Math.max(0, distance - getThreatReach(npc)) : distance;
 		double score = (enemy.getCurrentHp() / Math.max(1, enemy.getMaxHp())) + (walk / 2000.0) + (enemy.isInvul() ? 2 : 0) + (isPlayedAround(npc, enemy) ? 1.5 : 0);
 
+		// Team vs Team: its team's tactics (outside Team vs Team the legacy ones, which are the constants below).
+		final FakeTvtTactics tactics = FakeTvtTactics.of(npc);
+		final boolean nuker = ranged && !profile.getBuild().isSupport();
+
 		// A dagger is an assassin: it goes for the backline (a healer above all, then mages and archers) and leaves the tanks alone. A tank guards rather than hunts healers.
 		final boolean assassin = isAssassin(npc);
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
 		if (isHealer(enemy))
 		{
-			score -= tank ? 0 : assassin ? HEALER_PRIORITY * ASSASSIN_HEALER_FACTOR : HEALER_PRIORITY;
+			score -= tank ? 0 : assassin ? tactics.assassinHealer() : nuker ? tactics.nukerHealer() : tactics.healer();
 		}
 		else if (isSupport(enemy))
 		{
@@ -2151,12 +2183,209 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			score += assassin ? ASSASSIN_TANK_PENALTY : TANK_PENALTY;
 		}
 
+		// Team vs Team tactics: a nuker (or archer) goes for the enemy damage dealers, the ones that kill its team.
+		if (nuker && (tactics.nukerDps() > 0) && isDamageDealer(enemy))
+		{
+			score -= tactics.nukerDps();
+		}
+
+		// Team vs Team standoff: an archer or mage would rather shoot what it reaches from behind its front than walk up into the enemy for something better.
+		if (nuker && tactics.standoff())
+		{
+			score += (walk / STANDOFF_WALK_SCALE) + getExposurePenalty(npc, enemy, distance);
+		}
+
 		// The party's share: focus fire, enemies on its squishies, the damage done to the party, failed calls.
 		if (party != null)
 		{
 			score = partyBrain(party).adjustScore(npc, enemy, score);
 		}
 		return score;
+	}
+
+	/** Team vs Team standoff: an archer's or mage's walk beyond its reach counts this much more in its target score (1 per this many units, on top of the legacy 1 per 2000). */
+	private static final double STANDOFF_WALK_SCALE = 1000;
+	/** Team vs Team standoff: it walks up to a target only this far behind its party's front (waiting for the front at most {@link FakeTvtTactics#standoffWait}), and a new wait starts after this long without one. */
+	private static final int STANDOFF_BEHIND = 150;
+	private static final long STANDOFF_RESET = 1500;
+	/** Team vs Team standoff: its party's melee this close to it are its front. */
+	private static final int STANDOFF_FRONT_SCAN = 1500;
+	/** Team vs Team standoff: a mage between casts this much inside its hold range and ahead of its front steps back this far. */
+	private static final int STANDOFF_TOO_CLOSE = 300;
+	private static final int STANDOFF_STEP = 250;
+	/** Standoff (same as brain B's #35): an enemy in whose reach it would stand to hit its target, and that doesn't reach it now, adds this to the target's score, up to the max. */
+	private static final double EXPOSURE_PENALTY = 0.8;
+	private static final double EXPOSURE_MAX = 2.0;
+	private static final int EXPOSURE_STAND_MARGIN = 50;
+	private static final int EXPOSURE_SCAN_RANGE = 2500;
+
+	/**
+	 * @param npc a fake player
+	 * @param profile its profile
+	 * @return {@code true} for a nuker (an archer or mage that isn't a support) whose team's tactics weigh healers less for nukers than for the rest of the party: it doesn't follow a call on a healer
+	 */
+	private static boolean skipsHealerCalls(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		if ((profile == null) || profile.isTransformed() || !profile.getRole().isRanged() || profile.getBuild().isSupport())
+		{
+			return false;
+		}
+		final FakeTvtTactics tactics = FakeTvtTactics.of(npc);
+		return tactics.nukerHealer() < tactics.healer();
+	}
+
+	/**
+	 * @param creature an enemy
+	 * @return {@code true} for a damage dealer: not a tank, a healer nor a buffer
+	 */
+	static boolean isDamageDealer(Creature creature)
+	{
+		return !isHealer(creature) && !isSupport(creature) && !isTank(creature);
+	}
+
+	/**
+	 * Standoff: the enemies in whose reach an archer or mage would stand to hit {@code target} from the edge of its reach, and that don't reach it where it stands now.
+	 * @param npc the fake player
+	 * @param target its target
+	 * @param distance its distance to {@code target}
+	 * @return what it adds to the score of {@code target}, 0 if {@code target} is in its reach already or no other enemy waits on the way
+	 */
+	private static double getExposurePenalty(Attackable npc, Creature target, double distance)
+	{
+		final int reach = getThreatReach(npc);
+		if ((distance <= reach) || (distance < 1))
+		{
+			return 0;
+		}
+
+		final double stand = Math.max(0, reach - EXPOSURE_STAND_MARGIN);
+		final double spotX = target.getX() + (((npc.getX() - target.getX()) / distance) * stand);
+		final double spotY = target.getY() + (((npc.getY() - target.getY()) / distance) * stand);
+		int exposed = 0;
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, EXPOSURE_SCAN_RANGE))
+		{
+			if ((enemy == target) || !isPvpEnemy(enemy) || enemy.isAlikeDead() || !isValidTarget(npc, enemy))
+			{
+				continue;
+			}
+			final int enemyReach = getThreatReach(enemy);
+			if ((Math.hypot(enemy.getX() - spotX, enemy.getY() - spotY) <= enemyReach) && (npc.calculateDistance2D(enemy) > enemyReach))
+			{
+				exposed++;
+			}
+		}
+		return Math.min(EXPOSURE_MAX, exposed * EXPOSURE_PENALTY);
+	}
+
+	/**
+	 * @param npc a fake player
+	 * @return {@code true} for an archer or mage (not a support, not transformed) of a Team vs Team team whose tactics keep them back
+	 */
+	private static boolean isStandoffShooter(Attackable npc)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		return (profile != null) && !profile.isTransformed() && profile.getRole().isRanged() && !profile.getBuild().isSupport() && FakeTvtTactics.of(npc).standoff();
+	}
+
+	/**
+	 * @param member a party member
+	 * @return {@code true} for one that fights at the front: a tank or melee (a transformed Kamael too)
+	 */
+	private static boolean isFrontliner(Creature member)
+	{
+		if (member.isPlayer())
+		{
+			return !isSquishy(member) && !isHealer(member) && !isSupport(member);
+		}
+		final FakePlayerPvpProfile profile = member.isNpc() ? member.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && (profile.isTransformed() || !profile.getRole().isRanged());
+	}
+
+	/**
+	 * @param npc a fake player
+	 * @param target an enemy
+	 * @return how far its party's front is from {@code target}: its closest living tank or melee within {@link #STANDOFF_FRONT_SCAN} of it, {@link Double#MAX_VALUE} if it has none
+	 */
+	private static double getFrontDistance(Attackable npc, Creature target)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final FakePlayerParty party = profile != null ? profile.getParty() : null;
+		double front = Double.MAX_VALUE;
+		if (party == null)
+		{
+			return front;
+		}
+		for (Creature member : party.getMembers())
+		{
+			if ((member != npc) && !member.isAlikeDead() && isFrontliner(member) && (member.calculateDistance2D(npc) <= STANDOFF_FRONT_SCAN))
+			{
+				front = Math.min(front, member.calculateDistance2D(target));
+			}
+		}
+		return front;
+	}
+
+	/**
+	 * Team vs Team standoff: an archer or mage that has to walk up to its target doesn't walk past its party's front. It walks up to {@link #STANDOFF_BEHIND} behind its closest melee (or to its
+	 * reach, if that is farther back) and waits there for the front to go in, for {@link FakeTvtTactics#standoffWait} at most.
+	 * @param npc the fake player
+	 * @param target the enemy it would walk up to
+	 * @param reach how close it has to get (collisions excluded)
+	 * @return {@code true} if it holds back (or walks only part of the way): the caller does nothing more
+	 */
+	private boolean holdsBehindFront(Attackable npc, Creature target, int reach)
+	{
+		if (!isPvpEnemy(target) || !isStandoffShooter(npc) || (FakeTvtTactics.of(npc).standoffWait() <= 0))
+		{
+			return false;
+		}
+
+		final long now = System.currentTimeMillis();
+		if ((target != _standoffTarget) || ((now - _standoffLast) > STANDOFF_RESET))
+		{
+			_standoffTarget = target;
+			_standoffSince = now;
+		}
+		_standoffLast = now;
+		if ((now - _standoffSince) > FakeTvtTactics.of(npc).standoffWait())
+		{
+			return false; // The front isn't coming: it goes in.
+		}
+
+		final double front = getFrontDistance(npc, target);
+		if (front == Double.MAX_VALUE)
+		{
+			return false;
+		}
+		final int collision = (int) (npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius());
+		final double stand = Math.max(reach, front + STANDOFF_BEHIND);
+		if ((npc.calculateDistance2D(target) - collision) <= (stand + 25))
+		{
+			trace(Reason.MAGE_HOLD, target, null, "STANDOFF");
+			if (npc.isMoving())
+			{
+				clientStopMoving(null);
+			}
+			return true;
+		}
+		trace(Reason.MAGE_POSITION, target, null, "STANDOFF");
+		moveToPawn(target, (int) stand);
+		return true;
+	}
+
+	/**
+	 * @param npc a mage
+	 * @param profile its profile
+	 * @return where a mage holds between casts: its attack skills' reach less a margin, between {@link #MAGE_RANGE} and 900
+	 */
+	private static int getStandoffRange(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		int reach = 0;
+		for (Skill skill : profile.getSkills(SkillCategory.ATTACK))
+		{
+			reach = Math.max(reach, getSkillReach(skill));
+		}
+		return Math.max(MAGE_RANGE, Math.min(900, reach - 50));
 	}
 
 	/**
@@ -4046,6 +4275,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			{
 				trace(Reason.FIRING_POSITION, target, skill, getSkillKind(skill));
 				moveToSee(npc, target, range);
+				return CastResult.MOVING;
+			}
+
+			// Team vs Team standoff: an archer or mage doesn't walk past its party's front.
+			if (skill.hasNegativeEffect() && holdsBehindFront(npc, target, Math.max(20, range - 20)))
+			{
 				return CastResult.MOVING;
 			}
 
