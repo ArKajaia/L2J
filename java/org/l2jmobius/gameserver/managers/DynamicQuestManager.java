@@ -167,6 +167,9 @@ public class DynamicQuestManager
 	/** How many of a character's last quest grounds the next quests stay away from, and how far. */
 	private static final int RECENT_AREAS = 5;
 	private static final int RECENT_AREA_RANGE = 5000;
+	/** How far from the player a quest's ground may be: on the Notice Board, and for a herald or a find, which come to the player where they are and ask for help there. */
+	private static final int BOARD_GROUND_RANGE = 25000;
+	private static final int LOCAL_GROUND_RANGE = 6000;
 	/** Player variable: the character wants no unasked offers (heralds, finds). */
 	public static final String VAR_NO_HERALDS = "DQ_NO_HERALDS";
 
@@ -913,15 +916,10 @@ public class DynamicQuestManager
 		}
 		if (quest.getArea() == null)
 		{
-			int entryLevel = player.getLevel();
-			for (Player member : members)
-			{
-				entryLevel = Math.max(entryLevel, member.getLevel());
-			}
-			final HuntingGround ground = WorldMonsterIndex.getInstance().pick(quest.getDifficulty().getQuestLevel(), quest.random("area"), player, offer.isBoardOffer() ? 25000 : 6000, getRecentAreas(player), RECENT_AREA_RANGE, entryLevel);
+			final HuntingGround ground = WorldMonsterIndex.getInstance().pick(quest.getDifficulty().getQuestLevel(), quest.random("area"), player, offer.isBoardOffer() ? BOARD_GROUND_RANGE : LOCAL_GROUND_RANGE, getRecentAreas(player), RECENT_AREA_RANGE, getEntryLevel(player, members), offer.isLocal());
 			if (ground == null)
 			{
-				return "!There is nowhere to send you.";
+				return offer.isLocal() ? "!There is no work for you around here after all. Try the Notice Board of a town." : "!There is nowhere to send you.";
 			}
 			quest.setArea(ground);
 		}
@@ -989,6 +987,34 @@ public class DynamicQuestManager
 		AdventurersGuideManager.getInstance().trigger(player, GuideLesson.QUEST_TAKEN, "You have taken the quest " + quest.getName() + ".");
 		log(player.getName() + " took " + quest.getName() + " (template " + quest.getTemplate().getId() + ", " + tier + ", level " + quest.getDifficulty().getQuestLevel() + ", party " + quest.getDifficulty().getPartySize() + (twist != null ? ", " + twist : "") + ").");
 		return String.valueOf(quest.getId());
+	}
+
+	/**
+	 * @param player the player taking a quest
+	 * @param members the party members taking part (the player included)
+	 * @return the highest level among them: the grounds they can't all enter are left out
+	 */
+	private static int getEntryLevel(Player player, List<Player> members)
+	{
+		int entryLevel = player.getLevel();
+		for (Player member : members)
+		{
+			entryLevel = Math.max(entryLevel, member.getLevel());
+		}
+		return entryLevel;
+	}
+
+	/**
+	 * A herald or a find comes to the player where they are, so its quest must be there too: none is offered when no hunting ground of the player's level is near.
+	 * @param player the player
+	 * @param tier the offer's tier
+	 * @return {@code true} if a quest of that tier taken here would find a ground near the player
+	 */
+	private boolean hasLocalGround(Player player, QuestTier tier)
+	{
+		final List<Player> members = getMembers(player);
+		final int level = DifficultyContext.of(player, members, tier).getQuestLevel();
+		return WorldMonsterIndex.getInstance().pick(level, new Random(0), player, LOCAL_GROUND_RANGE, Collections.emptyList(), 0, getEntryLevel(player, members), true) != null;
 	}
 
 	/**
@@ -2258,7 +2284,8 @@ public class DynamicQuestManager
 	 */
 	public boolean offerByHerald(Player player, QuestTemplate template)
 	{
-		if (!canOffer(player, template))
+		final QuestTier tier = rollTier();
+		if (!canOffer(player, template) || !hasLocalGround(player, tier))
 		{
 			return false;
 		}
@@ -2274,7 +2301,8 @@ public class DynamicQuestManager
 		_heraldOwners.put(herald.getObjectId(), player.getObjectId());
 		herald.broadcastInfo();
 
-		final QuestOffer offer = new QuestOffer("H" + herald.getObjectId(), template, null, Rnd.nextLong(), null, rollTier(), 0, null);
+		final QuestOffer offer = new QuestOffer("H" + herald.getObjectId(), template, null, Rnd.nextLong(), null, tier, 0, null);
+		offer.setLocal(true);
 		offer.setHerald(herald);
 		offer.setExpires(System.currentTimeMillis() + (DynamicQuestConfig.HERALD_WAIT_TIME * 1000L) + 30000);
 		_personalOffers.put(player.getObjectId(), offer);
@@ -2319,11 +2347,13 @@ public class DynamicQuestManager
 	 */
 	public boolean offerDirect(Player player, QuestTemplate template)
 	{
-		if (!canOffer(player, template))
+		final QuestTier tier = rollTier();
+		if (!canOffer(player, template) || !hasLocalGround(player, tier))
 		{
 			return false;
 		}
-		final QuestOffer offer = new QuestOffer("D" + System.nanoTime(), template, null, Rnd.nextLong(), null, rollTier(), 0, null);
+		final QuestOffer offer = new QuestOffer("D" + System.nanoTime(), template, null, Rnd.nextLong(), null, tier, 0, null);
+		offer.setLocal(true);
 		offer.setExpires(System.currentTimeMillis() + (DynamicQuestConfig.HERALD_WAIT_TIME * 3000L));
 		_personalOffers.put(player.getObjectId(), offer);
 		_nextOffer.put(player.getObjectId(), System.currentTimeMillis() + (DynamicQuestConfig.OFFER_RETRY_DELAY * 1000L));

@@ -76,6 +76,8 @@ public class WorldMonsterIndex
 	private static final int CELL_SHIFT = 12;
 	/** How far from where a quest is taken its ground may be when nothing of its level is near. */
 	private static final int FAR_RANGE = 60000;
+	/** The widest level window a ground picked only near a place may be in: a ground near the player 12 levels off is no fit, and none is better. */
+	private static final int NEAR_ONLY_MAX_WINDOW = 8;
 	/** A ground is too dangerous with this many monsters this many levels above the quest within this range. */
 	private static final int DANGER_COUNT = 3;
 	private static final int DANGER_LEVELS = 8;
@@ -425,6 +427,28 @@ public class WorldMonsterIndex
 	 */
 	public HuntingGround pick(int level, Random random, ILocational near, int nearRange, List<? extends ILocational> avoid, int avoidRange, int entryLevel)
 	{
+		return pick(level, random, near, nearRange, avoid, avoidRange, entryLevel, false);
+	}
+
+	/**
+	 * Picks a hunting ground for a level, away from the places a player was sent to lately when there are others.
+	 * @param level the level wanted
+	 * @param random the random source (seeded by the quest)
+	 * @param near a place to stay near, {@code null} for anywhere
+	 * @param nearRange how far from {@code near} the ground may be
+	 * @param avoid places to stay away from if possible (the last quests' grounds)
+	 * @param avoidRange how far from them
+	 * @param entryLevel the highest level of the characters sent there (places they can't enter are left out), 0 for any
+	 * @param nearOnly {@code true} to never leave {@code nearRange} of {@code near} (nor a few levels of {@code level}): a quest that came to the player where they are
+	 * @return the ground, {@code null} if there is none (with {@code nearOnly}, none near enough)
+	 */
+	public HuntingGround pick(int level, Random random, ILocational near, int nearRange, List<? extends ILocational> avoid, int avoidRange, int entryLevel, boolean nearOnly)
+	{
+		if (nearOnly && ((near == null) || (nearRange <= 0)))
+		{
+			return null;
+		}
+
 		final List<Point> all = getPoints();
 		final List<Point> points;
 		if (entryLevel > 0)
@@ -459,9 +483,18 @@ public class WorldMonsterIndex
 		search:
 		for (int levelWindow : LEVEL_WINDOWS)
 		{
+			if (nearOnly && (levelWindow > NEAR_ONLY_MAX_WINDOW))
+			{
+				break;
+			}
 			// near + new, far + new, near + not the last, far + not the last, near, far, anywhere + new, anywhere
 			for (int pass = 0; pass < 8; pass++)
 			{
+				// Near only: the near passes (0, 2, 4).
+				if (nearOnly && (((pass % 2) != 0) || (pass > 4)))
+				{
+					continue;
+				}
 				final List<? extends ILocational> skip = (pass == 0) || (pass == 1) || (pass == 6) ? avoid : ((pass == 2) || (pass == 3) ? last : Collections.emptyList());
 				if (((pass < 4) || (pass == 6)) && !canAvoid)
 				{
@@ -487,6 +520,10 @@ public class WorldMonsterIndex
 		}
 		if (candidates.isEmpty())
 		{
+			if (nearOnly)
+			{
+				return null;
+			}
 			candidates = points;
 		}
 

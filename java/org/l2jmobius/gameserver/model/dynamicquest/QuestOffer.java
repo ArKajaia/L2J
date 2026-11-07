@@ -43,6 +43,7 @@ public class QuestOffer
 	private long _expires;
 	private boolean _arrived;
 	private boolean _accepted;
+	private boolean _local;
 
 	public QuestOffer(String key, QuestTemplate template, String town, long seed, String requester, QuestTier tier, int chain, Map<String, String> carry)
 	{
@@ -162,5 +163,18 @@ public class QuestOffer
 	public void setAccepted(boolean accepted)
 	{
 		_accepted = accepted;
+	}
+
+	/**
+	 * @return {@code true} for an offer that came to the player where they are (a herald, a find): its hunting ground must be near
+	 */
+	public boolean isLocal()
+	{
+		return _local;
+	}
+
+	public void setLocal(boolean local)
+	{
+		_local = local;
 	}
 }
