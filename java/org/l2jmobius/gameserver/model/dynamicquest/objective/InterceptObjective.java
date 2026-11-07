@@ -121,8 +121,9 @@ public class InterceptObjective extends AbstractObjective
 				final double angle = heading + ((random.nextDouble() - 0.5) * Math.toRadians(70 + (attempt * 20)));
 				final int length = legMin + random.nextInt((legMax - legMin) + 1);
 				final Location ahead = new Location(from.getX() + (int) (Math.cos(angle) * length), from.getY() + (int) (Math.sin(angle) * length), from.getZ());
-				final Location candidate = QuestSpawnUtil.findPoint(ahead, 0, 300, false, 0);
-				if ((Math.hypot(candidate.getX() - from.getX(), candidate.getY() - from.getY()) >= (legMin / 2)) && !WorldMonsterIndex.getInstance().isDangerous(candidate, _quest.getDifficulty().getQuestLevel()))
+				// The straight line may cross a mountain or a cliff: the next stop has to be one the band (and its hunters) can walk to.
+				final Location candidate = QuestSpawnUtil.findPointToward(from, ahead, 300, legMin / 2, false, 0);
+				if ((candidate != null) && !WorldMonsterIndex.getInstance().isDangerous(candidate, _quest.getDifficulty().getQuestLevel()))
 				{
 					next = candidate;
 				}

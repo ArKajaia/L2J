@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.model.dynamicquest.objective;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -38,8 +39,10 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * ESCORT: an npc ({@code escortee}, a QuestGuard, named {@code escorteeName} and titled {@code escorteeTitle} if set) follows the owner along a route of legs of {@code legMin}-{@code legMax}.
- * With {@code dest="TOWN"} the route heads for the nearest town with a Notice Board, with {@code "HOME"} for the board the quest was taken at: it takes as many legs as the road needs, from {@code legs}
- * to {@code maxLegs}, and ends at the town's board when that is enough (else it stops short, where the town's guards take over). With {@code "ROUTE"} it wanders the wilds for {@code legs} legs.
+ * With {@code dest="TOWN"} the route heads for the town with a Notice Board that has the shortest road over land of the few nearest (the nearest may be across water, or
+ * on a hill whose road starts on its far side), with {@code "HOME"} for the board the quest was taken at: the road goes around mountains and cliffs, every waypoint can
+ * be walked to from the one before, and it takes as many legs as the road needs, from {@code legs} to {@code maxLegs}, and ends at the town's board when that is enough
+ * (else it stops short, where the town's guards take over). With {@code "ROUTE"} it wanders the wilds for {@code legs} legs.
  * A {@code skittish="true"} escortee stops following when the owner gets more than {@code skittishRange} away and wanders off, until the owner comes back to it.
  * <p>
  * {@code ambushes} ambushes ({@code ambushCount} monsters each, the ones living there) wait somewhere along legs picked by the quest's seed, never on the first leg of a longer road; the
@@ -55,6 +58,16 @@ public class EscortObjective extends AbstractObjective
 	private static final int ARRIVE_RANGE = 200;
 	private static final int TOUCH_RANGE = 200;
 	private static final int AMBUSH_RANGE = 350;
+	/** How far around the planned spot of a waypoint to look for one that can be reached. */
+	private static final int WAYPOINT_SEARCH_RADIUS = 800;
+	/** The spacing of the grid the road to town is searched on, and how many of its points the search may look at. */
+	private static final int ROAD_SPACING = 250;
+	private static final int ROAD_MAX_NODES = 6000;
+	/** How much longer than a straight line the road to a town may be, when maxLegs legs can't cover it. */
+	private static final double ROAD_MAX_DETOUR = 2;
+	private static final int ROAD_DETOUR_EXTRA = 3000;
+	/** How many of the nearest towns a road is searched to. */
+	private static final int ROAD_TOWNS = 3;
 
 	private final List<Location> _waypoints = new ArrayList<>();
 	/** Where on each leg an ambush waits ({@code null}: a quiet leg). */
@@ -117,23 +130,71 @@ public class EscortObjective extends AbstractObjective
 		final int maxLegs = Math.max(minLegs, _params.getInt("maxLegs", minLegs + 4));
 		final int legMin = _params.getInt("legMin", 2000);
 		final int legMax = Math.max(legMin, _params.getInt("legMax", 3000));
-		Location destination = null;
+		// The towns the road may lead to, nearest first: the nearest one may be across water or a mountain range, then the road leads to the next.
+		final List<NoticeBoardSite> towns = new ArrayList<>();
 		final String dest = _params.getString("dest", "TOWN").toUpperCase();
 		if (dest.equals("HOME"))
 		{
-			destination = getHome();
-			_quest.putContext("dest", _quest.getContext("town", "town"));
+			final Location home = getHome();
+			final NoticeBoardSite site = home != null ? DynamicQuestData.getInstance().getBoard(_quest.getContext("town", "")) : null;
+			if (site != null)
+			{
+				towns.add(site);
+			}
 		}
 		else if (dest.equals("TOWN"))
 		{
-			final NoticeBoardSite site = DynamicQuestData.getInstance().getNearestBoard(start, 0);
-			if (site != null)
+			for (NoticeBoardSite site : DynamicQuestData.getInstance().getBoards())
 			{
-				destination = site.getLocation();
-				_quest.putContext("dest", site.getTown());
+				if (site.getLocation() != null)
+				{
+					towns.add(site);
+				}
+			}
+			towns.sort(Comparator.comparingDouble(site -> Math.hypot(site.getLocation().getX() - start.getX(), site.getLocation().getY() - start.getY())));
+			while (towns.size() > ROAD_TOWNS)
+			{
+				towns.remove(towns.size() - 1);
 			}
 		}
 
+		// The road goes around what is in the way: a straight line from the start may cross a mountain or a cliff, and a town on a hill is only reached by its own road,
+		// which may start on its far side. The caravan heads for the town with the shortest road, as long as maxLegs legs can cover it, else one not much longer than
+		// a straight line.
+		NoticeBoardSite bestTown = null;
+		List<Location> bestRoad = null;
+		double bestLength = Double.MAX_VALUE;
+		for (NoticeBoardSite town : towns)
+		{
+			final Location board = QuestSpawnUtil.findPoint(town.getLocation(), 0, 150, true, 0);
+			final double straight = Math.hypot(board.getX() - start.getX(), board.getY() - start.getY());
+			if (straight >= bestLength)
+			{
+				continue;
+			}
+			final double maxLength = Math.min(bestLength, Math.max((straight * ROAD_MAX_DETOUR) + ROAD_DETOUR_EXTRA, (double) maxLegs * legMax));
+			final List<Location> road = QuestSpawnUtil.findRoute(start, board, ROAD_SPACING, ROAD_MAX_NODES, maxLength, 0);
+			if (road == null)
+			{
+				continue;
+			}
+			final double length = QuestSpawnUtil.getLength(start, road);
+			if (length < bestLength)
+			{
+				bestTown = town;
+				bestRoad = road;
+				bestLength = length;
+			}
+		}
+		if (bestRoad != null)
+		{
+			_quest.putContext("dest", bestTown.getTown());
+			followRoad(start, bestRoad, minLegs, maxLegs, legMin, legMax);
+			return;
+		}
+
+		final Location destination = towns.isEmpty() ? null : towns.get(0).getLocation();
+		_quest.putContext("dest", !towns.isEmpty() ? towns.get(0).getTown() : _quest.getContext("town", "town"));
 		if (destination == null)
 		{
 			Location from = start;
@@ -145,28 +206,92 @@ public class EscortObjective extends AbstractObjective
 			return;
 		}
 
-		// As many legs as the road needs: the last one ends at the town's board if the road is short enough.
-		final double dx = destination.getX() - start.getX();
-		final double dy = destination.getY() - start.getY();
-		final double distance = Math.max(1, Math.sqrt((dx * dx) + (dy * dy)));
+		// No road found: each leg is planned from where the last one ended, as many as the way needs, and the last ends at the board once that can be walked to.
+		final double distance = Math.max(1, Math.hypot(destination.getX() - start.getX(), destination.getY() - start.getY()));
 		final int legs = Math.max(minLegs, Math.min(maxLegs, (int) Math.round(distance / ((legMin + legMax) / 2.0))));
-		final double step = Math.min(legMax, distance / legs);
-		final boolean reachesTown = (step * legs) >= (distance - 1);
-		final double ux = dx / distance;
-		final double uy = dy / distance;
-		for (int i = 0; i < legs; i++)
+		final Location board = QuestSpawnUtil.findPoint(destination, 0, 150, true, 0);
+		Location from = start;
+		for (int i = 0; i < maxLegs; i++)
 		{
-			final boolean last = i == (legs - 1);
-			if (last && reachesTown)
+			final double remaining = Math.hypot(board.getX() - from.getX(), board.getY() - from.getY());
+			final int planned = Math.max(1, legs - i);
+			if (((planned == 1) || (remaining <= legMin)) && (remaining <= (legMax * 1.25)) && QuestSpawnUtil.canReach(from, board, 0))
 			{
-				_waypoints.add(QuestSpawnUtil.findPoint(destination, 0, 150, true, 0));
-				break;
+				_waypoints.add(board);
+				return;
 			}
-			// The road bends: each waypoint is a little to one side of the straight line.
-			final double along = step * (i + 1);
+
+			// The road bends: each waypoint is a little to one side of the way to town.
+			final boolean last = i == (maxLegs - 1);
+			final double step = Math.max(Math.min(legMax, remaining / planned), Math.min(legMin, remaining - ARRIVE_RANGE));
+			final double ux = (board.getX() - from.getX()) / Math.max(1, remaining);
+			final double uy = (board.getY() - from.getY()) / Math.max(1, remaining);
 			final double side = (random.nextDouble() - 0.5) * 0.5 * step;
-			final Location ahead = new Location(start.getX() + (int) ((ux * along) - (uy * side)), start.getY() + (int) ((uy * along) + (ux * side)), start.getZ());
-			_waypoints.add(QuestSpawnUtil.findPoint(ahead, 0, 300, last, 0));
+			final Location ahead = new Location(from.getX() + (int) ((ux * step) - (uy * side)), from.getY() + (int) ((uy * step) + (ux * side)), from.getZ());
+			// Close to town the way in may lead through it.
+			final boolean allowTown = last || (remaining <= (legMax * 1.25));
+			Location next = QuestSpawnUtil.findPointToward(from, ahead, WAYPOINT_SEARCH_RADIUS, (int) Math.min(step / 3, remaining / 3), allowTown, 0);
+			if (next == null)
+			{
+				next = QuestSpawnUtil.findPoint(from, (int) (step / 3), (int) step, allowTown, 0, true);
+			}
+			_waypoints.add(next);
+			from = next;
+		}
+	}
+
+	/**
+	 * Puts the waypoints along a road, at about even distances along it, each one a place that can be walked to from the one before. If the road needs more than
+	 * {@code maxLegs} legs it stops short.
+	 * @param start where the escort starts
+	 * @param road the road's points after the start, ending at the destination
+	 */
+	private void followRoad(Location start, List<Location> road, int minLegs, int maxLegs, int legMin, int legMax)
+	{
+		final int end = road.size() - 1;
+		final double[] along = new double[road.size()];
+		Location previous = start;
+		double length = 0;
+		for (int i = 0; i <= end; i++)
+		{
+			final Location point = road.get(i);
+			length += Math.hypot(point.getX() - previous.getX(), point.getY() - previous.getY());
+			along[i] = length;
+			previous = point;
+		}
+		final int legs = Math.max(minLegs, Math.min(maxLegs, (int) Math.round(length / ((legMin + legMax) / 2.0))));
+		final double step = Math.min(legMax, length / legs);
+		Location from = start;
+		int index = -1;
+		while (_waypoints.size() < maxLegs)
+		{
+			final double done = index < 0 ? 0 : along[index];
+			if (((length - done) <= (step * 1.25)) && QuestSpawnUtil.canReach(from, road.get(end), 0))
+			{
+				_waypoints.add(road.get(end));
+				return;
+			}
+			// The road's point nearest to where this leg should end, or nearer if the way there is blocked.
+			final double wanted = done + step;
+			int next = index + 1;
+			for (int i = index + 2; i < end; i++)
+			{
+				if (Math.abs(along[i] - wanted) < Math.abs(along[next] - wanted))
+				{
+					next = i;
+				}
+			}
+			while ((next > (index + 1)) && !QuestSpawnUtil.canReach(from, road.get(next), 0))
+			{
+				next--;
+			}
+			index = next;
+			from = road.get(index);
+			_waypoints.add(from);
+			if (index >= end)
+			{
+				return;
+			}
 		}
 	}
 
@@ -212,6 +337,12 @@ public class EscortObjective extends AbstractObjective
 		final double dy = waypoint.getY() - _escortee.getY();
 		final double distance = Math.max(1, Math.sqrt((dx * dx) + (dy * dy)));
 		final Location ahead = new Location(_escortee.getX() + (int) ((dx / distance) * 600), _escortee.getY() + (int) ((dy / distance) * 600), _escortee.getZ());
+		// They come from a spot that can be walked to, not from the top of a cliff they could never climb down.
+		Location from = QuestSpawnUtil.findPointToward(_escortee, ahead, 300, 250, false, 0);
+		if (from == null)
+		{
+			from = point(_escortee, 400, 700);
+		}
 		final Random random = random("ambush" + _leg);
 		final int amount = count("ambushCount", 3);
 		// How they attack: all at the charge (RUSH), half at the leader (SPLIT), or all at the leader, to draw it away (HARASS).
@@ -221,7 +352,7 @@ public class EscortObjective extends AbstractObjective
 		for (int i = 0; i < amount; i++)
 		{
 			final boolean atLeader = tactic.equals("HARASS") || (tactic.equals("SPLIT") && ((i % 2) == 1));
-			final Npc monster = _quest.spawnMonster(this, pickMonsterNear(spot != null ? spot : waypoint, random), point(ahead, 0, 350), _params.getInt("tierBonus", 0), title("ambushTitle"), atLeader ? owner : _escortee);
+			final Npc monster = _quest.spawnMonster(this, pickMonsterNear(spot != null ? spot : waypoint, random), point(from, 0, 250), _params.getInt("tierBonus", 0), title("ambushTitle"), atLeader ? owner : _escortee);
 			if (monster != null)
 			{
 				_ambush.add(monster);
