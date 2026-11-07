@@ -159,19 +159,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="6701" min="1" max="1" chance="1.0276" /> <!-- Sealed Imperial Crusader Breastplate Part -->
@@ -239,19 +227,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="6688" min="1" max="1" chance="0.3844" /> <!-- Forgotten Blade Edge -->
@@ -314,19 +290,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="6694" min="1" max="1" chance="0.3866" /> <!-- Saint Spear Blade -->
@@ -395,19 +359,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="6689" min="1" max="1" chance="0.5626" /> <!-- Basalt Battlehammer Head -->
@@ -472,19 +424,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="6695" min="1" max="1" chance="0.3888" /> <!-- Demon Splinter Blade -->
@@ -547,19 +487,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="5529" min="1" max="1" chance="0.4969" /> <!-- Dragon Slayer Edge -->
@@ -626,19 +554,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="6703" min="1" max="1" chance="3.5837" /> <!-- Sealed Imperial Crusader Gauntlets Design -->
@@ -708,19 +624,7 @@
 				<item id="8603" min="1" max="1" chance="4.4" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="5.72" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="0.88" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="959" min="1" max="1" chance="0.0057" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
@@ -1128,19 +1032,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="4039" min="1" max="1" chance="17.124" /> <!-- Mold Glue -->
@@ -1220,19 +1112,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 		</dropLists>
 		<collision>
@@ -1304,19 +1184,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 		</dropLists>
 		<collision>
@@ -1391,19 +1259,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="4040" min="1" max="1" chance="6.1669" /> <!-- Mold Lubricant -->
@@ -1483,19 +1339,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="10403" min="1" max="1" chance="0.2196" /> <!-- Icarus Hand Piece -->
@@ -1570,19 +1414,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="4041" min="1" max="1" chance="3.5561" /> <!-- Mold Hardener -->
@@ -1658,19 +1490,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 		</dropLists>
 		<collision>
@@ -4524,19 +4344,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="4039" min="1" max="1" chance="13.5339" /> <!-- Mold Glue -->
@@ -4612,19 +4420,7 @@
 				<item id="8603" min="1" max="1" chance="0.77" /> <!-- Herb of Mana -->
 				<item id="8604" min="1" max="1" chance="8.91" /> <!-- Greater Herb of Mana -->
 				<item id="8605" min="1" max="1" chance="1.32" /> <!-- Superior Herb of Mana -->
-				<item id="8606" min="1" max="1" chance="5" /> <!-- Herb of Power -->
-				<item id="8608" min="1" max="1" chance="5" /> <!-- Herb of Alacrity -->
-				<item id="8610" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Probability -->
-				<item id="10655" min="1" max="1" chance="5" /> <!-- Herb of Vampiric Rage -->
-				<item id="10656" min="1" max="1" chance="5" /> <!-- Herb of Critical Attack - Power -->
-				<item id="8607" min="1" max="1" chance="5" /> <!-- Herb of Magic -->
-				<item id="8609" min="1" max="1" chance="5" /> <!-- Herb of Casting Spd. -->
-				<item id="8612" min="1" max="1" chance="0.33" /> <!-- Herb of the Warrior -->
-				<item id="8613" min="1" max="1" chance="0.33" /> <!-- Herb of the Mystic -->
 				<item id="8614" min="1" max="1" chance="0.34" /> <!-- Herb of Recovery -->
-				<item id="8611" min="1" max="1" chance="10.34" /> <!-- Herb of Speed -->
-				<item id="10657" min="1" max="1" chance="0.33" /> <!-- Herb of Doubt -->
-				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
 				<item id="4042" min="1" max="1" chance="7.0373" /> <!-- Enria -->

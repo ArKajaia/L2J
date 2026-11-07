@@ -24,6 +24,10 @@
 			<location name="Silent Valley" x="170838" y="55776" z="-5280" feeCount="6100" />
 			<location name="Tower of Insolence" x="114649" y="11115" z="-5120" feeCount="4200" />
 			<location name="Entrance to The Giant's Cave" x="174491" y="50942" z="-4360" feeCount="7400" />
+			<location name="Plains of Glory" x="135580" y="19467" z="-3424" feeCount="1500" />
+			<location name="War-Torn Plains" x="156898" y="11217" z="-4032" feeCount="2100" />
+			<location name="Hunters Valley" x="114306" y="86573" z="-3112" feeCount="8100" />
+			<location name="Anghel Waterfall" x="166182" y="91560" z="-3168" feeCount="11000" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Gludin Arena" x="-87328" y="142266" z="-3640" feeId="13722" feeCount="1" />

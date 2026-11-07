@@ -16,6 +16,11 @@
 			<location name="Wall of Argos" x="165054" y="-47861" z="-3560" feeCount="2200" />
 			<location name="Monastery of Silence" x="106414" y="-87799" z="-2920" feeCount="10000" />
 			<location name="Entrance to the Forge of the Gods" x="169018" y="-116303" z="-2432" feeCount="10000" />
+			<location name="Devil's Pass" x="106349" y="-61870" z="-2904" feeCount="6700" />
+			<location name="Garden of Wild Beasts" x="132997" y="-60608" z="-2960" feeCount="2500" />
+			<location name="Shrine of Loyalty" x="191257" y="-59388" z="-2898" feeCount="8600" />
+			<location name="Four Sepulchers" x="178127" y="-84435" z="-7215" feeCount="8300" />
+			<location name="Imperial Tomb" x="186699" y="-75915" z="-2826" feeCount="8700" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Gludin Arena" x="-87328" y="142266" z="-3640" feeId="13722" feeCount="1" />

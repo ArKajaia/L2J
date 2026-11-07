@@ -11,6 +11,7 @@
 			<location name="Dragon Valley" x="73024" y="118485" z="-3696" feeCount="1800" />
 			<location name="Antharas's Lair" x="131557" y="114509" z="-3712" feeCount="7000" />
 			<location name="Ivory Tower" x="85391" y="16228" z="-3672" feeCount="13000" />
+			<location name="Hunters Valley" x="114306" y="86573" z="-3112" feeCount="1200" />
 		</teleport>
 		<teleport type="NOBLES_TOKEN">
 			<location name="Gludin Arena" x="-87328" y="142266" z="-3640" feeId="13722" feeCount="1" />
