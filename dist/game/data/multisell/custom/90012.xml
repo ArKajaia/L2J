@@ -15,54 +15,54 @@
     <!-- Crystals -->
     <item>
         <!-- Crystal (D-Grade) -->
-        <ingredient count="5" id="3481" />
+        <ingredient count="10" id="3481" />
         <production count="1" id="1458" />
     </item>
     <item>
         <!-- Crystal (C-Grade) -->
-        <ingredient count="20" id="3481" />
+        <ingredient count="40" id="3481" />
         <production count="1" id="1459" />
     </item>
     <item>
         <!-- Crystal (B-Grade) -->
-        <ingredient count="55" id="3481" />
+        <ingredient count="110" id="3481" />
         <production count="1" id="1460" />
     </item>
     <item>
         <!-- Crystal (A-Grade) -->
-        <ingredient count="90" id="3481" />
+        <ingredient count="180" id="3481" />
         <production count="1" id="1461" />
     </item>
     <item>
         <!-- Crystal (S-Grade) -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="300" id="3481" />
         <production count="1" id="1462" />
     </item>
 
     <!-- Gemstones -->
     <item>
         <!-- Gemstone D -->
-        <ingredient count="10" id="3481" />
+        <ingredient count="20" id="3481" />
         <production count="1" id="2130" />
     </item>
     <item>
         <!-- Gemstone C -->
-        <ingredient count="30" id="3481" />
+        <ingredient count="60" id="3481" />
         <production count="1" id="2131" />
     </item>
     <item>
         <!-- Gemstone B -->
-        <ingredient count="100" id="3481" />
+        <ingredient count="200" id="3481" />
         <production count="1" id="2132" />
     </item>
     <item>
         <!-- Gemstone A -->
-        <ingredient count="750" id="3481" />
+        <ingredient count="1500" id="3481" />
         <production count="1" id="2133" />
     </item>
     <item>
         <!-- Gemstone S -->
-        <ingredient count="2500" id="3481" />
+        <ingredient count="5000" id="3481" />
         <production count="1" id="2134" />
     </item>
 </list>

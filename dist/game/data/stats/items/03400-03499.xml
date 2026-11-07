@@ -839,7 +839,7 @@
 		<set name="icon" val="icon.etc_coins_gold_i00" />
 		<set name="immediate_effect" val="true" />
 		<set name="material" val="STEEL" />
-		<set name="price" val="200" />
+		<set name="price" val="100" />
 		<set name="is_stackable" val="true" />
 	</item>
 	<item id="3482" type="EtcItem" name="Gold Wyvern">

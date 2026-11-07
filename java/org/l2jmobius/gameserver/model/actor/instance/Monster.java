@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
+import org.l2jmobius.gameserver.managers.ArenaSurvivalManager;
 import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakeJoinerManager;
@@ -48,6 +49,7 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
 import org.l2jmobius.gameserver.model.actor.holders.npc.MinionList;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.arena.ArenaRun;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
 import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.guide.GuideLesson;
@@ -75,6 +77,8 @@ public class Monster extends Attackable
 	private MinionList _minionList = null;
 	private ScheduledFuture<?> _arenaEnrageTask = null;
 	private ScheduledFuture<?> _arenaWaveReminderTask;
+	/** The Survival Arena run this challenger belongs to, or {@code null} (see {@link ArenaSurvivalManager}). */
+	private volatile ArenaRun _arenaRun;
 	private double championHpMult;
 	
 	// Owns every stat Func a rage adds, so removeStatsOwner() strips them all at once.
@@ -363,7 +367,8 @@ public class Monster extends Attackable
 		{
 			applyArenaBuffs();
 			rerollArenaActiveSkills();
-			getVariables().set("ARENA_WAVE", 0);
+			// A run started from a checkpoint (skip-ahead) spawns its challenger already at that wave.
+			getVariables().set("ARENA_WAVE", getVariables().getInt("ARENA_START_WAVE", 0));
 			startArenaWaveReminderTask();
 			setIsRaid(true);
 		}
@@ -606,11 +611,9 @@ public class Monster extends Attackable
 		}
 		if (isArenaChallenger())
 		{
-			final int arenaWave = getVariables().getInt("ARENA_WAVE", 0);
-			if (arenaWave > 0)
-			{
-				sb.append("Wave ").append(arenaWave).append(" -").append(' ');
-			}
+			// The wave being fought (the variable counts the waves cleared), as the arena's screen messages show it.
+			final int arenaWave = getVariables().getInt("ARENA_WAVE", 0) + 1;
+			sb.append("Wave ").append(arenaWave).append(" -").append(' ');
 		}
 		if (isRaging())
 		{
@@ -1308,6 +1311,20 @@ public class Monster extends Attackable
 		broadcastInfo();
 	}
 
+	/**
+	 * Turns a Mage back into an ordinary monster (the Survival Arena's Arcane Surge omen only lasts one wave).
+	 */
+	public void stopMage()
+	{
+		if (!getVariables().getBoolean("IS_MAGE", false))
+		{
+			return;
+		}
+		getVariables().remove("IS_MAGE");
+		rebuildFullTitle();
+		broadcastInfo();
+	}
+
 	// =======================================================================
 	// Infused Monster System
 	// =======================================================================
@@ -1896,6 +1913,58 @@ public class Monster extends Attackable
 		return RatesConfig.ARENA_SYSTEM_ENABLED && getVariables().getBoolean("IS_ARENA_CHALLENGER", false);
 	}
 	
+	/**
+	 * @return the Survival Arena run this challenger belongs to, or {@code null}
+	 */
+	public ArenaRun getArenaRun()
+	{
+		return _arenaRun;
+	}
+	
+	public void setArenaRun(ArenaRun run)
+	{
+		_arenaRun = run;
+	}
+	
+	/** The run's omens and boons on the challenger's P. Atk. and M. Atk. */
+	private double getArenaRunAttackMultiplier()
+	{
+		final ArenaRun run = _arenaRun;
+		return (run != null) && isArenaChallenger() ? run.getAttackMultiplier() : 1.0;
+	}
+	
+	/** The run's omens on the challenger's P. Def. and M. Def. */
+	private double getArenaRunDefenseMultiplier()
+	{
+		final ArenaRun run = _arenaRun;
+		return (run != null) && isArenaChallenger() ? run.getDefenseMultiplier() : 1.0;
+	}
+	
+	/** The run's omens on the challenger's attack and cast speed. */
+	private double getArenaRunSpeedMultiplier()
+	{
+		final ArenaRun run = _arenaRun;
+		return (run != null) && isArenaChallenger() ? run.getSpeedMultiplier() : 1.0;
+	}
+	
+	/**
+	 * Called for every hit this monster lands: a Survival Arena challenger under a Vampiric omen heals part of it.
+	 * @param damage the damage dealt
+	 */
+	public void onArenaDamageDealt(double damage)
+	{
+		final ArenaRun run = _arenaRun;
+		if ((run == null) || (damage <= 0) || isDead() || !isArenaChallenger())
+		{
+			return;
+		}
+		final int lifeSteal = run.getLifeStealPercent();
+		if (lifeSteal > 0)
+		{
+			setCurrentHp(Math.min(getMaxHp(), getCurrentHp() + ((damage * lifeSteal) / 100.0)));
+		}
+	}
+	
 	private double getArenaStatMultiplier()
 	{
 		int wave = getVariables().getInt("ARENA_WAVE", 0);
@@ -1946,7 +2015,19 @@ public class Monster extends Attackable
 	public void reduceCurrentHp(double value, Creature attacker, boolean awake, boolean isDOT, Skill skill)
 	{
 		// Map Device modifiers: Spell-Warded, Glass Cannon, Summoners, Linked Souls.
-		final double amount = MapDeviceManager.onMonsterDamaged(this, value, attacker, isDOT, skill);
+		double amount = MapDeviceManager.onMonsterDamaged(this, value, attacker, isDOT, skill);
+		
+		final ArenaRun arenaRun = _arenaRun;
+		if ((arenaRun != null) && isArenaChallenger())
+		{
+			// Frozen for the breather between waves: nothing hurts it, damage over time included.
+			if (arenaRun.isIntermission())
+			{
+				return;
+			}
+			amount *= arenaRun.getDamageTakenMultiplier(skill != null, getCurrentHp() / Math.max(1, getMaxHp()));
+			ArenaSurvivalManager.getInstance().onChallengerHit(arenaRun, attacker, Math.min(amount, getCurrentHp()));
+		}
 		
 		if (isArenaChallenger() && ((getCurrentHp() - amount) <= 0) && onArenaWaveCleared(attacker, amount))
 		{
@@ -1985,6 +2066,13 @@ public class Monster extends Attackable
 		addRandomPassiveSkill(getLevel());
 		applyArenaBuffs();
 		rerollArenaActiveSkills();
+		this.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, 7029);
+		
+		// A live run pays the wave, rolls the next wave's omens, heals the challenger and restarts the enrage (after a breather on milestones).
+		if (ArenaSurvivalManager.getInstance().onWaveCleared(this, wave, killer))
+		{
+			return true;
+		}
 
 		this.setCurrentHp(this.getMaxHp());
 		this.setCurrentMp(this.getMaxMp());
@@ -1999,9 +2087,7 @@ public class Monster extends Attackable
 			killer.sendMessage("Wave " + wave + " cleared! The challenger grows stronger...");
 		}
 		
-		this.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, 7029);
-		
-		startEnrageTimer();
+		startArenaEnrageTimer(RatesConfig.ARENA_ENRAGE_TIME);
 		return true;
 	}
 	
@@ -2084,7 +2170,7 @@ public class Monster extends Attackable
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PATK) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.P_ATK);
+		return basePAtk * multiplier * getArenaRunAttackMultiplier() * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PATK) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.P_ATK);
 	}
 
 	@Override
@@ -2093,7 +2179,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MATK) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.M_ATK);
+		return baseMAtk * multiplier * getArenaRunAttackMultiplier() * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MATK) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.M_ATK);
 	}
 
 	@Override
@@ -2102,7 +2188,7 @@ public class Monster extends Attackable
 		final double basePDef = super.getPDef(target);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PDEF) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.P_DEF);
+		return basePDef * multiplier * getArenaRunDefenseMultiplier() * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PDEF) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.P_DEF);
 	}
 
 	@Override
@@ -2111,7 +2197,7 @@ public class Monster extends Attackable
 		final double baseMDef = super.getMDef(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MDEF) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.M_DEF);
+		return baseMDef * multiplier * getArenaRunDefenseMultiplier() * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MDEF) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.M_DEF);
 	}
 
 	@Override
@@ -2121,7 +2207,7 @@ public class Monster extends Attackable
 		final double multiplier = (isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0) * getWaveChallengeOffenseMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
-		return basePAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.ATK_SPD);
+		return basePAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * getArenaRunSpeedMultiplier() * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.ATK_SPD);
 	}
 
 	@Override
@@ -2132,7 +2218,7 @@ public class Monster extends Attackable
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
 		final double mageMultiplier = isMageMonster() ? 1.0 + (MageMonsterConfig.CAST_SPEED_BONUS / 100.0) : 1.0;
-		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * mageMultiplier * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.CAST_SPD));
+		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * mageMultiplier * getArenaRunSpeedMultiplier() * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.CAST_SPD));
 	}
 
 	/**
@@ -2152,6 +2238,22 @@ public class Monster extends Attackable
 		return MapDeviceManager.isRanged(this) ? Math.max(range, MapDeviceManager.getRangedAttackRange()) : range;
 	}
 
+	/**
+	 * @param wave a wave of the Survival Arena (1 and up)
+	 * @return what clearing that one wave is worth: the escalating per-wave value, the milestone bonus on every milestone wave, and {@code ArenaRewardBonusPercent}. {@link #calculateArenaReward(int)} is the sum of these over waves 1 to N (before
+	 *         rounding); a live run multiplies each by {@code ArenaLiveRewardMultiplier} and its bonuses.
+	 */
+	public static double calculateArenaWaveValue(int wave)
+	{
+		if (wave <= 0)
+		{
+			return 0;
+		}
+		final double escalating = RatesConfig.ARENA_BASE_CURRENCY_PER_WAVE * Math.pow(1 + (RatesConfig.ARENA_ESCALATION_FACTOR / 100.0), wave);
+		final double milestone = (wave % Math.max(1, RatesConfig.ARENA_MILESTONE_INTERVAL)) == 0 ? RatesConfig.ARENA_MILESTONE_BONUS : 0;
+		return (escalating + milestone) * RatesConfig.ARENA_REWARD_MULTIPLIER;
+	}
+	
 	public static long calculateArenaReward(int finalWave)
 	{
 		if (finalWave <= 0)
@@ -2338,12 +2440,15 @@ public class Monster extends Attackable
 		super.onDecay();
 	}
 	
-	private void startEnrageTimer()
+	/**
+	 * (Re)starts the Survival Arena enrage timer: if the wave isn't cleared within {@code seconds}, the challenger enrages.
+	 * @param seconds seconds until the enrage
+	 */
+	public void startArenaEnrageTimer(int seconds)
 	{
 		// Cancel any existing timer to prevent duplicates
 		cancelEnrageTimer();
 		
-		// Schedule the enrage to happen in 120,000 milliseconds (2 minutes)
 		_arenaEnrageTask = ThreadPool.schedule(() ->
 		{
 			// Safety check: if monster is dead, deleted, or not an arena boss, abort.
@@ -2366,7 +2471,16 @@ public class Monster extends Attackable
 				this.setTitle("!!! ENRAGED !!!");
 				this.broadcastInfo();
 			}
-		}, RatesConfig.ARENA_ENRAGE_TIME * 1000L); // 120,000 ms = 2 minutes
+			ArenaSurvivalManager.getInstance().onEnraged(this);
+		}, seconds * 1000L);
+	}
+	
+	/**
+	 * Stops the Survival Arena enrage timer (the breather between waves, or the end of a run).
+	 */
+	public void cancelArenaEnrageTimer()
+	{
+		cancelEnrageTimer();
 	}
 	
 	/**
@@ -2392,9 +2506,17 @@ public class Monster extends Attackable
 			final Player player = World.getInstance().getPlayer(playerObjId);
 			if (player != null)
 			{
-				final int wave = getVariables().getInt("ARENA_WAVE", 0);
+				final int wave = getVariables().getInt("ARENA_WAVE", 0) + 1;
 				final int hpPercent = (int) ((getCurrentHp() / getMaxHp()) * 100);
-				player.sendMessage("Wave " + wave + " | Challenger HP: " + hpPercent + "%");
+				final ArenaRun run = _arenaRun;
+				if (run == null)
+				{
+					player.sendMessage("Wave " + wave + " | Challenger HP: " + hpPercent + "%");
+				}
+				else if (!run.isIntermission() && (player.getInstanceId() == getInstanceId()))
+				{
+					player.sendMessage("Wave " + wave + " | Challenger HP: " + hpPercent + "% | Pot: " + String.format("%,d", Math.round(run.getTotalPot()) * run.getStake()) + " | Swift streak: " + run.getSwiftStreak());
+				}
 			}
 		}, intervalMs, intervalMs);
 	}

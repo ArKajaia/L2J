@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.AdventurersGuideConfig;
 import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
@@ -256,6 +257,7 @@ import handlers.chat.commands.user.PartyInfo;
 import handlers.chat.commands.user.SiegeStatus;
 import handlers.chat.commands.user.Time;
 import handlers.chat.commands.user.Unstuck;
+import handlers.chat.commands.voiced.ArenaVoiced;
 import handlers.chat.commands.voiced.AutoPlay;
 import handlers.chat.commands.voiced.AutoPotion;
 import handlers.chat.commands.voiced.Banking;
@@ -682,6 +684,7 @@ public class MasterHandler
 			DynamicQuestConfig.ENABLED || HiddenQuestConfig.ENABLED ? QuestsVoiced.class : null,
 			VillageSiegeConfig.ENABLED ? VillageSiegeVoiced.class : null,
 			AdventurersGuideConfig.ENABLED ? GuideVoiced.class : null,
+			RatesConfig.ARENA_SYSTEM_ENABLED ? ArenaVoiced.class : null,
 			MapDeviceConfig.ENABLED ? HideoutVoiced.class : null,
 			MapDeviceConfig.ENABLED ? CrucibleVoiced.class : null,
 			MapDeviceConfig.ENABLED ? FrontVoiced.class : null,

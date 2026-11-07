@@ -107,7 +107,7 @@ The retail clock is kept (night is game hours 0:00-5:59, about one real hour in 
 - **The Witching Hour**: the Omen gives way to the dead: slain monsters may rise again (20%), undead hit 30% harder, wave challenges are three times as common, XP/SP +20% and the sky turns red. A kill may call a wave challenger nearby. At dawn the sun burns the undead still fighting.
 - **Nightlords and Shadow Raids take turns** (`NightEventsAlternate`): one night the Nightlords rise, the next the Shadow Raids strike, so a night doesn't stack both on top of the Omen and the event rotation. Tonight's turn is told at dusk and shown with `.night`. Set it to `False` for both every night.
 - **Night Watch**: kills in the open world at night (and Nightlords and Shadow Raiders) earn points. At dawn the best 3 online players with enough points are announced and get hot zone coins and Sealed Caches.
-- **The Night Market**: at nightfall Varro the Moonmonger (NPC 900360) opens his stalls in Giran next to the Master Blacksmith, and packs up at dawn. He sells Blessed Scrolls of Resurrection and the low and high grade luminous (night) lures that fishermen don't stock, for Dragon Coins (hot zone coins), trades Sealed Caches up a tier (5 Common for a Rare, 4 Rare for an Epic; he never sells caches, since they hold Dragon Coins), and changes Dragon Coins into Ancient Adena at 22 per coin - a little less than the standard way (a coin sells to a shop for 100 Adena, and the Black Marketeer of Mammon sells Ancient Adena at 4 Adena each, 25 per coin), but with no daily limit, level or hour requirement.
+- **The Night Market**: at nightfall Varro the Moonmonger (NPC 900360) opens his stalls in Giran next to the Master Blacksmith, and packs up at dawn. He sells Blessed Scrolls of Resurrection and the low and high grade luminous (night) lures that fishermen don't stock, for Dragon Coins (hot zone coins), trades Sealed Caches up a tier (5 Common for a Rare, 4 Rare for an Epic; he never sells caches, since they hold Dragon Coins), and changes Dragon Coins into Ancient Adena at 11 per coin - a little less than the standard way (a coin sells to a shop for 50 Adena, and the Black Marketeer of Mammon sells Ancient Adena at 4 Adena each, 12.5 per coin), but with no daily limit, level or hour requirement.
 - **The Night Forge**: next to Varro, Gorm the Moonsmith (NPC 900370) lights his forge at nightfall and puts it out at dawn, on the same `NightMarketEnabled` setting. He sells Mammon's Varnish Enhancer for 100,000 Adena each (the Merchant of Mammon's price, with no need to find him underground), finishes Foundation items with it (the retail Blacksmith of Mammon list, the weapons come back with their special ability) and unseals masterwork items: B-grade gloves and boots for free, A grade for Adena and S, S80 and S84 for Ancient Adena, the retail prices. The unseal list (multisell 900371) is the "Sealed Masterwork Item" entries of the retail unseal lists, 161 entries for the 129 sealed masterwork items in the item data, shown inventory-only so the unsealed item keeps its enchant level. Plain sealed items are left to the Master Blacksmith, who does every other blacksmith service by day and night.
 - **Black markets in town**: towns keep half their fake players at night (the ones who leave aren't replaced), and two more fake player stores open in each town. Their sellers fence goods for adena - a rare find well below its usual price, Sealed Caches, night lures - and pack up at dawn.
 - **Thieves' Night**: in the open world at night Thief monsters are twice as common, and a Thief with a full bag runs off into the dark; players nearby see it on their radar until it is caught or gone.
@@ -134,8 +134,14 @@ The towns follow the day and the night. Town life npcs (templates 900400-900446)
 
 A solo PvE endurance mode and a matching reward shop, linked through a shared currency.
 
-- Players fight an escalating series of waves against a single boss that gets stronger each wave and can never be permanently defeated — only the player's own death ends the run.
-- Rewards scale with waves cleared, with milestone bonuses and a tracked personal best.
+- Players fight an escalating series of waves against a single boss that gets stronger each wave and can never be permanently defeated. The run ends when the player falls or leaves, and either way it pays every wave cleared (a disconnect forfeits it).
+- **Stakes**: a live run is staked with Champion Medals and its whole payout is multiplied by the medals staked. A quick run trades a medal for part of the best payout without fighting, so fighting always pays more.
+- **Skip-ahead**: once a record is set, a run can start from a checkpoint below it; the skipped waves are paid at a reduced rate.
+- **Omens**: waves roll one-wave twists (champion, elemental infusion, rage, Mage, Glass Cannon, Spell-Warded, Iron Hide, Haste, Vampiric) that pay more; every milestone wave is a Champion Wave with two.
+- **Milestones**: the challenger freezes for a breather, the player drafts one of three run-long boons (Bloodlust, Iron Skin, Second Wind, Leech, Executioner, Patience, Greed, Momentum) and gets a Sealed Cache.
+- **Swift clears**: fast waves pay more, and a streak of them more still. A live HUD shows the wave, its omens, the pot and the enrage countdown; `.arena` shows the run and its boons.
+- **Reasons to go now**: the first run of the day pays more and gives a cache, a server-wide Arena Rush raises every payout for a while, and the Hall of Champions keeps the server's best runs (new records and high waves are announced).
+- Survival Arena payouts are doubled compared to the other sources of the same coin, and the Arena Shop prices match.
 - A "Wave Challenge" variant happens spontaneously on ordinary world monsters, rewarding everyone who helped kill its final wave.
 - The Arena Shop is a crafting-material store that accepts the currency earned from both challenge types, with a built-in item search.
 
@@ -972,6 +978,17 @@ This program is free software, licensed under the **GNU General Public License, 
 ---
 
 ## Recent Updates
+
+### Survival Arena: the Gauntlet
+- **Changed**: a Dragon Coin sells to a shop for 50 Adena instead of 100, every Arena Shop price is doubled, and the Survival Arena pays twice as many coins as before (hot zones, Wave Challenges, class transfer trials and the Night Market's goods are unchanged). The Night Market now changes a coin into 11 Ancient Adena instead of 22, still a little less than selling it and buying Ancient Adena.
+- **New**: stake 1-100 Champion Medals on a live run; the whole payout is multiplied by the medals staked. A quick run now pays half the best payout per medal, and the Arena Master shows from which wave a live run beats it. Records from before are doubled once to the new payouts.
+- **New**: once you have cleared wave 10, a run can start at a later checkpoint (up to 5 waves below your best); the skipped waves pay half.
+- **New**: from wave 3 waves may roll an omen that pays more: Champion's Mantle, Elemental Infusion, Frenzy, Arcane Surge, Glass Cannon, Spell-Warded, Iron Hide, Haste or Vampiric. Every fifth wave is a Champion Wave with two.
+- **New**: after every fifth wave the challenger freezes for a 12-second breather and you pick one of three boons for the rest of the run (Bloodlust, Iron Skin, Second Wind, Leech, Executioner, Patience, Greed, Momentum), and get a Sealed Cache.
+- **New**: a wave cleared within 45 seconds pays 25% more, plus 5% for every swift clear in a row (up to 50%). The screen shows each wave, its omens, what it paid, the pot and the time left before the enrage; `.arena` shows the run and its boons.
+- **New**: the first run of the day pays 50% more and gives a Sealed Cache; every 3 hours or so an announced 30-minute Arena Rush makes every wave pay 50% more; the Hall of Champions on the Arena Master lists the server's ten best runs, and a new record or a cleared wave 20, 25, 30... is announced.
+- **Fixed**: a run only paid when the challenger itself landed the killing blow, and leaving the arena alive (escape, To Village) paid nothing. Every way out now pays the waves cleared, except a disconnect.
+- **Fixed**: the wave and HP reminder during a run never showed, and the first wave of a run never enraged.
 
 Changes from 28 September – 19 October 2026.
 

@@ -142,6 +142,24 @@ public class RatesConfig
 	public static List<Integer> ARENA_BUFF_SKILL_LEVELS;
 	public static int ARENA_ENRAGE_TIME;
 	public static int ARENA_WAVE_REMINDER_INTERVAL_SECONDS;
+	public static double ARENA_LIVE_REWARD_MULTIPLIER;
+	public static int ARENA_QUICK_RUN_PERCENT;
+	public static int ARENA_SKIP_AHEAD_PAY_PERCENT;
+	public static int ARENA_MAX_STAKE;
+	public static int ARENA_SWIFT_SECONDS;
+	public static int ARENA_SWIFT_BONUS_PERCENT;
+	public static int ARENA_SWIFT_STREAK_STEP_PERCENT;
+	public static int ARENA_SWIFT_STREAK_MAX_PERCENT;
+	public static int ARENA_OMEN_START_WAVE;
+	public static int ARENA_OMEN_CHANCE;
+	public static int ARENA_INTERMISSION_SECONDS;
+	public static boolean ARENA_MILESTONE_CACHE;
+	public static int ARENA_DAILY_BONUS_PERCENT;
+	public static boolean ARENA_RUSH_ENABLED;
+	public static int ARENA_RUSH_INTERVAL_HOURS;
+	public static int ARENA_RUSH_MINUTES;
+	public static int ARENA_RUSH_BONUS_PERCENT;
+	public static int ARENA_ANNOUNCE_WAVE;
 	
 	public static void load()
 	{
@@ -341,6 +359,24 @@ public class RatesConfig
 		}
 		ARENA_ENRAGE_TIME = config.getInt("ArenaEnrageTime", 120);
 		ARENA_WAVE_REMINDER_INTERVAL_SECONDS = config.getInt("ArenaWaveReminderIntervalSeconds", 30);
+		ARENA_LIVE_REWARD_MULTIPLIER = Math.max(0, config.getDouble("ArenaLiveRewardMultiplier", 2.0));
+		ARENA_QUICK_RUN_PERCENT = Math.max(0, config.getInt("ArenaQuickRunPercent", 50));
+		ARENA_SKIP_AHEAD_PAY_PERCENT = Math.max(0, config.getInt("ArenaSkipAheadPayPercent", 50));
+		ARENA_MAX_STAKE = Math.max(1, config.getInt("ArenaMaxStake", 100));
+		ARENA_SWIFT_SECONDS = config.getInt("ArenaSwiftSeconds", 45);
+		ARENA_SWIFT_BONUS_PERCENT = config.getInt("ArenaSwiftBonusPercent", 25);
+		ARENA_SWIFT_STREAK_STEP_PERCENT = config.getInt("ArenaSwiftStreakStepPercent", 5);
+		ARENA_SWIFT_STREAK_MAX_PERCENT = config.getInt("ArenaSwiftStreakMaxPercent", 50);
+		ARENA_OMEN_START_WAVE = config.getInt("ArenaOmenStartWave", 3);
+		ARENA_OMEN_CHANCE = config.getInt("ArenaOmenChance", 50);
+		ARENA_INTERMISSION_SECONDS = Math.max(0, config.getInt("ArenaIntermissionSeconds", 12));
+		ARENA_MILESTONE_CACHE = config.getBoolean("ArenaMilestoneCache", true);
+		ARENA_DAILY_BONUS_PERCENT = config.getInt("ArenaDailyBonusPercent", 50);
+		ARENA_RUSH_ENABLED = config.getBoolean("ArenaRushEnabled", true);
+		ARENA_RUSH_INTERVAL_HOURS = Math.max(1, config.getInt("ArenaRushIntervalHours", 3));
+		ARENA_RUSH_MINUTES = Math.max(1, config.getInt("ArenaRushMinutes", 30));
+		ARENA_RUSH_BONUS_PERCENT = config.getInt("ArenaRushBonusPercent", 50);
+		ARENA_ANNOUNCE_WAVE = config.getInt("ArenaAnnounceWave", 20);
 		// </Arena Master>
 	}
 }
