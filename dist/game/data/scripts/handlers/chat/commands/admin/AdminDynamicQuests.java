@@ -118,7 +118,7 @@ public class AdminDynamicQuests implements IAdminCommandHandler
 				if (action.equals("admin_dynquest_herald"))
 				{
 					final boolean sent = manager.adminHerald(player, template);
-					activeChar.sendSysMessage(sent ? "A herald is on its way to " + player.getName() + "." : "No herald could be sent (the player can't take it, or no spot was found).");
+					activeChar.sendSysMessage(sent ? "A herald is on its way to " + player.getName() + "." : "No herald could be sent (the player can't take it, no hunting ground of their level is near them, or no spot was found).");
 					log(activeChar, "sent a herald with template " + template.getId() + " to " + player.getName());
 					return sent;
 				}
