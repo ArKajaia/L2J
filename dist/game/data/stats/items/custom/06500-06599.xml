@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
 	<item id="6509" type="EtcItem" name="Sealed Cache (Epic)">
-		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Dragon Coins, plus at least 4 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
+		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Dragon Coins, plus at least 4 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. Each opening also has a very small chance of a treasure (enchant scrolls and better, the rarer the better). -->
 		<set name="icon" val="icon.etc_treasure_box_i04" />
 		<set name="default_action" val="PEEL" />
 		<set name="immediate_effect" val="true" />
@@ -11,11 +11,32 @@
 		<set name="is_stackable" val="true" />
 		<set name="is_oly_restricted" val="true" />
 		<set name="handler" val="ExtractableItems" />
-		<!-- extractableCountMin/Max count distinct items, Dragon Coins included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
+		<!-- extractableCountMin/Max count distinct items, Dragon Coins included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. A re-roll (too few hits) rolls the treasures again too, so their real chance is about 5-15% above the listed one. -->
 		<set name="extractableCountMin" val="5" />
-		<set name="extractableCountMax" val="18" />
+		<set name="extractableCountMax" val="22" />
 		<capsuled_items>
 			<item id="3481" min="5000" max="50000" chance="100" /> <!-- Dragon Coin (always) -->
+			<!-- Treasures: the rarer, the better. Listed right after the coins so the extractableCountMax cap can never cut them off. Anything listed at or below SealedCacheTreasureChance (LuckyLoot.ini) is shown on screen with a fanfare, and at or below SealedCacheAnnounceChance it is announced to every online player. -->
+			<item id="730" min="1" max="1" chance="1" /> <!-- Scroll: Enchant Armor (A-Grade) -->
+			<item id="729" min="1" max="1" chance="0.5" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
+			<item id="960" min="1" max="1" chance="0.3" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+			<item id="959" min="1" max="1" chance="0.15" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+			<item id="6622" min="1" max="1" chance="0.05" /> <!-- Giant's Codex -->
+			<item id="6578" min="1" max="1" chance="0.04" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
+			<item id="9552" min="1" max="1" chance="0.02" /> <!-- Fire Crystal -->
+			<item id="9553" min="1" max="1" chance="0.02" /> <!-- Water Crystal -->
+			<item id="9554" min="1" max="1" chance="0.02" /> <!-- Earth Crystal -->
+			<item id="9555" min="1" max="1" chance="0.02" /> <!-- Wind Crystal -->
+			<item id="9556" min="1" max="1" chance="0.02" /> <!-- Dark Crystal -->
+			<item id="9557" min="1" max="1" chance="0.02" /> <!-- Holy Crystal -->
+			<item id="6577" min="1" max="1" chance="0.02" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+			<item id="9627" min="1" max="1" chance="0.01" /> <!-- Giant's Codex - Mastery -->
+			<item id="10486" min="1" max="1" chance="0.005" /> <!-- Top-Grade Life Stone - Level 82 -->
+			<item id="6659" min="1" max="1" chance="0.002" /> <!-- Earring of Zaken -->
+			<item id="8191" min="1" max="1" chance="0.002" /> <!-- Necklace of Frintezza -->
+			<item id="6658" min="1" max="1" chance="0.001" /> <!-- Ring of Baium -->
+			<item id="6656" min="1" max="1" chance="0.001" /> <!-- Earring of Antharas -->
+			<item id="6657" min="1" max="1" chance="0.001" /> <!-- Necklace of Valakas -->
 			<!-- Ores -->
 			<item id="1874" min="10" max="30" chance="25" /> <!-- Oriharukon Ore -->
 			<item id="1875" min="10" max="30" chance="25" /> <!-- Stone of Purity -->
@@ -37,19 +58,27 @@
 			<item id="4042" min="2" max="5" chance="20" /> <!-- Enria -->
 			<item id="4043" min="2" max="5" chance="20" /> <!-- Asofe -->
 			<item id="4044" min="2" max="5" chance="20" /> <!-- Thons -->
-			<!-- Uncommon: plates and threads -->
+			<!-- Uncommon: A/S crystals and gemstones, hardener, plates and threads -->
+			<item id="1461" min="5" max="15" chance="12" /> <!-- Crystal (A-Grade) -->
+			<item id="1462" min="3" max="10" chance="8" /> <!-- Crystal (S-Grade) -->
+			<item id="2133" min="2" max="5" chance="8" /> <!-- Gemstone A -->
+			<item id="2134" min="1" max="3" chance="6" /> <!-- Gemstone S -->
+			<item id="5220" min="3" max="10" chance="12" /> <!-- Metal Hardener -->
 			<item id="5549" min="2" max="5" chance="15" /> <!-- Metallic Thread -->
 			<item id="5550" min="2" max="5" chance="15" /> <!-- Durable Metal Plate -->
-			<!-- Rare: molds and holders -->
+			<!-- Rare: molds, holders and maestro parts -->
 			<item id="5551" min="1" max="2" chance="6" /> <!-- Reorin's Mold -->
 			<item id="5552" min="1" max="2" chance="6" /> <!-- Warsmith's Mold -->
 			<item id="5553" min="1" max="2" chance="6" /> <!-- Arcsmith's Anvil -->
 			<item id="5554" min="1" max="2" chance="6" /> <!-- Warsmith's Holder -->
+			<item id="4045" min="1" max="2" chance="6" /> <!-- Maestro Holder -->
+			<item id="4046" min="1" max="2" chance="6" /> <!-- Maestro Anvil Lock -->
+			<item id="4047" min="1" max="2" chance="6" /> <!-- Craftsman Mold -->
+			<item id="4048" min="1" max="2" chance="6" /> <!-- Maestro Mold -->
 			<!-- Very rare: S80 materials -->
 			<item id="9628" min="1" max="2" chance="4" /> <!-- Leonard -->
 			<item id="9629" min="1" max="2" chance="4" /> <!-- Adamantine -->
 			<item id="9630" min="1" max="2" chance="4" /> <!-- Orichalcum -->
-			<item id="9631" min="1" max="2" chance="4" /> <!-- Tough Leather -->
 		</capsuled_items>
 	</item>
 	<item id="6593" type="Weapon" name="Shining Bow - Cheap Shot">

@@ -207,6 +207,7 @@ Two unrelated loot systems that both involve opening something for a reward.
 - Opening a real chest correctly requires a specific key/skill and yields random crafting materials from a Common/Rare/Epic tier.
 - Sealed Caches are a separate, simpler system: a chance-based bonus item drop on any kill, one of three possible outcomes (alongside a "Lucky Streak" drop-rate bonus and a "Jackpot" loot reroll) from the same kill-reward roll.
 - A Sealed Cache is just an ordinary lootbox item, opened from the inventory — no key or NPC involved.
+- Each cache tier has a wide pool of crafting materials (basic and crafted materials, ores, crystals, gemstones, soul and spirit ore, maestro parts, S80 materials) and a ladder of very rare treasures where the rarer the find, the better it is: enchant scrolls (1% down to 0.15%), blessed scrolls, attribute stones, Giant's Codex, Top-Grade Life Stones, and at 0.001-0.002% boss jewels up to Antharas, Valakas and Baium. A treasure gets an on-screen message and a fanfare, and the rarest are announced to the server (`SealedCacheTreasureChance`, `SealedCacheAnnounceChance` in `LuckyLoot.ini`).
 
 ### Alternative Class Transfer Challenges
 
@@ -978,6 +979,13 @@ This program is free software, licensed under the **GNU General Public License, 
 ---
 
 ## Recent Updates
+
+### Sealed Cache treasures
+- **New**: every Sealed Cache tier draws from a wider pool of crafting materials. Common adds D-Grade crystals and gemstones, soul and spirit ore, more crafted materials and all four ores; Rare adds C/B crystals and gemstones, Metal Hardener, maestro parts, Metallic Thread and Durable Metal Plate; Epic adds A/S crystals and gemstones, Metal Hardener and maestro parts.
+- **New**: each cache has a very small chance of a treasure, and the rarer it is, the better: Common from D-Grade enchant scrolls (1%) to a Top-Grade Life Stone (0.002%), Rare from C-Grade scrolls (1%) to the Queen Ant, Core and Orfen jewels (0.001%), Epic from A-Grade scrolls (1%) to the Antharas, Valakas and Baium jewels (0.001%). The full ladder is in `LuckyLoot.ini`.
+- **New**: a treasure find shows a big on-screen message with a fanfare (`SealedCacheTreasureChance`, default 1%), and anything at 0.02% or rarer is announced to every online player (`SealedCacheAnnounceChance`).
+- **Changed**: the Epic cache no longer gives Tough Leather, which no recipe uses.
+- **Fixed**: an extractable item entry rolled one chance in 100,000 too many, so a 0.001% entry hit at 0.002% (and a 0% entry could still hit).
 
 ### Survival Arena: the Gauntlet
 - **Changed**: a Dragon Coin sells to a shop for 50 Adena instead of 100, every Arena Shop price is doubled, and the Survival Arena pays twice as many coins as before (hot zones, Wave Challenges, class transfer trials and the Night Market's goods are unchanged). The Night Market now changes a coin into 11 Ancient Adena instead of 22, still a little less than selling it and buying Ancient Adena.

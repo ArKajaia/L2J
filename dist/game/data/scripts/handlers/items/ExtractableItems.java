@@ -30,6 +30,7 @@ import java.util.Set;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.RatesConfig;
+import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.handler.IItemHandler;
 import org.l2jmobius.gameserver.model.actor.Playable;
@@ -39,9 +40,12 @@ import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.holders.ExtractableProduct;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.InventoryUpdate;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+import org.l2jmobius.gameserver.util.Broadcast;
 
 /**
  * Extractable Items handler.
@@ -128,7 +132,56 @@ public class ExtractableItems implements IItemHandler
 			sendMessage(player, entry.getKey(), entry.getValue().longValue());
 		}
 		
+		if (isSealedCache(etcitem.getId()))
+		{
+			revealTreasures(player, etcitem, rolled);
+		}
+		
 		return true;
+	}
+	
+	/**
+	 * @param itemId an item id
+	 * @return {@code true} if it is one of the Lucky Loot Sealed Caches
+	 */
+	private static boolean isSealedCache(int itemId)
+	{
+		return LuckyLootConfig.SEALED_CACHE_ENABLED && ((itemId == LuckyLootConfig.SEALED_CACHE_COMMON_ITEM_ID) || (itemId == LuckyLootConfig.SEALED_CACHE_RARE_ITEM_ID) || (itemId == LuckyLootConfig.SEALED_CACHE_EPIC_ITEM_ID));
+	}
+	
+	/**
+	 * Makes a rare Sealed Cache find stand out from the stream of material messages: anything listed at or below {@link LuckyLootConfig#SEALED_CACHE_TREASURE_CHANCE} gets an on-screen message and a fanfare, and anything at or below {@link LuckyLootConfig#SEALED_CACHE_ANNOUNCE_CHANCE} is also announced to every online player.
+	 * @param player the player who opened the cache
+	 * @param cache the cache template
+	 * @param rolled what the cache gave
+	 */
+	private static void revealTreasures(Player player, EtcItem cache, List<ExtractedProduct> rolled)
+	{
+		final int treasureChance = (int) (LuckyLootConfig.SEALED_CACHE_TREASURE_CHANCE * 1000);
+		final int announceChance = (int) (LuckyLootConfig.SEALED_CACHE_ANNOUNCE_CHANCE * 1000);
+		ExtractedProduct best = null;
+		for (ExtractedProduct extracted : rolled)
+		{
+			final int chance = extracted.product().getChance();
+			if ((chance <= treasureChance) && ((best == null) || (chance < best.product().getChance())))
+			{
+				best = extracted;
+			}
+			
+			if (chance <= announceChance)
+			{
+				Broadcast.toAllOnlinePlayers(player.getName() + " found " + extracted.template().getName() + " in a " + cache.getName() + "!");
+			}
+		}
+		
+		if (best == null)
+		{
+			return;
+		}
+		
+		final boolean legendary = best.product().getChance() <= announceChance;
+		player.sendPacket(new ExShowScreenMessage((legendary ? "LEGENDARY FIND! " : "Treasure! ") + best.template().getName(), 6000));
+		player.sendPacket(legendary ? QuestSound.ITEMSOUND_QUEST_JACKPOT.getPacket() : QuestSound.ITEMSOUND_QUEST_FANFARE_2.getPacket());
 	}
 	
 	/**
@@ -194,7 +247,8 @@ public class ExtractableItems implements IItemHandler
 					break;
 				}
 				
-				if (Rnd.get(100000) > expi.getChance())
+				// Chance is in thousandths of a percent: 1 = 0.001%, 100000 = always.
+				if (Rnd.get(100000) >= expi.getChance())
 				{
 					continue;
 				}
