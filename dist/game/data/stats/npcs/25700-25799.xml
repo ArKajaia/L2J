@@ -3179,6 +3179,8 @@
 				<item id="4087" min="11" max="31" chance="21.7907776815" /> <!-- Stockings of Doom Pattern -->
 				<item id="97" min="1" max="1" chance="2.318883161" /> <!-- Lance -->
 				<item id="4115" min="12" max="36" chance="21.267616839" /> <!-- Lance Blade -->
+				<item id="4613" min="1" max="3" chance="26.1503392436" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
+				<item id="4614" min="2" max="4" chance="17.4335116116" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 				<item id="4615" min="2" max="6" chance="13.0751696218" /> <!-- Greater Dye of CON <Con+4 Str-4> -->
 				<item id="8176" min="1" max="2" chance="73" /> <!-- Destruction Tombstone -->
 				<item id="9814" min="1" max="4" chance="85" /> <!-- Memento Mori -->
@@ -3533,6 +3535,8 @@
 				<item id="4105" min="4" max="12" chance="33.0057703012" /> <!-- Heavy War Axe Head -->
 				<item id="4106" min="8" max="22" chance="17.31428229" /> <!-- Sprite's Staff Head -->
 				<item id="4610" min="1" max="3" chance="33.2293680726" /> <!-- Greater Dye of MEN <Men+3 Wit-3> -->
+				<item id="4611" min="2" max="4" chance="22.1529120484" /> <!-- Greater Dye of WIT <Wit+3 Int-3> -->
+				<item id="4612" min="2" max="6" chance="16.6146840363" /> <!-- Greater Dye of WIT <Wit+3 Men-3> -->
 				<item id="8176" min="1" max="1" chance="85" /> <!-- Destruction Tombstone -->
 				<item id="9814" min="1" max="3" chance="85" /> <!-- Memento Mori -->
 			</drop>
@@ -3663,6 +3667,8 @@
 				<item id="2917" min="40" max="120" chance="15.109152297" /> <!-- Ring of Seal Gemstone -->
 				<item id="286" min="1" max="1" chance="4.0181852172" /> <!-- Eminence Bow -->
 				<item id="2121" min="3" max="9" chance="72.5814147828" /> <!-- Eminence Bow Shaft -->
+				<item id="4607" min="1" max="3" chance="34.0992819254" /> <!-- Greater Dye of INT <Int+3 Men-3> -->
+				<item id="4608" min="2" max="4" chance="22.7328293077" /> <!-- Greater Dye of INT <Int+3 Wit-3> -->
 				<item id="4609" min="2" max="6" chance="17.0496409627" /> <!-- Greater Dye of MEN <Men+3 Int-3> -->
 				<item id="8176" min="1" max="1" chance="87" /> <!-- Destruction Tombstone -->
 				<item id="9814" min="1" max="3" chance="87" /> <!-- Memento Mori -->
@@ -3794,6 +3800,8 @@
 				<item id="2106" min="4" max="12" chance="27.6249704325" /> <!-- Grace Dagger Edge -->
 				<item id="2107" min="8" max="22" chance="14.7333270175" /> <!-- Dark Screamer Edge -->
 				<item id="4604" min="2" max="6" chance="14.6026690173" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
+				<item id="4605" min="3" max="7" chance="11.6821163277" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
+				<item id="4606" min="3" max="9" chance="9.7351441551" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="8176" min="1" max="1" chance="75" /> <!-- Destruction Tombstone -->
 				<item id="9816" min="1" max="3" chance="75" /> <!-- Earth Egg -->
 			</drop>

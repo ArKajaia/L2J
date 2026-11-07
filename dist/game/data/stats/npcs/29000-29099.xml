@@ -3554,6 +3554,8 @@
 				</group>
 				<group chance="80.68769836425781">
 					<item id="4616" min="1" max="3" chance="27.2727" /> <!-- Greater Dye of CON <Con+4 Dex-4> -->
+					<item id="4617" min="2" max="4" chance="18.1818" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
+					<item id="4618" min="1" max="1" chance="54.5455" /> <!-- Greater Dye of DEX <Dex+4 Con-4> -->
 				</group>
 			</drop>
 		</dropLists>

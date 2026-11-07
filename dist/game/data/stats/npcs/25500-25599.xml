@@ -520,6 +520,8 @@
 				<item id="4106" min="2" max="6" chance="33.4339569551697" /> <!-- Sprite's Staff Head -->
 				<item id="8339" min="11" max="31" chance="6.47461502105713" /> <!-- Spell Breaker Head -->
 				<item id="8347" min="3" max="7" chance="24.4529025384064" /> <!-- Ice Storm Hammer Head -->
+				<item id="4613" min="1" max="3" chance="21.2410297034225" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
+				<item id="4614" min="2" max="4" chance="14.1606864689484" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 				<item id="4615" min="1" max="1" chance="42.4820594068451" /> <!-- Greater Dye of CON <Con+4 Str-4> -->
 				<item id="947" min="1" max="1" chance="12.319723261116" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
 			</drop>
@@ -681,6 +683,8 @@
 				<item id="4107" min="9" max="27" chance="9.59869349872589" /> <!-- Keshanberk Blade -->
 				<item id="4108" min="2" max="6" chance="43.1941572926178" /> <!-- Sword of Valhalla Blade -->
 				<item id="4604" min="2" max="6" chance="16.563786320137" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
+				<item id="4605" min="3" max="7" chance="13.2510189916496" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
+				<item id="4606" min="3" max="9" chance="11.0425242134247" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="21" max="63" chance="9.46497043206406" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>

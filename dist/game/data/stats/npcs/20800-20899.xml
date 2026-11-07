@@ -584,6 +584,7 @@
 			<spoil>
 				<item id="2160" min="1" max="1" chance="13.2104" /> <!-- Recipe: Moonstone Earring -->
 				<item id="1953" min="1" max="1" chance="6.5586" /> <!-- Sage's Rag Lining -->
+				<item id="4470" min="1" max="1" chance="1.1701" /> <!-- Dye of STR <Str+1 Dex-1> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1325,6 +1326,7 @@
 					<item id="1879" min="1" max="1" chance="6.7829" /> <!-- Cokes -->
 					<item id="1875" min="1" max="1" chance="2.7132" /> <!-- Stone of Purity -->
 					<item id="4040" min="1" max="1" chance="0.814" /> <!-- Mold Lubricant -->
+					<item id="4619" min="1" max="1" chance="0.0561" /> <!-- Greater Dye of INT <Int+4 Men-4> -->
 					<item id="4401" min="1" max="1" chance="0.0814" /> <!-- Green Dimensional Stone -->
 					<item id="4167" min="1" max="1" chance="0.5062" /> <!-- Recipe: Sealed Blue Wolf Boots (100%) -->
 					<item id="8728" min="1" max="1" chance="0.6783" /> <!-- Life Stone - Level 61 -->
@@ -1412,6 +1414,7 @@
 					<item id="1881" min="1" max="1" chance="4.6008" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="2.3004" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.3" /> <!-- Mold Hardener -->
+					<item id="4620" min="1" max="1" chance="0.0476" /> <!-- Greater Dye of INT <Int+4 Wit-4> -->
 					<item id="8728" min="1" max="1" chance="0.5751" /> <!-- Life Stone - Level 61 -->
 					<item id="8738" min="1" max="1" chance="0.1438" /> <!-- Mid-Grade Life Stone - Level 61 -->
 					<item id="8748" min="1" max="1" chance="0.0144" /> <!-- High-Grade Life Stone - Level 61 -->
@@ -1420,6 +1423,8 @@
 			</drop>
 			<spoil>
 				<item id="1875" min="1" max="1" chance="38.4494" /> <!-- Stone of Purity -->
+				<item id="4617" min="1" max="1" chance="0.7955" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
+				<item id="4613" min="1" max="1" chance="0.7955" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1499,6 +1504,7 @@
 					<item id="1881" min="1" max="1" chance="4.6008" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="2.3004" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.3" /> <!-- Mold Hardener -->
+					<item id="4620" min="1" max="1" chance="0.0476" /> <!-- Greater Dye of INT <Int+4 Wit-4> -->
 					<item id="8728" min="1" max="1" chance="0.5751" /> <!-- Life Stone - Level 61 -->
 					<item id="8738" min="1" max="1" chance="0.1438" /> <!-- Mid-Grade Life Stone - Level 61 -->
 					<item id="8748" min="1" max="1" chance="0.0144" /> <!-- High-Grade Life Stone - Level 61 -->
@@ -1960,6 +1966,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4620" min="1" max="1" chance="0.8386" /> <!-- Greater Dye of INT <Int+4 Wit-4> -->
 				<item id="4105" min="1" max="1" chance="3.479" /> <!-- Heavy War Axe Head -->
 				<item id="4077" min="1" max="1" chance="27.3487" /> <!-- Doom Shield Fragment -->
 			</spoil>
@@ -2505,6 +2512,7 @@
 					<item id="1874" min="1" max="1" chance="3.0531" /> <!-- Oriharukon Ore -->
 					<item id="4043" min="1" max="1" chance="1.5265" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="1.5265" /> <!-- Mold Glue -->
+					<item id="4617" min="1" max="1" chance="0.0632" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
 					<item id="8730" min="1" max="1" chance="0.5088" /> <!-- Life Stone - Level 67 -->
 					<item id="8740" min="1" max="1" chance="0.1272" /> <!-- Mid-Grade Life Stone - Level 67 -->
 					<item id="8750" min="1" max="1" chance="0.0127" /> <!-- High-Grade Life Stone - Level 67 -->
@@ -4207,6 +4215,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4601" min="1" max="1" chance="0.3273" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 				<item id="1539" min="1" max="1" chance="32.7301" /> <!-- Greater Healing Potion -->
 				<item id="1914" min="1" max="1" chance="8.2745" /> <!-- Earring of Seal Gemstone -->
 			</spoil>
@@ -4290,6 +4299,7 @@
 					<item id="1881" min="1" max="1" chance="4.5709" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="2.2855" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.2981" /> <!-- Mold Hardener -->
+					<item id="4601" min="1" max="1" chance="0.0762" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 					<item id="4609" min="1" max="1" chance="0.0762" /> <!-- Greater Dye of MEN <Men+3 Int-3> -->
 					<item id="2355" min="1" max="1" chance="0.0559" /> <!-- Recipe: Ghoul's Staff -->
 					<item id="8725" min="1" max="1" chance="0.9523" /> <!-- Life Stone - Level 52 -->
@@ -4390,6 +4400,7 @@
 					<item id="1876" min="1" max="1" chance="6.1908" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="8.844" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="0.5159" /> <!-- Enria -->
+					<item id="4608" min="1" max="1" chance="0.0688" /> <!-- Greater Dye of INT <Int+3 Wit-3> -->
 					<item id="3017" min="1" max="1" chance="0.8646" /> <!-- Recipe: Divine Gloves -->
 					<item id="3017" min="1" max="1" chance="0.8646" /> <!-- Recipe: Divine Gloves -->
 					<item id="8725" min="1" max="1" chance="0.8598" /> <!-- Life Stone - Level 52 -->
@@ -4804,6 +4815,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4469" min="1" max="1" chance="0.8784" /> <!-- Dye of STR <Str+1 Con-1> -->
 				<item id="1956" min="1" max="1" chance="17.4488" /> <!-- Square Shield Fragment -->
 			</spoil>
 		</dropLists>

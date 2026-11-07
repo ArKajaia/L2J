@@ -5136,6 +5136,7 @@
 			<spoil>
 				<item id="4043" min="1" max="1" chance="12.7207" /> <!-- Asofe -->
 				<item id="1869" min="1" max="9" chance="76.3245" /> <!-- Iron Ore -->
+				<item id="4601" min="1" max="1" chance="0.848" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5222,6 +5223,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4600" min="1" max="1" chance="1.3611" /> <!-- Greater Dye of WIT <Wit+2 Men-2> -->
 				<item id="1920" min="1" max="1" chance="13.9722" /> <!-- Necklace of Seal Chain -->
 			</spoil>
 		</dropLists>
@@ -5393,6 +5395,8 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4613" min="1" max="1" chance="0.7001" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
+				<item id="4614" min="1" max="1" chance="0.7001" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 				<item id="4049" min="1" max="1" chance="26.6232" /> <!-- Adamantite Earring Gemstone -->
 			</spoil>
 		</dropLists>
@@ -7320,6 +7324,7 @@
 			<spoil>
 				<item id="440" min="1" max="1" chance="0.1258" /> <!-- Robe of Seal -->
 				<item id="1912" min="1" max="1" chance="40.9204" /> <!-- Ring of Protection Gemstone -->
+				<item id="4590" min="1" max="1" chance="1.2658" /> <!-- Greater Dye of STR <Str+2 Dex-2> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7422,6 +7427,7 @@
 			<spoil>
 				<item id="4041" min="1" max="1" chance="3.3616" /> <!-- Mold Hardener -->
 				<item id="1872" min="1" max="11" chance="85.908" /> <!-- Animal Bone -->
+				<item id="4601" min="1" max="1" chance="0.8591" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7525,6 +7531,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4594" min="1" max="1" chance="1.7584" /> <!-- Greater Dye of DEX <Dex+2 Con-2> -->
 				<item id="1920" min="1" max="1" chance="18.05" /> <!-- Necklace of Seal Chain -->
 			</spoil>
 		</dropLists>
@@ -7740,6 +7747,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4613" min="1" max="1" chance="0.7498" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 				<item id="947" min="1" max="1" chance="0.2174" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
 				<item id="1872" min="1" max="15" chance="90.6001" /> <!-- Animal Bone -->
 			</spoil>
@@ -9620,6 +9628,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4593" min="1" max="1" chance="1.7584" /> <!-- Greater Dye of DEX <Dex+2 Str-2> -->
 				<item id="1920" min="1" max="1" chance="18.05" /> <!-- Necklace of Seal Chain -->
 			</spoil>
 		</dropLists>
@@ -9722,6 +9731,7 @@
 			</drop>
 			<spoil>
 				<item id="4129" min="1" max="1" chance="6.1196" /> <!-- Recipe: Earrings of Black Ore (100%) -->
+				<item id="4611" min="1" max="1" chance="1.2566" /> <!-- Greater Dye of WIT <Wit+3 Int-3> -->
 				<item id="947" min="1" max="1" chance="0.2262" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
 			</spoil>
 		</dropLists>

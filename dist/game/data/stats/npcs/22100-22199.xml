@@ -263,6 +263,7 @@
 			</drop>
 			<spoil>
 				<item id="1895" min="1" max="7" chance="77.2457" /> <!-- Metallic Fiber -->
+				<item id="4617" min="1" max="1" chance="1.4916" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
 				<item id="4056" min="1" max="1" chance="19.5736" /> <!-- Zubei's Breastplate Part -->
 			</spoil>
 		</dropLists>

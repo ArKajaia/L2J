@@ -662,6 +662,7 @@
 				</group>
 			</drop>
 			<spoil>
+				<item id="4553" min="1" max="1" chance="0.3236" /> <!-- Greater Dye of STR <Str+1 Con-1> -->
 				<item id="1908" min="1" max="1" chance="7.6616" /> <!-- Moonstone Earring Wire -->
 				<item id="2163" min="1" max="1" chance="4.1279" /> <!-- Recipe: Earring of Protection -->
 			</spoil>
@@ -801,6 +802,7 @@
 			<spoil>
 				<item id="1878" min="1" max="1" chance="41.7148" /> <!-- Braided Hemp -->
 				<item id="1884" min="1" max="1" chance="64.1767" /> <!-- Cord -->
+				<item id="4601" min="1" max="1" chance="0.2317" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1012,6 +1014,7 @@
 			<spoil>
 				<item id="1867" min="1" max="5" chance="65.1751" /> <!-- Animal Skin -->
 				<item id="1872" min="1" max="5" chance="65.1751" /> <!-- Animal Bone -->
+				<item id="4613" min="1" max="1" chance="0.2023" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
 			</spoil>
 		</dropLists>
 		<collision>

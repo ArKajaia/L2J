@@ -1870,6 +1870,8 @@
 				<item id="2117" min="3" max="7" chance="12.024629635498" /> <!-- Ghoul's Staff Head -->
 				<item id="2118" min="3" max="9" chance="10.0205463033829" /> <!-- Demon's Staff Head -->
 				<item id="2969" min="2" max="4" chance="20.4612649442749" /> <!-- Yaksa Mace Head -->
+				<item id="4601" min="1" max="3" chance="23.0076350369568" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
+				<item id="4602" min="2" max="4" chance="15.3384525242386" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 				<item id="4603" min="2" max="6" chance="11.5038175184784" /> <!-- Greater Dye of CON <Con+3 Str-3> -->
 				<item id="951" min="1" max="1" chance="37.6488971053848" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
 			</drop>
@@ -1940,6 +1942,8 @@
 				<item id="4087" min="11" max="31" chance="14.4526610304451" /> <!-- Stockings of Doom Pattern -->
 				<item id="79" min="1" max="1" chance="1.53798826739502" /> <!-- Sword of Damascus -->
 				<item id="4114" min="3" max="9" chance="56.6134132523804" /> <!-- Sword of Damascus Blade -->
+				<item id="4613" min="1" max="3" chance="17.3440508772278" /> <!-- Greater Dye of STR <Str+4 Con-4> -->
+				<item id="4614" min="1" max="1" chance="34.6881891934586" /> <!-- Greater Dye of STR <Str+4 Dex-4> -->
 				<item id="4615" min="1" max="1" chance="34.6881891934586" /> <!-- Greater Dye of CON <Con+4 Str-4> -->
 				<item id="6571" min="1" max="1" chance="0.718573726577759" /> <!-- Blessed Scroll: Enchant Weapon (B-Grade) -->
 			</drop>
@@ -5043,6 +5047,8 @@
 				<item id="2104" min="3" max="7" chance="11.4298546606445" /> <!-- Club of Nature Head -->
 				<item id="2105" min="5" max="13" chance="6.03357845397949" /> <!-- Mace of Underworld Head -->
 				<item id="4604" min="2" max="6" chance="14.6026693589706" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
+				<item id="4605" min="3" max="7" chance="11.6821166010361" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
+				<item id="4606" min="3" max="9" chance="9.73514438288117" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="3" max="9" chance="58.4107718665848" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>

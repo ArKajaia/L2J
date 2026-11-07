@@ -1568,6 +1568,8 @@
 					<item id="2121" min="12" max="36" chance="81.8702" /> <!-- Eminence Bow Shaft -->
 				</group>
 				<group chance="84.7074966430664">
+					<item id="4607" min="5" max="15" chance="14.0187" /> <!-- Greater Dye of INT <Int+3 Men-3> -->
+					<item id="4608" min="2" max="4" chance="46.729" /> <!-- Greater Dye of INT <Int+3 Wit-3> -->
 					<item id="4609" min="2" max="6" chance="35.0467" /> <!-- Greater Dye of MEN <Men+3 Int-3> -->
 					<item id="6573" min="1" max="1" chance="4.2056" /> <!-- Blessed Scroll: Enchant Weapon (C-Grade) -->
 				</group>
@@ -1731,6 +1733,8 @@
 				</group>
 				<group chance="87.43939971923828">
 					<item id="4616" min="5" max="15" chance="11.4068" /> <!-- Greater Dye of CON <Con+4 Dex-4> -->
+					<item id="4617" min="2" max="4" chance="38.0228" /> <!-- Greater Dye of DEX <Dex+4 Str-4> -->
+					<item id="4618" min="2" max="6" chance="28.5171" /> <!-- Greater Dye of DEX <Dex+4 Con-4> -->
 					<item id="6572" min="1" max="1" chance="22.0533" /> <!-- Blessed Scroll: Enchant Armor (B-Grade) -->
 				</group>
 			</drop>

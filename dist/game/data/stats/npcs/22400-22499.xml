@@ -3910,6 +3910,7 @@
 			</drop>
 			<spoil>
 				<item id="1871" min="1" max="3" chance="62.5677" /> <!-- Charcoal -->
+				<item id="4553" min="1" max="1" chance="0.5005" /> <!-- Greater Dye of STR <Str+1 Con-1> -->
 				<item id="1908" min="1" max="1" chance="11.8499" /> <!-- Moonstone Earring Wire -->
 			</spoil>
 		</dropLists>

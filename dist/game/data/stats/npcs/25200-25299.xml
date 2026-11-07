@@ -888,6 +888,8 @@
 				<item id="4051" min="14" max="42" chance="28.4041012542191" /> <!-- Adamantite Necklace Chain -->
 				<item id="267" min="1" max="1" chance="2.76274380953407" /> <!-- Arthro Nail -->
 				<item id="4111" min="12" max="36" chance="22.0034553024044" /> <!-- Arthro Nail Blade -->
+				<item id="4601" min="1" max="3" chance="33.2293920140381" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
+				<item id="4602" min="2" max="4" chance="22.1529556333923" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 				<item id="4603" min="2" max="6" chance="16.614696007019" /> <!-- Greater Dye of CON <Con+3 Str-3> -->
 				<item id="951" min="3" max="7" chance="10.8750571756287" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
 			</drop>
@@ -2158,6 +2160,8 @@
 				<item id="243" min="1" max="1" chance="2.60856027649689" /> <!-- Hell Knife -->
 				<item id="4109" min="24" max="72" chance="10.2267277612457" /> <!-- Kris Edge -->
 				<item id="4110" min="8" max="22" chance="32.7254517651062" /> <!-- Hell Knife Edge -->
+				<item id="4619" min="5" max="15" chance="7.78961351516724" /> <!-- Greater Dye of INT <Int+4 Men-4> -->
+				<item id="4620" min="2" max="4" chance="25.965327838089" /> <!-- Greater Dye of INT <Int+4 Wit-4> -->
 				<item id="4621" min="2" max="6" chance="19.4739579692154" /> <!-- Greater Dye of MEN <Men+4 Int-4> -->
 				<item id="947" min="1" max="1" chance="22.5898033752823" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
 			</drop>
@@ -3116,6 +3120,8 @@
 				<item id="97" min="1" max="1" chance="3.45373154600525" /> <!-- Lance -->
 				<item id="4115" min="12" max="36" chance="31.6758689788971" /> <!-- Lance Blade -->
 				<item id="4622" min="2" max="4" chance="25.9653649651337" /> <!-- Greater Dye of MEN <Men+4 Wit-4> -->
+				<item id="4623" min="2" max="6" chance="19.4740419198761" /> <!-- Greater Dye of WIT <Wit+4 Int-4> -->
+				<item id="4624" min="3" max="7" chance="15.5792189790802" /> <!-- Greater Dye of WIT <Wit+4 Men-4> -->
 				<item id="948" min="6" max="18" chance="11.7654775294647" /> <!-- Scroll: Enchant Armor (B-Grade) -->
 			</drop>
 		</dropLists>
@@ -3194,6 +3200,8 @@
 				<item id="2092" min="3" max="7" chance="22.395022508606" /> <!-- Homunkulus's Sword Blade -->
 				<item id="2095" min="3" max="9" chance="18.6625449109039" /> <!-- Sword of Nightmare Blade -->
 				<item id="2096" min="4" max="10" chance="15.9964334402618" /> <!-- Sword of Whispering Death Blade -->
+				<item id="4601" min="6" max="18" chance="7.39882752147675" /> <!-- Greater Dye of STR <Str+3 Con-3> -->
+				<item id="4602" min="2" max="4" chance="29.595310085907" /> <!-- Greater Dye of STR <Str+3 Dex-3> -->
 				<item id="4603" min="2" max="6" chance="22.1964825644302" /> <!-- Greater Dye of CON <Con+3 Str-3> -->
 				<item id="951" min="3" max="7" chance="14.5285799624634" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
 			</drop>
@@ -3860,6 +3868,8 @@
 				<item id="4081" min="20" max="60" chance="10.1409734761963" /> <!-- Doom Plate Armor Temper -->
 				<item id="287" min="1" max="1" chance="3.67045449752426" /> <!-- Bow of Peril -->
 				<item id="4121" min="12" max="36" chance="33.6070456550636" /> <!-- Bow of Peril Shaft -->
+				<item id="4619" min="1" max="3" chance="41.3920529053803" /> <!-- Greater Dye of INT <Int+4 Men-4> -->
+				<item id="4620" min="2" max="4" chance="27.5946714710541" /> <!-- Greater Dye of INT <Int+4 Wit-4> -->
 				<item id="4621" min="2" max="6" chance="20.6960721514893" /> <!-- Greater Dye of MEN <Men+4 Int-4> -->
 				<item id="6571" min="1" max="1" chance="1.71480173867798" /> <!-- Blessed Scroll: Enchant Weapon (B-Grade) -->
 			</drop>
@@ -4086,6 +4096,8 @@
 				<item id="284" min="1" max="1" chance="4.379518665905" /> <!-- Dark Elven Long Bow -->
 				<item id="4112" min="12" max="36" chance="34.5097826341438" /> <!-- Dark Elven Longbow Shaft -->
 				<item id="4604" min="2" max="6" chance="26.3376513746796" /> <!-- Greater Dye of CON <Con+3 Dex-3> -->
+				<item id="4605" min="3" max="7" chance="21.0701050965042" /> <!-- Greater Dye of DEX <Dex+3 Str-3> -->
+				<item id="4606" min="3" max="9" chance="17.5584342497864" /> <!-- Greater Dye of DEX <Dex+3 Con-3> -->
 				<item id="952" min="21" max="63" chance="15.0500064836197" /> <!-- Scroll: Enchant Armor (C-Grade) -->
 			</drop>
 		</dropLists>
