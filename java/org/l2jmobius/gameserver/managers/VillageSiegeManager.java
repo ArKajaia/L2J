@@ -88,6 +88,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 import org.l2jmobius.gameserver.taskmanagers.AttackStanceTaskManager;
+import org.l2jmobius.gameserver.util.BoardPlacement;
 import org.l2jmobius.gameserver.util.LocationUtil;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
@@ -3098,14 +3099,14 @@ public class VillageSiegeManager
 	{
 		for (SiegeVillage village : VillageSiegeData.getInstance().getVillages())
 		{
-			final Location heart = getHeart(village);
-			if (heart == null)
+			final Spawn gatekeeper = SpawnTable.getInstance().getAnySpawn(village.getGatekeeperId());
+			final Location location = gatekeeper != null ? BoardPlacement.place(gatekeeper, BOARD_NPC_ID, village.getBoard()) : null;
+			if (location == null)
 			{
 				LOGGER.warning(getClass().getSimpleName() + ": No spawn of gatekeeper " + village.getGatekeeperId() + " for the Defence Force Board of " + village.getName() + ".");
 				continue;
 			}
-			final Location location = QuestSpawnUtil.findPoint(heart, 150, 230, true, 0);
-			final Npc board = Quest.addSpawn(BOARD_NPC_ID, location.getX(), location.getY(), location.getZ(), LocationUtil.calculateHeadingFrom(location, heart), false, 0, false, 0);
+			final Npc board = Quest.addSpawn(BOARD_NPC_ID, location.getX(), location.getY(), location.getZ(), location.getHeading(), false, 0, false, 0);
 			if (board != null)
 			{
 				board.setRandomWalking(false);

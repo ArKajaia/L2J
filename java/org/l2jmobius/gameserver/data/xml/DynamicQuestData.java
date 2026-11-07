@@ -37,6 +37,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 import org.l2jmobius.commons.util.IXmlReader;
+import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.dynamicquest.Eligibility;
@@ -290,7 +291,8 @@ public class DynamicQuestData implements IXmlReader
 					}
 					case "board":
 					{
-						_loadingBoards.add(new NoticeBoardSite(parseString(attrs, "town"), parseInteger(attrs, "anchor")));
+						final Location place = attrs.getNamedItem("x") != null ? new Location(parseInteger(attrs, "x"), parseInteger(attrs, "y"), parseInteger(attrs, "z"), parseInteger(attrs, "heading", 0)) : null;
+						_loadingBoards.add(new NoticeBoardSite(parseString(attrs, "town"), parseInteger(attrs, "anchor"), place));
 						break;
 					}
 					case "monsterPool":
