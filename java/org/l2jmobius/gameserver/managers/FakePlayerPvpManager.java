@@ -30,6 +30,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
@@ -2479,16 +2480,17 @@ public class FakePlayerPvpManager
 			return;
 		}
 		
-		if (!FakePlayerPvpConfig.REVENGE_ON_KILL_STEAL || !victim.isMonster() || _fakePlayers.isEmpty())
+		// Everyone fights the monsters of a village siege or of a big fight together: nobody steals a kill there.
+		if (!FakePlayerPvpConfig.REVENGE_ON_KILL_STEAL || !victim.isMonster() || _fakePlayers.isEmpty() || isSharedFightMonster(victim))
 		{
 			return;
 		}
 		
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
-			// A big fight's helper (a Resonant monster, a Nightlord) came to help the players, during that fight and after it.
+			// Not a big fight's joiner (a Resonant monster, a Nightlord): a helper came to help the players, during that fight and after it, a rival came for that monster.
 			// Nor a defender of a village under siege: everyone there fights the same monsters.
-			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || FakeJoinerManager.isHelper(fake) || VillageSiegeManager.isSiegeDefender(fake))
+			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || isInSharedFight(fake))
 			{
 				return;
 			}
@@ -2709,7 +2711,12 @@ public class FakePlayerPvpManager
 		}
 		profile.setNextChatTime(now + CHAT_INTERVAL);
 		
-		final String text = TAUNTS_GREET_REPLY[Rnd.get(TAUNTS_GREET_REPLY.length)];
+		final String[] replies = isInSharedFight(other) ? withoutKillSteal(TAUNTS_GREET_REPLY) : TAUNTS_GREET_REPLY;
+		if (replies.length == 0)
+		{
+			return;
+		}
+		final String text = replies[Rnd.get(replies.length)];
 		ThreadPool.schedule(() ->
 		{
 			if (!other.isDead() && other.isSpawned() && !isInPvp(other))
@@ -2735,7 +2742,15 @@ public class FakePlayerPvpManager
 			return;
 		}
 		
-		final String[][] dialogues = rivalry ? DIALOGUES_RIVALRY : DIALOGUES_HUNTING;
+		String[][] dialogues = rivalry ? DIALOGUES_RIVALRY : DIALOGUES_HUNTING;
+		if (isInSharedFight(fake) || isInSharedFight(other))
+		{
+			dialogues = withoutKillSteal(dialogues);
+			if (dialogues.length == 0)
+			{
+				return;
+			}
+		}
 		final String[] lines = dialogues[Rnd.get(dialogues.length)];
 		
 		// When each line is said: it is typed, read by the other one, who types the answer...
@@ -2854,7 +2869,7 @@ public class FakePlayerPvpManager
 	 */
 	public void onMonsterAttackedByFake(Attackable monster, Attackable stealer)
 	{
-		if ((_fakePlayers.size() < 2) || (FakePlayerPvpConfig.TAUNT_CHANCE <= 0))
+		if ((_fakePlayers.size() < 2) || (FakePlayerPvpConfig.TAUNT_CHANCE <= 0) || isSharedFightMonster(monster) || isInSharedFight(stealer))
 		{
 			return;
 		}
@@ -2862,7 +2877,7 @@ public class FakePlayerPvpManager
 		for (Map.Entry<Creature, AggroInfo> entry : monster.getAggroList().entrySet())
 		{
 			final Creature creature = entry.getKey();
-			if ((creature == null) || (creature == stealer) || !creature.isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster) || FakePartyManager.getInstance().isSameGroup(creature, stealer))
+			if ((creature == null) || (creature == stealer) || !creature.isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster) || FakePartyManager.getInstance().isSameGroup(creature, stealer) || isInSharedFight(creature))
 			{
 				continue;
 			}
@@ -2882,7 +2897,7 @@ public class FakePlayerPvpManager
 	 */
 	public void onMonsterKilledByFake(Attackable victim, Attackable killer)
 	{
-		if (!FakePlayerPvpConfig.REVENGE_ON_KILL_STEAL || !victim.isMonster() || (_fakePlayers.size() < 2) || killer.isInsideZone(ZoneId.PEACE))
+		if (!FakePlayerPvpConfig.REVENGE_ON_KILL_STEAL || !victim.isMonster() || (_fakePlayers.size() < 2) || killer.isInsideZone(ZoneId.PEACE) || isSharedFightMonster(victim) || isInSharedFight(killer))
 		{
 			return;
 		}
@@ -2891,7 +2906,7 @@ public class FakePlayerPvpManager
 		final long stolenDamage = killerDamage != null ? killerDamage.getDamage() : 0;
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
-			if ((fake == killer) || !fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || fake.isTrialDuelist() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer))
+			if ((fake == killer) || !fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || fake.isTrialDuelist() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || isInSharedFight(fake))
 			{
 				return;
 			}
@@ -2929,7 +2944,8 @@ public class FakePlayerPvpManager
 	 */
 	public void onMonsterAttacked(Attackable monster, Creature attacker)
 	{
-		if (_fakePlayers.isEmpty() || (FakePlayerPvpConfig.TAUNT_CHANCE <= 0))
+		// Everyone hits the monsters of a village siege or of a big fight together: nobody's monster to complain about.
+		if (_fakePlayers.isEmpty() || (FakePlayerPvpConfig.TAUNT_CHANCE <= 0) || isSharedFightMonster(monster))
 		{
 			return;
 		}
@@ -2943,7 +2959,7 @@ public class FakePlayerPvpManager
 		for (Map.Entry<Creature, AggroInfo> entry : monster.getAggroList().entrySet())
 		{
 			final Creature creature = entry.getKey();
-			if ((creature == null) || !creature.isAttackable() || !creature.asAttackable().isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster) || FakePartyManager.getInstance().isSameGroup(creature, player))
+			if ((creature == null) || !creature.isAttackable() || !creature.asAttackable().isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster) || FakePartyManager.getInstance().isSameGroup(creature, player) || isInSharedFight(creature))
 			{
 				continue;
 			}
@@ -3189,6 +3205,8 @@ public class FakePlayerPvpManager
 	 */
 	/** Nothing to say. */
 	private static final String[] NO_TAUNTS = {};
+	/** A chat line about kill stealing. */
+	private static final Pattern KILL_STEAL_TALK = Pattern.compile("\\bks\\b|kill ?steal", Pattern.CASE_INSENSITIVE);
 
 	// What a fake player of a Team vs Team match says: about the match, like a player of an event (see getTvtLines).
 	private static final String[] TVT_ENGAGE =
@@ -3238,6 +3256,63 @@ public class FakePlayerPvpManager
 		"back back",
 		"heal me"
 	};
+
+	/**
+	 * @param monster a monster
+	 * @return {@code true} if everyone fights {@code monster} together, so that nobody steals it: a monster of a village siege, or of a big fight fake players join (a Resonant monster, a Nightlord, see {@link FakeJoinerManager#getFight})
+	 */
+	private static boolean isSharedFightMonster(Creature monster)
+	{
+		return VillageSiegeManager.isSiegeMonster(monster) || (monster.isMonster() && (FakeJoinerManager.getFight(monster.asMonster()) != null));
+	}
+	
+	/**
+	 * @param fake a fake player
+	 * @return {@code true} if {@code fake} defends a village under siege or joined a big fight (a Resonant monster, a Nightlord), where everyone fights the same monsters: it never talks about kill stealing
+	 */
+	private static boolean isInSharedFight(Creature fake)
+	{
+		return VillageSiegeManager.isSiegeDefender(fake) || FakeJoinerManager.isHelper(fake) || FakeJoinerManager.getInstance().isRival(fake);
+	}
+	
+	/**
+	 * @param taunts chat lines
+	 * @return {@code taunts} without the lines about kill stealing: none of the lines about someone taking its monster, and none that mention "ks" of the others
+	 */
+	private static String[] withoutKillSteal(String[] taunts)
+	{
+		if ((taunts == TAUNTS_KILL_STEAL) || (taunts == TAUNTS_KILL_STEAL_COMPLAIN) || (taunts == TAUNTS_MOB_HUNT))
+		{
+			return NO_TAUNTS;
+		}
+	
+		final List<String> lines = new ArrayList<>(taunts.length);
+		for (String line : taunts)
+		{
+			if (!KILL_STEAL_TALK.matcher(line).find())
+			{
+				lines.add(line);
+			}
+		}
+		return lines.size() == taunts.length ? taunts : lines.toArray(NO_TAUNTS);
+	}
+	
+	/**
+	 * @param dialogues talks of two fake players
+	 * @return {@code dialogues} without the talks that mention kill stealing
+	 */
+	private static String[][] withoutKillSteal(String[][] dialogues)
+	{
+		final List<String[]> kept = new ArrayList<>(dialogues.length);
+		for (String[] dialogue : dialogues)
+		{
+			if (withoutKillSteal(dialogue).length == dialogue.length)
+			{
+				kept.add(dialogue);
+			}
+		}
+		return kept.toArray(new String[0][]);
+	}
 
 	/**
 	 * @param taunts what a fake player would say outside an event
@@ -3316,6 +3391,16 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		String[] lines = taunts;
+		
+		// Defending a village under siege or in a big fight (a Resonant monster, a Nightlord), everyone fights the same monsters: no talk about kill stealing.
+		if (isInSharedFight(fake))
+		{
+			lines = withoutKillSteal(taunts);
+			if (lines.length == 0)
+			{
+				return false;
+			}
+		}
 		if (profile.isTvtFighter())
 		{
 			lines = getTvtLines(taunts);
