@@ -65,21 +65,11 @@
 					<item id="8605" min="1" max="1" chance="7" /> <!-- Superior Herb of Mana -->
 				</group>
 				<group chance="20.0">
-					<item id="8606" min="1" max="1" chance="20" /> <!-- Herb of Power -->
-					<item id="8608" min="1" max="1" chance="20" /> <!-- Herb of Alacrity -->
-					<item id="8610" min="1" max="1" chance="20" /> <!-- Herb of Critical Attack - Probability -->
-					<item id="10655" min="1" max="1" chance="20" /> <!-- Herb of Vampiric Rage -->
-					<item id="10656" min="1" max="1" chance="20" /> <!-- Herb of Critical Attack - Power -->
 				</group>
 				<group chance="10.0">
-					<item id="8607" min="1" max="1" chance="50" /> <!-- Herb of Magic -->
-					<item id="8609" min="1" max="1" chance="50" /> <!-- Herb of Casting Spd. -->
 				</group>
 				<group chance="5.0">
-					<item id="8612" min="1" max="1" chance="10" /> <!-- Herb of the Warrior -->
-					<item id="8613" min="1" max="1" chance="10" /> <!-- Herb of the Mystic -->
 					<item id="8614" min="1" max="1" chance="10" /> <!-- Herb of Recovery -->
-					<item id="8611" min="1" max="1" chance="70" /> <!-- Herb of Speed -->
 				</group>
 			</drop>
 		</dropLists>
