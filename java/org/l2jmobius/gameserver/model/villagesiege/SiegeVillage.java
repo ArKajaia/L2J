@@ -69,8 +69,9 @@ public class SiegeVillage
 	private final int _minDefenderLevel;
 	private final int _maxDefenderLevel;
 	private final List<FixedEntrance> _entrances;
+	private final Location _board;
 
-	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int minLevel, int maxLevel, int minDefenderLevel, int maxDefenderLevel, List<FixedEntrance> entrances)
+	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int minLevel, int maxLevel, int minDefenderLevel, int maxDefenderLevel, List<FixedEntrance> entrances, Location board)
 	{
 		_id = id;
 		_name = name;
@@ -82,6 +83,15 @@ public class SiegeVillage
 		_minDefenderLevel = minDefenderLevel;
 		_maxDefenderLevel = maxDefenderLevel;
 		_entrances = Collections.unmodifiableList(entrances);
+		_board = board;
+	}
+
+	/**
+	 * @return where the Defence Force Board stands, its heading included, {@code null} to find a place near the gatekeeper
+	 */
+	public Location getBoard()
+	{
+		return _board;
 	}
 
 	/**

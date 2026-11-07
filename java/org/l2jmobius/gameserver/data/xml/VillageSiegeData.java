@@ -77,6 +77,7 @@ public class VillageSiegeData implements IXmlReader
 				final NamedNodeMap attrs = node.getAttributes();
 				final String id = parseString(attrs, "id").toLowerCase();
 				final List<FixedEntrance> entrances = new ArrayList<>();
+				Location board = null;
 				for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling())
 				{
 					if ("entrance".equalsIgnoreCase(child.getNodeName()))
@@ -85,8 +86,13 @@ public class VillageSiegeData implements IXmlReader
 						final Location rally = entrance.getNamedItem("rallyX") != null ? new Location(parseInteger(entrance, "rallyX"), parseInteger(entrance, "rallyY"), parseInteger(entrance, "rallyZ")) : null;
 						entrances.add(new FixedEntrance(new Location(parseInteger(entrance, "x"), parseInteger(entrance, "y"), parseInteger(entrance, "z")), rally));
 					}
+					else if ("board".equalsIgnoreCase(child.getNodeName()))
+					{
+						final NamedNodeMap place = child.getAttributes();
+						board = new Location(parseInteger(place, "x"), parseInteger(place, "y"), parseInteger(place, "z"), parseInteger(place, "heading", 0));
+					}
 				}
-				_villages.put(id, new SiegeVillage(id, parseString(attrs, "name"), parseString(attrs, "town"), parseInteger(attrs, "gatekeeper"), parseInteger(attrs, "guardLook"), parseInteger(attrs, "minLevel", 0), parseInteger(attrs, "maxLevel", 0), parseInteger(attrs, "minDefenderLevel", 0), parseInteger(attrs, "maxDefenderLevel", 0), entrances));
+				_villages.put(id, new SiegeVillage(id, parseString(attrs, "name"), parseString(attrs, "town"), parseInteger(attrs, "gatekeeper"), parseInteger(attrs, "guardLook"), parseInteger(attrs, "minLevel", 0), parseInteger(attrs, "maxLevel", 0), parseInteger(attrs, "minDefenderLevel", 0), parseInteger(attrs, "maxDefenderLevel", 0), entrances, board));
 			}
 		}
 	}

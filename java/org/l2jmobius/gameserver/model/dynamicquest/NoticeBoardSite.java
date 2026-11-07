@@ -30,12 +30,19 @@ public class NoticeBoardSite
 {
 	private final String _town;
 	private final int _anchorNpcId;
+	private final Location _fixedLocation;
 	private volatile Location _location;
 
-	public NoticeBoardSite(String town, int anchorNpcId)
+	/**
+	 * @param town the town's name
+	 * @param anchorNpcId the npc the board stands next to
+	 * @param fixedLocation where the board stands, its heading included, {@code null} to find a place next to the npc
+	 */
+	public NoticeBoardSite(String town, int anchorNpcId, Location fixedLocation)
 	{
 		_town = town;
 		_anchorNpcId = anchorNpcId;
+		_fixedLocation = fixedLocation;
 	}
 
 	public String getTown()
@@ -46,6 +53,14 @@ public class NoticeBoardSite
 	public int getAnchorNpcId()
 	{
 		return _anchorNpcId;
+	}
+
+	/**
+	 * @return where the board stands as set in the data, its heading included, {@code null} if it is found next to the npc
+	 */
+	public Location getFixedLocation()
+	{
+		return _fixedLocation;
 	}
 
 	/**

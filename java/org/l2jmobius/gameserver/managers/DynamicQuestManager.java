@@ -104,6 +104,7 @@ import org.l2jmobius.gameserver.model.zone.type.TownZone;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
 import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
+import org.l2jmobius.gameserver.util.BoardPlacement;
 import org.l2jmobius.gameserver.util.Broadcast;
 import org.l2jmobius.gameserver.util.LocationUtil;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
@@ -352,16 +353,15 @@ public class DynamicQuestManager
 				LOGGER.warning(getClass().getSimpleName() + ": No spawn of npc " + site.getAnchorNpcId() + " for the Notice Board of " + site.getTown() + ".");
 				continue;
 			}
-			Location anchor = spawn.getLastSpawn() != null ? spawn.getLastSpawn().getLocation() : new Location(spawn.getX(), spawn.getY(), spawn.getZ());
-			if ((anchor.getX() == 0) && (anchor.getY() == 0))
+			final Location location = BoardPlacement.place(spawn, DynamicQuestData.getInstance().getNoticeBoardNpcId(), site.getFixedLocation());
+			if (location == null)
 			{
 				continue;
 			}
-			final Location location = QuestSpawnUtil.findPoint(anchor, 70, 140, true, 0);
 			site.setLocation(location);
 			if (DynamicQuestConfig.NOTICE_BOARDS)
 			{
-				final Npc npc = Quest.addSpawn(DynamicQuestData.getInstance().getNoticeBoardNpcId(), location.getX(), location.getY(), location.getZ(), LocationUtil.calculateHeadingFrom(location, anchor), false, 0, false, 0);
+				final Npc npc = Quest.addSpawn(DynamicQuestData.getInstance().getNoticeBoardNpcId(), location.getX(), location.getY(), location.getZ(), location.getHeading(), false, 0, false, 0);
 				if (npc != null)
 				{
 					npc.setRandomWalking(false);

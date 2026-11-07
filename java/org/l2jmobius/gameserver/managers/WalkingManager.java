@@ -18,6 +18,7 @@ package org.l2jmobius.gameserver.managers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -239,6 +240,14 @@ public class WalkingManager implements IXmlReader
 	public WalkRoute getRoute(String route)
 	{
 		return _routes.get(route);
+	}
+	
+	/**
+	 * @return all the routes
+	 */
+	public Collection<WalkRoute> getRoutes()
+	{
+		return _routes.values();
 	}
 	
 	/**
