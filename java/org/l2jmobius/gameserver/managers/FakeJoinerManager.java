@@ -44,9 +44,9 @@ public class FakeJoinerManager
 {
 	/** Set for good on a fake player that came to help: it never comes back to a party from town and never takes kill-steal revenge. */
 	private static final String HELPER_VAR = "FIGHT_HELPER";
-	/** How far from the monster a fake player turns up, so it runs into the fight. */
-	private static final int JOIN_MIN_DISTANCE = 600;
-	private static final int JOIN_MAX_DISTANCE = 900;
+	/** How far from the monster a fake player turns up, so it runs into the fight. Beyond what the players see, so it doesn't seem to appear out of nowhere: they see it arrive. */
+	private static final int JOIN_MIN_DISTANCE = 1700;
+	private static final int JOIN_MAX_DISTANCE = 2300;
 	/** How often a fight with joiners is checked for being given up ({@link #checkFight(Monster, Watch)}). */
 	private static final int WATCH_INTERVAL_MS = 15000;
 	/** A fight is given up once no living player of the monster's aggro list is this close to it, twice in a row. */
