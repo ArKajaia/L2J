@@ -65,6 +65,8 @@ public class LuckyLootConfig
 	public static int SEALED_CACHE_EPIC_WEIGHT;
 	public static boolean SEALED_CACHE_HIGH_LEVEL_BONUS;
 	public static boolean SEALED_CACHE_MESSAGE;
+	public static double SEALED_CACHE_TREASURE_CHANCE;
+	public static double SEALED_CACHE_ANNOUNCE_CHANCE;
 
 	public static void load()
 	{
@@ -100,5 +102,7 @@ public class LuckyLootConfig
 		SEALED_CACHE_EPIC_WEIGHT = Math.max(0, config.getInt("SealedCacheEpicWeight", 5));
 		SEALED_CACHE_HIGH_LEVEL_BONUS = config.getBoolean("SealedCacheHighLevelBonus", true);
 		SEALED_CACHE_MESSAGE = config.getBoolean("SealedCacheMessage", true);
+		SEALED_CACHE_TREASURE_CHANCE = Math.max(0, config.getDouble("SealedCacheTreasureChance", 1.0));
+		SEALED_CACHE_ANNOUNCE_CHANCE = Math.max(0, config.getDouble("SealedCacheAnnounceChance", 0.02));
 	}
 }
