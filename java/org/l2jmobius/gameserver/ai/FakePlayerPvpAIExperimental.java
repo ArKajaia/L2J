@@ -22,12 +22,16 @@ package org.l2jmobius.gameserver.ai;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
@@ -51,6 +55,9 @@ import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.ai.fight.FightRead;
 import org.l2jmobius.gameserver.ai.fight.FightReadFeed;
+import org.l2jmobius.gameserver.ai.fight.Reaction;
+import org.l2jmobius.gameserver.ai.fight.ReflexEvent;
+import org.l2jmobius.gameserver.ai.fight.Reflexes;
 import org.l2jmobius.gameserver.ai.fight.ScoreContext;
 import org.l2jmobius.gameserver.ai.fight.Scored;
 import org.l2jmobius.gameserver.ai.fight.SkillFacts;
@@ -269,6 +276,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long FIGHT_READ_NOTE_INTERVAL = 2000;
 	/** An attack skill with at least this reuse is its burst: with one ready, it may plan a burst. */
 	private static final int BURST_SKILL_REUSE = 10000;
+	/** The skill categories whose defensive and cleansing skills (and every emergency skill) answer a reflex. */
+	private static final List<SkillCategory> REFLEX_SELF_CATEGORIES = List.of(SkillCategory.EMERGENCY, SkillCategory.CLEANSE, SkillCategory.BUFF);
+	private static final Random REFLEX_RANDOM = new Random();
+	/** An attack skill is worth at least this to the power of its place in the build's list, times the best estimate of the list. */
+	private static final double LIST_RANK_FACTOR = 0.85;
+	/** Most critical hit chance counted for normal attacks. */
+	private static final double MAX_CRIT_CHANCE = 0.8;
 	/** Within this gap a melee fake player counts its enemy as on it (its long casts risk an interrupt). */
 	private static final double MELEE_NEAR = 150;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
@@ -467,6 +481,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private FightReadFeed _fightRead;
 	private long _nextFightReadNote;
 	private SkillScorer _scorer;
+	private Reflexes _reflexes;
+	private volatile boolean _reflexScheduled;
+	private volatile boolean _reflexDue;
 	/** The plan it last started, to note when it ends. */
 	private SkillPlan _lastPlan;
 	
@@ -1024,8 +1041,14 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			FakePlayerPvpManager.getInstance().keepPerformance(npc, profile, pvp || FakePlayerPvpManager.isInPvp(npc));
 		}
 		
-		// Take care of itself first: emergency skills, cleansing, heals, buffs. A Totem Warchief with an enemy on it swaps places with a totem away from it first.
-		if ((hpRatio < 0.3) && ((pvp && trySpiritWalk(npc, profile, target)) || castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true)))
+		// Skill timing: a reflex that came due since its last think (an enemy cast, a burst, its HP crashing...) is answered first.
+		if (pvp && _reflexDue && runReflex(npc, profile, target, role, mage, safeCast, distance, collision, canMove, pressed, now))
+		{
+			return;
+		}
+		
+		// Take care of itself first: emergency skills, cleansing, heals, buffs. A Totem Warchief with an enemy on it swaps places with a totem away from it first. In a PvP its emergency skills answer its HP crashing (a reflex) instead of a fixed HP.
+		if ((hpRatio < 0.3) && ((pvp && trySpiritWalk(npc, profile, target)) || (!(pvp && (_fightRead != null)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "EMERGENCY");
 			return;
@@ -7043,7 +7066,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		if (_fightRead == null)
 		{
-			_fightRead = new FightReadFeed(npc, profile.getPersonality());
+			_fightRead = new FightReadFeed(npc, profile.getPersonality(), SkillWeights.of(profile.getRole().name()).burstReflexTtd());
+			_fightRead.setOnEvent(this::scheduleReflex);
 		}
 		_fightRead.update(target, getFightEnemies(npc, party), now);
 		if (now >= _nextFightReadNote)
@@ -7062,37 +7086,14 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 */
 	private boolean useScoredSkill(Attackable npc, FakePlayerPvpProfile profile, Creature target, Role role, boolean mage, int defenses, long safeCast, double distance, int collision, boolean canMove, boolean pressed, long now)
 	{
-		final double reach = distance - collision;
-		final boolean ranged = role.isRanged();
-		final List<SkillOption> options = new ArrayList<>();
 		final Map<SkillOption, Skill> skills = new IdentityHashMap<>();
-		final boolean dagger = profile.getRole() == Role.DAGGER;
-		addScoredOptions(npc, target, affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, reach, defenses, dagger, options, skills);
-		addScoredOptions(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, reach, defenses, dagger, options, skills);
-		if (skills.isEmpty())
+		final List<SkillOption> options = new ArrayList<>();
+		final ScoreContext ctx = scoredOptions(npc, profile, target, role, mage, defenses, safeCast, distance - collision, pressed, now, options, skills);
+		if (ctx == null)
 		{
 			return false;
 		}
-		
-		final double autoDps = mage ? 0 : estimateAutoAttackDps(npc, target);
-		if (!mage)
-		{
-			options.add(new SkillOption(SkillOption.Kind.AUTO_ATTACK, null, 0, true));
-		}
-		options.add(new SkillOption(SkillOption.Kind.HOLD, null, 0, true));
-		double bestRate = 0;
-		boolean burstReady = false;
-		for (Map.Entry<SkillOption, Skill> entry : skills.entrySet())
-		{
-			final SkillFacts facts = entry.getKey().skill();
-			bestRate = Math.max(bestRate, entry.getKey().expectedDamage() / Math.max(0.5, (facts.hitTimeMs() + facts.coolTimeMs()) / 1000.0));
-			burstReady |= (facts.reuseMs() >= BURST_SKILL_REUSE) && (entry.getKey().expectedDamage() > 0);
-		}
-		final FightRead read = _fightRead.read();
-		final double myDps = Math.max(read.damageDealtPerSecond(now), Math.max(autoDps, 0.5 * bestRate));
-		final boolean meleeNear = ranged ? pressed : (reach < MELEE_NEAR);
-		final boolean disabled = npc.isStunned() || npc.isSleeping() || npc.isParalyzed() || npc.isMuted();
-		final ScoreContext ctx = new ScoreContext(npc.getObjectId(), target.getObjectId(), now, myDps, autoDps, npc.getCurrentHp() / npc.getMaxHp(), target.getCurrentHp() / Math.max(1, target.getMaxHp()), meleeNear, ranged, burstReady, disabled, FightReadFeed.groupOf(target), FightRead.level(profile.getPersonality().getSkill()));
+		final boolean burstReady = ctx.burstReady();
 		
 		final SkillScorer scorer = scorer(npc, profile);
 		notePlanEnd(npc, target, scorer);
@@ -7110,15 +7111,22 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 		
-		final Scored best = scorer.score(options, ctx).get(0);
+		final List<Scored> scored = scorer.score(options, ctx);
+		final Scored best = scored.get(0);
+		final StringBuilder note = new StringBuilder(best.option().kind() == SkillOption.Kind.SKILL ? skills.get(best.option()).getName() + " (" + best.option().skill().id() + ")" : best.option().kind().name());
+		note.append(";value=").append(String.format(Locale.ROOT, "%.2f", best.value()));
+		best.terms().entrySet().stream().sorted((a, b) -> Double.compare(Math.abs(b.getValue()), Math.abs(a.getValue()))).limit(3).forEach(term -> note.append(';').append(term.getKey()).append('=').append(String.format(Locale.ROOT, "%.2f", term.getValue())));
+		if (scored.size() > 1)
+		{
+			final Scored second = scored.get(1);
+			note.append(";next=").append(second.option().kind() == SkillOption.Kind.SKILL ? skills.get(second.option()).getName() : second.option().kind().name()).append(':').append(String.format(Locale.ROOT, "%.2f", second.value()));
+		}
+		FakeAiTrace.note(npc, Reason.SCORED_SKILL, target, note.toString());
 		if (best.option().kind() != SkillOption.Kind.SKILL)
 		{
 			return false;
 		}
 		final Skill skill = skills.get(best.option());
-		final StringBuilder terms = new StringBuilder();
-		best.terms().entrySet().stream().sorted((a, b) -> Double.compare(Math.abs(b.getValue()), Math.abs(a.getValue()))).limit(3).forEach(term -> terms.append(';').append(term.getKey()).append('=').append(String.format(Locale.ROOT, "%.2f", term.getValue())));
-		FakeAiTrace.note(npc, Reason.SCORED_SKILL, target, skill.getName() + " (" + skill.getId() + ");value=" + String.format(Locale.ROOT, "%.2f", best.value()) + terms);
 		if (!useSkill(npc, target, skill, distance, collision, canMove))
 		{
 			return false;
@@ -7129,10 +7137,179 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/**
-	 * Adds its skills that may be used on the target now as scorer options (the same filters as {@link #pickSkill}).
+	 * Builds what it could do now as scorer options (its debuff and attack skills that may be used on the target, normal attack unless it is a mage, holding) and the scorer's context.
+	 * @param options filled with the options
+	 * @param skills filled with the skill of each skill option
+	 * @return the context, {@code null} if no skill may be used
 	 */
-	private static void addScoredOptions(Attackable npc, Creature target, List<Skill> list, boolean debuff, double reach, int defenses, boolean dagger, List<SkillOption> options, Map<SkillOption, Skill> skills)
+	private ScoreContext scoredOptions(Attackable npc, FakePlayerPvpProfile profile, Creature target, Role role, boolean mage, int defenses, long safeCast, double reach, boolean pressed, long now, List<SkillOption> options, Map<SkillOption, Skill> skills)
 	{
+		final boolean ranged = role.isRanged();
+		final boolean dagger = profile.getRole() == Role.DAGGER;
+		addScoredOptions(npc, target, profile.getSkills(SkillCategory.DEBUFF), affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, reach, defenses, dagger, options, skills);
+		addScoredOptions(npc, target, profile.getSkills(SkillCategory.ATTACK), affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, reach, defenses, dagger, options, skills);
+		// An archer or mage uses what reaches its target from where it stands, and only walks in when nothing does (like pickSkill).
+		if (ranged && options.stream().anyMatch(SkillOption::inReach))
+		{
+			options.removeIf(option -> !option.inReach() && (skills.remove(option) != null));
+		}
+		if (skills.isEmpty())
+		{
+			return null;
+		}
+		
+		final double autoDps = mage ? 0 : estimateAutoAttackDps(npc, target);
+		if (!mage)
+		{
+			options.add(new SkillOption(SkillOption.Kind.AUTO_ATTACK, null, 0, true));
+		}
+		options.add(new SkillOption(SkillOption.Kind.HOLD, null, 0, true));
+		double bestRate = 0;
+		boolean burstReady = false;
+		for (Map.Entry<SkillOption, Skill> entry : skills.entrySet())
+		{
+			final SkillFacts facts = entry.getKey().skill();
+			bestRate = Math.max(bestRate, entry.getKey().expectedDamage() / Math.max(0.5, entry.getKey().castMs() / 1000.0));
+			burstReady |= (facts.reuseMs() >= BURST_SKILL_REUSE) && (entry.getKey().expectedDamage() > 0);
+		}
+		final FightRead read = _fightRead.read();
+		final double myDps = Math.max(read.damageDealtPerSecond(now), Math.max(autoDps, 0.5 * bestRate));
+		final boolean meleeNear = ranged ? pressed : (reach < MELEE_NEAR);
+		final boolean disabled = npc.isStunned() || npc.isSleeping() || npc.isParalyzed() || npc.isMuted();
+		return new ScoreContext(npc.getObjectId(), target.getObjectId(), now, myDps, autoDps, npc.getCurrentHp() / npc.getMaxHp(), target.getCurrentHp() / Math.max(1, target.getMaxHp()), meleeNear, ranged, burstReady, disabled, FightReadFeed.groupOf(target), FightRead.level(profile.getPersonality().getSkill()));
+	}
+	
+	/**
+	 * Skill timing: a reflex came due (see {@link #scheduleReflex}). It weighs answering the events since its last reflex against what it is doing (see {@link Reflexes}) and acts if answering is worth more.
+	 * @return {@code true} if it acted
+	 */
+	private boolean runReflex(Attackable npc, FakePlayerPvpProfile profile, Creature target, Role role, boolean mage, long safeCast, double distance, int collision, boolean canMove, boolean pressed, long now)
+	{
+		_reflexDue = false;
+		if (_fightRead == null)
+		{
+			return false;
+		}
+		final List<ReflexEvent> events = _fightRead.drainEvents();
+		if (events.isEmpty())
+		{
+			return false;
+		}
+		final Map<SkillOption, Skill> skills = new IdentityHashMap<>();
+		final List<SkillOption> options = new ArrayList<>();
+		final ScoreContext built = scoredOptions(npc, profile, target, role, mage, getKnownDefenses(target), safeCast, distance - collision, pressed, now, options, skills);
+		final ScoreContext ctx = built != null ? built : new ScoreContext(npc.getObjectId(), target.getObjectId(), now, 1, 0, npc.getCurrentHp() / npc.getMaxHp(), target.getCurrentHp() / Math.max(1, target.getMaxHp()), role.isRanged() ? pressed : ((distance - collision) < MELEE_NEAR), role.isRanged(), false, npc.isStunned() || npc.isSleeping() || npc.isParalyzed() || npc.isMuted(), FightReadFeed.groupOf(target), FightRead.level(profile.getPersonality().getSkill()));
+		if (built == null)
+		{
+			options.add(new SkillOption(SkillOption.Kind.HOLD, null, 0, true));
+		}
+		// Its own defensive and cleansing skills, which answer a burst, an HP crash or a root.
+		final Set<Skill> selfSkills = new HashSet<>();
+		for (SkillCategory category : REFLEX_SELF_CATEGORIES)
+		{
+			for (Skill skill : profile.getSkills(category))
+			{
+				final SkillFacts facts = SkillFactsReader.of(skill);
+				final EnumSet<SkillMeaning> meanings = SkillMeanings.classify(facts);
+				if ((meanings.contains(SkillMeaning.DEFENSIVE) || meanings.contains(SkillMeaning.CLEANSE) || (category == SkillCategory.EMERGENCY)) && selfSkills.add(skill) && !npc.isAffectedBySkill(skill.getId()) && canCast(npc, skill, npc))
+				{
+					final SkillFacts asDefensive = meanings.contains(SkillMeaning.CLEANSE) || meanings.contains(SkillMeaning.DEFENSIVE) ? facts : new SkillFacts(facts.id(), facts.level(), false, true, facts.castRange(), facts.hitTimeMs(), facts.coolTimeMs(), facts.reuseMs(), facts.abnormalTimeMs(), "INVINCIBILITY", facts.effectTypes(), false, 0, 0, facts.magicLevel(), facts.basicProperty());
+					final SkillOption option = new SkillOption(SkillOption.Kind.SKILL, asDefensive, 0, true, FightReadFeed.castTime(npc, skill));
+					options.add(option);
+					skills.put(option, skill);
+				}
+			}
+		}
+		if (role.isRanged() && canMove)
+		{
+			options.add(new SkillOption(SkillOption.Kind.STEP_BACK, null, 0, true));
+		}
+		
+		final SkillScorer scorer = scorer(npc, profile);
+		if (_reflexes == null)
+		{
+			_reflexes = new Reflexes(_fightRead.read(), scorer, SkillWeights.of(profile.getRole().name()));
+		}
+		final SkillOption current = npc.isAttackingNow() ? new SkillOption(SkillOption.Kind.AUTO_ATTACK, null, 0, true) : null;
+		final Reaction reaction = _reflexes.decide(events, ctx, options, current);
+		if (reaction == null)
+		{
+			if (scorer.raceWon(ctx))
+			{
+				FakeAiTrace.note(npc, Reason.REFLEX_RACE_SKIP, target, events.stream().map(event -> event.kind().name()).distinct().collect(Collectors.joining(",")));
+			}
+			return false;
+		}
+		
+		final SkillOption option = reaction.option();
+		if (option.kind() == SkillOption.Kind.STEP_BACK)
+		{
+			FakeAiTrace.note(npc, Reason.REFLEX, target, reaction.why() + ";STEP_BACK");
+			return kiteStep(npc, target, now);
+		}
+		if (option.kind() != SkillOption.Kind.SKILL)
+		{
+			return false;
+		}
+		final Skill skill = skills.get(option);
+		FakeAiTrace.note(npc, Reason.REFLEX, target, reaction.why() + ";" + skill.getName() + " (" + skill.getId() + ")");
+		if (selfSkills.contains(skill) || option.skill().self())
+		{
+			npc.setTarget(npc);
+			npc.doCast(skill);
+			npc.setTarget(target);
+		}
+		else if (!useSkill(npc, target, skill, distance, collision, canMove))
+		{
+			return false;
+		}
+		scorer.onSkillUsed(skill.getId());
+		_fightRead.noteOwnCc(target, skill);
+		return true;
+	}
+	
+	/**
+	 * Skill timing: an event for the reflexes came (see {@link FightReadFeed}). After its reaction delay, a reflex comes due and it thinks.
+	 */
+	private void scheduleReflex()
+	{
+		if (_reflexScheduled)
+		{
+			return;
+		}
+		_reflexScheduled = true;
+		final FakePlayerPvpProfile profile = getActiveChar().getTemplate().getFakePlayerPvpProfile();
+		final double skillLevel = profile != null ? FightRead.level(profile.getPersonality().getSkill()) : 0.5;
+		ThreadPool.schedule(() ->
+		{
+			_reflexScheduled = false;
+			_reflexDue = true;
+			if (!getActiveChar().isDead())
+			{
+				onActionThink();
+			}
+		}, Reflexes.reactionDelay(skillLevel, REFLEX_RANDOM));
+	}
+	
+	/**
+	 * Adds its skills that may be used on the target now as scorer options (the same filters as {@link #pickSkill}). An attack skill is worth at least its place in the build's list allows (the lists are ordered best first by hand, which knows prophecies, damage over time and curses that
+	 * the damage estimate doesn't see): {@link #LIST_RANK_FACTOR} to the power of its place, times the best estimate of the list.
+	 * @param ordered the build's whole list, in its order
+	 * @param list the skills of it to consider
+	 */
+	private static void addScoredOptions(Attackable npc, Creature target, List<Skill> ordered, List<Skill> list, boolean debuff, double reach, int defenses, boolean dagger, List<SkillOption> options, Map<SkillOption, Skill> skills)
+	{
+		double top = 0;
+		if (!debuff)
+		{
+			for (Skill skill : ordered)
+			{
+				if (SkillMeanings.classify(SkillFactsReader.of(skill)).contains(SkillMeaning.NUKE))
+				{
+					top = Math.max(top, estimateDamage(npc, target, skill, dagger));
+				}
+			}
+		}
 		final boolean disabled = debuff && isDisabled(target);
 		for (Skill skill : list)
 		{
@@ -7142,7 +7319,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 			final int range = skill.getCastRange() > 0 ? skill.getCastRange() : skill.getAffectRange();
 			final SkillFacts facts = SkillFactsReader.of(skill);
-			final SkillOption option = new SkillOption(SkillOption.Kind.SKILL, facts, SkillMeanings.classify(facts).contains(SkillMeaning.NUKE) ? estimateDamage(npc, target, skill, dagger) : 0, (range <= 0) || (range >= reach));
+			double damage = SkillMeanings.classify(facts).contains(SkillMeaning.NUKE) ? estimateDamage(npc, target, skill, dagger) : 0;
+			if (!debuff)
+			{
+				damage = Math.max(damage, Math.pow(LIST_RANK_FACTOR, Math.max(0, ordered.indexOf(skill))) * top);
+			}
+			final SkillOption option = new SkillOption(SkillOption.Kind.SKILL, facts, damage, (range <= 0) || (range >= reach), FightReadFeed.castTime(npc, skill));
 			options.add(option);
 			skills.put(option, skill);
 		}
@@ -7165,11 +7347,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/**
-	 * @return the damage per second it expects from its normal attacks on the target, without critical hits
+	 * @return the damage per second it expects from its normal attacks on the target, critical hits (double damage) counted by their chance
 	 */
 	private static double estimateAutoAttackDps(Attackable npc, Creature target)
 	{
-		final double damage = Formulas.calcPhysDam(npc, target, null, (byte) 0, false, true);
+		final double critChance = Math.min(MAX_CRIT_CHANCE, npc.getCriticalHit(target, null) / 1000.0);
+		final double damage = Formulas.calcPhysDam(npc, target, null, (byte) 0, false, true) * (1 + critChance);
 		final int interval = Math.max(npc.calculateTimeBetweenAttacks(), npc.getActiveWeaponItem() != null ? npc.calculateReuseTime(npc.getActiveWeaponItem()) : 0);
 		return (damage * 1000) / Math.max(200, interval);
 	}

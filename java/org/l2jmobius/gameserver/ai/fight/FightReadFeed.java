@@ -20,10 +20,13 @@
  */
 package org.l2jmobius.gameserver.ai.fight;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,8 +62,21 @@ public class FightReadFeed
 	/** Tenacity's buff (passive tree keystone): no stun, sleep or root for a moment. */
 	private static final int TENACITY_SKILL = 27479;
 	
+	/** The crowd control holding the target is about to end when less than this is left. */
+	private static final long CC_ENDING = 700;
+	
 	private final Attackable _self;
 	private final FightRead _read;
+	private final double _hpCrashTtd;
+	/** Events for the reflexes since they last looked. */
+	private final List<ReflexEvent> _events = new ArrayList<>();
+	private volatile Runnable _onEvent;
+	// What the icons showed at the last update, to see what changed.
+	private boolean _selfHeld;
+	private boolean _targetHeld;
+	private boolean _targetDefended;
+	private boolean _ccEndingPosted;
+	private int _lastTargetId;
 	/** Object id -> the enemy it listens to. */
 	private final Map<Integer, Creature> _listened = new HashMap<>();
 	
@@ -70,8 +86,53 @@ public class FightReadFeed
 	 */
 	public FightReadFeed(Attackable self, FakePlayerPvpPersonality personality)
 	{
+		this(self, personality, Double.NEGATIVE_INFINITY);
+	}
+	
+	/**
+	 * @param self the fake player
+	 * @param personality its personality (its knowledge sets how much it notices)
+	 * @param hpCrashTtd an HP crash event is posted when its time to die falls below this many seconds
+	 */
+	public FightReadFeed(Attackable self, FakePlayerPvpPersonality personality, double hpCrashTtd)
+	{
 		_self = self;
 		_read = new FightRead(personality != null ? personality.getKnowledge() : 0, self.getObjectId());
+		_hpCrashTtd = hpCrashTtd;
+	}
+	
+	/**
+	 * @param onEvent called (outside of any lock) each time an event for the reflexes comes
+	 */
+	public void setOnEvent(Runnable onEvent)
+	{
+		_onEvent = onEvent;
+	}
+	
+	/**
+	 * @return the events since the last call, oldest first
+	 */
+	public List<ReflexEvent> drainEvents()
+	{
+		synchronized (_events)
+		{
+			final List<ReflexEvent> events = new ArrayList<>(_events);
+			_events.clear();
+			return events;
+		}
+	}
+	
+	private void post(ReflexEvent event)
+	{
+		synchronized (_events)
+		{
+			_events.add(event);
+		}
+		final Runnable onEvent = _onEvent;
+		if (onEvent != null)
+		{
+			onEvent.run();
+		}
 	}
 	
 	public FightRead read()
@@ -114,6 +175,51 @@ public class FightReadFeed
 		{
 			_read.onEffects(target.getObjectId(), meanings(target, now), now);
 			_read.onHp(now, _self.getObjectId(), _self.getCurrentHp(), _self.getMaxHp(), target.getObjectId(), target.getCurrentHp(), target.getMaxHp());
+			postChanges(target, now);
+		}
+	}
+	
+	/**
+	 * Posts the events the icons and HP show since the last update: a crowd control on itself, its own landed on its target, the target's defense gone, the hold on the target ending, its HP crashing.
+	 */
+	private void postChanges(Creature target, long now)
+	{
+		final int self = _self.getObjectId();
+		final int id = target.getObjectId();
+		if (id != _lastTargetId)
+		{
+			_lastTargetId = id;
+			_targetHeld = false;
+			_targetDefended = false;
+			_ccEndingPosted = false;
+		}
+		final boolean selfHeld = _read.has(self, EffectMeaning.STUNNED, now) || _read.has(self, EffectMeaning.ROOTED, now) || _read.has(self, EffectMeaning.SLEEPING, now) || _read.has(self, EffectMeaning.SILENCED, now);
+		if (selfHeld && !_selfHeld)
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.CC_ON_ME, id, null, now));
+		}
+		_selfHeld = selfHeld;
+		final long held = Math.max(_read.remaining(id, EffectMeaning.STUNNED, now), Math.max(_read.remaining(id, EffectMeaning.ROOTED, now), _read.remaining(id, EffectMeaning.SLEEPING, now)));
+		if ((held > 0) && !_targetHeld)
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.MY_CC_LANDED, id, null, now));
+			_ccEndingPosted = false;
+		}
+		if ((held > 0) && (held <= CC_ENDING) && !_ccEndingPosted)
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.TARGET_CC_ENDING, id, null, now));
+			_ccEndingPosted = true;
+		}
+		_targetHeld = held > 0;
+		final boolean defended = _read.has(id, EffectMeaning.INVULNERABLE, now) || _read.has(id, EffectMeaning.REFLECT, now);
+		if (!defended && _targetDefended)
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.ENEMY_DEFENSE_ENDED, id, null, now));
+		}
+		_targetDefended = defended;
+		if (_read.timeToDie(now, 0) < _hpCrashTtd)
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.HP_CRASH, 0, null, now / 1000));
 		}
 	}
 	
@@ -182,7 +288,27 @@ public class FightReadFeed
 		}
 		final Creature target = event.getTarget() instanceof Creature creature ? creature : null;
 		final long now = System.currentTimeMillis();
-		_read.onEnemyCast(caster.getObjectId(), SkillFactsReader.of(skill), target != null ? target.getObjectId() : 0, now, now + castTime(caster, skill));
+		final SkillFacts facts = SkillFactsReader.of(skill);
+		_read.onEnemyCast(caster.getObjectId(), facts, target != null ? target.getObjectId() : 0, now, now + castTime(caster, skill));
+		
+		final EnumSet<SkillMeaning> meanings = SkillMeanings.classify(facts);
+		final boolean atMe = target == _self;
+		if (atMe && (meanings.contains(SkillMeaning.NUKE) || meanings.contains(SkillMeaning.CC)))
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.ENEMY_CAST_AT_ME, caster.getObjectId(), facts, now));
+		}
+		if (atMe && meanings.contains(SkillMeaning.GAP_CLOSER))
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.ENEMY_GAP_CLOSER, caster.getObjectId(), facts, now));
+		}
+		if (meanings.contains(SkillMeaning.HEAL))
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.ENEMY_HEAL, caster.getObjectId(), facts, now));
+		}
+		if (meanings.contains(SkillMeaning.BURST_BUFF))
+		{
+			post(new ReflexEvent(ReflexEvent.Kind.ENEMY_BURST, caster.getObjectId(), facts, now));
+		}
 	}
 	
 	/**

@@ -111,6 +111,21 @@ public class SkillScorerTest
 				read.onEnemyCast(TARGET, stun(0), SELF, 1000, 1000);
 				Check.near(scorer.score(List.of(skill(nuke(1230, 3000), 1000)), ctx(2000, 1, true, true)).get(0).terms().getOrDefault("risk", 0.0), 0, 0, "its stun is down");
 			}, //
+			() -> // The caster's real cast time counts: half the time, twice the damage per second.
+			{
+				final SkillScorer scorer = new SkillScorer(new FightRead(1, 1), SkillWeights.DEFAULT, 1);
+				final SkillFacts slow = nuke(1230, 3000);
+				final double base = scorer.score(List.of(new SkillOption(Kind.SKILL, slow, 1000, true, 2000)), ctx(0, 1, false, true)).get(0).terms().get("damage");
+				final double fast = scorer.score(List.of(new SkillOption(Kind.SKILL, slow, 1000, true, 1000)), ctx(0, 1, false, true)).get(0).terms().get("damage");
+				Check.near(fast, base * 2, 1e-9, "twice as fast");
+			}, //
+			() -> // A melee near costs a share of a skill's value, never more than the skill is worth.
+			{
+				final SkillScorer scorer = new SkillScorer(new FightRead(1, 1), SkillWeights.DEFAULT, 1);
+				final List<Scored> scored = scorer.score(List.of(skill(nuke(1230, 3000), 1000), HOLD), ctx(1000, 1, true, false));
+				Check.eq(scored.get(0).option().skill().id(), 1230, "the nuke still beats holding");
+				Check.isTrue(scored.get(0).terms().get("risk") > -scored.get(0).terms().get("damage"), "risk below the damage");
+			}, //
 			() -> // Skill level 1 plays the same on any seed; level 0 strays.
 			{
 				final List<SkillOption> options = List.of(skill(nuke(1230, 3000), 1000), skill(nuke(1231, 3000), 900), AUTO);

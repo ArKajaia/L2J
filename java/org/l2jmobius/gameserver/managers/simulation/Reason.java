@@ -144,6 +144,10 @@ public enum Reason
 	PLAN_START,
 	/** Not a decision: its plan ended, done or dropped. */
 	PLAN_DROP,
+	/** Not a decision: a reflex fired (the event it answered and what it did). */
+	REFLEX,
+	/** Not a decision: events it didn't answer because it is winning the race (it keeps attacking). */
+	REFLEX_RACE_SKIP,
 
 	/** Nothing else to do this think. */
 	IDLE

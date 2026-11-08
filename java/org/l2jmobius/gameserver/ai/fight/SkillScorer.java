@@ -48,6 +48,9 @@ public class SkillScorer
 	private static final double LOW_HP = 0.35;
 	/** What an option out of reach keeps of its value (it has to walk first). */
 	private static final double OUT_OF_REACH = 0.8;
+	/** Share of a skill's value lost per second of its cast when a melee near may interrupt it: magic casts break on damage and stuns, physical skills only on stuns. */
+	private static final double MAGIC_INTERRUPT_SHARE = 0.2;
+	private static final double PHYSICAL_INTERRUPT_SHARE = 0.1;
 	/** Bonus of a plan's next step, in damage weights. */
 	private static final double PLAN_BONUS = 2;
 	/** Lowest land chance of the crowd control a burst is built on. */
@@ -178,7 +181,7 @@ public class SkillScorer
 		final EnumSet<SkillMeaning> meanings = SkillMeanings.classify(skill);
 		final long now = ctx.now();
 		final int target = ctx.targetId();
-		final double seconds = Math.max(MIN_ACTION_SECONDS, (skill.hitTimeMs() + skill.coolTimeMs()) / 1000.0);
+		final double seconds = Math.max(MIN_ACTION_SECONDS, option.castMs() / 1000.0);
 		
 		double damage = option.expectedDamage() / seconds / unit;
 		if (invulnerable)
@@ -221,9 +224,10 @@ public class SkillScorer
 			}
 			terms.put("cooldownCost", _weights.cooldownCost() * cost);
 		}
-		if (ctx.meleeNear() && (skill.hitTimeMs() > 0) && !_read.knownCcOnCooldown(target, now))
+		if (ctx.meleeNear() && (option.castMs() > 0) && !_read.knownCcOnCooldown(target, now))
 		{
-			terms.put("risk", -_weights.risk() * (skill.hitTimeMs() / 1000.0));
+			final boolean magic = skill.effectTypes().contains("MAGICAL_ATTACK") || skill.effectTypes().contains("DEATH_LINK") || skill.effectTypes().contains("HP_DRAIN");
+			terms.put("risk", -_weights.risk() * (magic ? MAGIC_INTERRUPT_SHARE : PHYSICAL_INTERRUPT_SHARE) * (option.castMs() / 1000.0) * damage);
 		}
 	}
 	
