@@ -51,6 +51,8 @@ public class SkillScorer
 	/** Share of a skill's value lost per second of its cast when a melee near may interrupt it: magic casts break on damage and stuns, physical skills only on stuns. */
 	private static final double MAGIC_INTERRUPT_SHARE = 0.2;
 	private static final double PHYSICAL_INTERRUPT_SHARE = 0.1;
+	/** Chance at skill level 0 to take the second-best option (none at level 1). */
+	private static final double MISPLAY_CHANCE = 0.2;
 	/** Bonus of a plan's next step, in damage weights. */
 	private static final double PLAN_BONUS = 2;
 	/** Lowest land chance of the crowd control a burst is built on. */
@@ -80,11 +82,13 @@ public class SkillScorer
 	
 	/**
 	 * @param ctx the fake player and its target
-	 * @return {@code true} if it kills its target well before it would die: then it keeps attacking
+	 * @return {@code true} if it kills its target well before it would die, at the rate it really deals damage: then it keeps attacking
 	 */
 	public boolean raceWon(ScoreContext ctx)
 	{
-		final double ttk = _read.timeToKill(ctx.now(), ctx.myDps());
+		// The damage it really deals decides, its estimate only before any is seen.
+		final double dealt = _read.damageDealtPerSecond(ctx.now());
+		final double ttk = _read.timeToKill(ctx.now(), dealt > 0 ? dealt : ctx.myDps());
 		final double ttd = _read.timeToDie(ctx.now(), 0);
 		if (Double.isInfinite(ttk) || Double.isInfinite(ttd))
 		{
@@ -111,6 +115,11 @@ public class SkillScorer
 			scored.add(value(option, ctx, raceWon));
 		}
 		scored.sort(Comparator.comparingDouble(Scored::value).reversed().thenComparingInt(s -> rank(s.option().kind())));
+		// An unskilled fake player sometimes takes its second-best option, like a player who misjudges.
+		if ((scored.size() > 1) && (_random.nextDouble() < (MISPLAY_CHANCE * (1 - ctx.skillLevel()))))
+		{
+			scored.add(0, scored.remove(1));
+		}
 		return scored;
 	}
 	

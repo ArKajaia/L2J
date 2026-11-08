@@ -89,6 +89,14 @@ public class SkillScorerTest
 				Check.eq(top.option().skill().id(), 1239, "the big nuke");
 				Check.near(top.terms().getOrDefault("cooldownCost", 0.0), 0, 0, "no cooldown cost");
 			}, //
+			() -> // The race is judged by the damage really dealt: a high estimate doesn't win it when little lands.
+			{
+				final FightRead read = new FightRead(1, 1);
+				read.onHp(0, SELF, 6000, 10000, TARGET, 20000, 20000);
+				read.onHp(4000, SELF, 5000, 10000, TARGET, 19800, 20000);
+				final SkillScorer scorer = new SkillScorer(read, SkillWeights.DEFAULT, 1);
+				Check.isTrue(!scorer.raceWon(new ScoreContext(SELF, TARGET, 4000, 100000, 300, 0.5, 0.99, false, true, false, false, ClassGroup.LIGHT_FIGHTER, 1)), "50 dps dealt against 250 taken is not winning");
+			}, //
 			() -> // Not winning (no damage seen): the long cooldown costs.
 			{
 				final FightRead read = new FightRead(1, 1);
@@ -125,6 +133,20 @@ public class SkillScorerTest
 				final List<Scored> scored = scorer.score(List.of(skill(nuke(1230, 3000), 1000), HOLD), ctx(1000, 1, true, false));
 				Check.eq(scored.get(0).option().skill().id(), 1230, "the nuke still beats holding");
 				Check.isTrue(scored.get(0).terms().get("risk") > -scored.get(0).terms().get("damage"), "risk below the damage");
+			}, //
+			() -> // An unskilled fake player sometimes takes its second-best option (about 20% of the time); a skilled one never does.
+			{
+				final List<SkillOption> options = List.of(skill(nuke(1230, 3000), 3000), skill(nuke(1231, 3000), 100));
+				int misplays = 0;
+				for (int seed = 0; seed < 400; seed++)
+				{
+					if (new SkillScorer(new FightRead(1, 1), SkillWeights.DEFAULT, seed).score(options, ctx(0, 0, false, true)).get(0).option().skill().id() == 1231)
+					{
+						misplays++;
+					}
+					Check.eq(new SkillScorer(new FightRead(1, 1), SkillWeights.DEFAULT, seed).score(options, ctx(0, 1, false, true)).get(0).option().skill().id(), 1230, "skilled never misplays");
+				}
+				Check.isTrue((misplays > 40) && (misplays < 130), "unskilled misplays about 20%: " + misplays);
 			}, //
 			() -> // Skill level 1 plays the same on any seed; level 0 strays.
 			{

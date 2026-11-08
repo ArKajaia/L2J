@@ -39,7 +39,7 @@ import java.util.function.BiFunction;
  */
 public record SkillWeights(double damage, double control, double setup, double cooldownCost, double risk, double raceMargin, double burstReflexTtd, double noise, int planDepth)
 {
-	public static final SkillWeights DEFAULT = new SkillWeights(1.0, 1.0, 0.6, 1.0, 1.0, 0.75, 3.0, 0.15, 3);
+	public static final SkillWeights DEFAULT = new SkillWeights(1.0, 1.0, 0.6, 1.0, 1.0, 0.75, 3.0, 0.35, 3);
 	/** The roles of fake player builds (FakePlayerPvpBuild.Role). */
 	public static final List<String> ROLES = List.of("FIGHTER", "TANK", "DAGGER", "ARCHER", "MAGE");
 	

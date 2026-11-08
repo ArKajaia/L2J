@@ -7203,6 +7203,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		{
 			options.add(new SkillOption(SkillOption.Kind.HOLD, null, 0, true));
 		}
+		// What it would do otherwise: its scorer's pick among its attacks, normal attack and holding. A reflex has to be worth more than that.
+		final SkillScorer scorer = scorer(npc, profile);
+		final SkillOption current = scorer.score(new ArrayList<>(options), ctx).get(0).option();
 		// Its own defensive and cleansing skills, which answer a burst, an HP crash or a root.
 		final Set<Skill> selfSkills = new HashSet<>();
 		for (SkillCategory category : REFLEX_SELF_CATEGORIES)
@@ -7225,12 +7228,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			options.add(new SkillOption(SkillOption.Kind.STEP_BACK, null, 0, true));
 		}
 		
-		final SkillScorer scorer = scorer(npc, profile);
 		if (_reflexes == null)
 		{
 			_reflexes = new Reflexes(_fightRead.read(), scorer, SkillWeights.of(profile.getRole().name()));
 		}
-		final SkillOption current = npc.isAttackingNow() ? new SkillOption(SkillOption.Kind.AUTO_ATTACK, null, 0, true) : null;
 		final Reaction reaction = _reflexes.decide(events, ctx, options, current);
 		if (reaction == null)
 		{

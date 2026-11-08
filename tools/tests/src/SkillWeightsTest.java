@@ -24,7 +24,7 @@ public class SkillWeightsTest
 				Check.near(d.setup(), 0.6, 0, "setup");
 				Check.near(d.raceMargin(), 0.75, 0, "race margin");
 				Check.near(d.burstReflexTtd(), 3.0, 0, "burst reflex");
-				Check.near(d.noise(), 0.15, 0, "noise");
+				Check.near(d.noise(), 0.35, 0, "noise");
 				Check.eq(d.planDepth(), 3, "plan depth");
 				Check.near(weights.get("MAGE").risk(), 1.3, 0, "mage risk");
 				Check.near(weights.get("ARCHER").risk(), 1.3, 0, "archer risk");
