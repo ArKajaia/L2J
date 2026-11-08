@@ -634,3 +634,32 @@ The four Soul Hound builds against all 40 builds, 10 battles per pair, level 85,
 - The mace is out 82–88% of the time against tanks and warriors, 77% against daggers, and about 21% against archers, mages and supports (the opening burst from range, then the rapier). About 1.1 swaps a battle against ranged targets, 3.2 against tanks (Final Form puts the mace away).
 - Max HP with the rapier out went 16,965 → 21,040 (male) and 15,740 → 19,167 (female). Part of the gain is the Health rapier rather than the swapping. It multiplies the whole HP pool, CP included (`FakePvpIncludeCpInHp`), like buffs and set bonuses do for fake players, so it gives more than a player's +25% HP. The two weren't tested apart.
 - Tanks are still the hybrids' worst match (14–16%).
+
+## Unwavering Stance for every mage and archer (`matrix-20261108-103602` against `matrix-20261108-105938`)
+
+**Change tested**
+- The 13 MAGE and ARCHER builds (Archmage, Mystic Muse, Storm Screamer, Dominator, Soultaker, both Soul Hounds, Doom Oracle, Flame Warchief, Sagittarius, Moonlight Sentinel, Ghost Sentinel, Trickster; supports and Soul Hound hybrids aside) take Unwavering Stance (no stuns, −15% P.Def) as an extra keystone at the first keystone point, on top of their usual two (`keystones="+!Unwavering Stance"`, the `!` syntax in `FakePlayerPvpPassiveTree`).
+- Two full matrices, 40 builds, 10 battles per pair, 700 at once, level 85, brain A, seed 85085 in both: 7,800 battles each, 390 per build. The battle logs kept show every changed fighter with the keystone in the second run.
+- Archers already took Unwavering Stance most of the time from their role's list (19 of 22 kept archers in the baseline), so for them the change is mostly a third keystone. Mages never had it.
+
+**Result: the changed builds lost 2.2 points** (58.2% → 56.0%, 95% −4.1 to −0.2); against the unchanged builds only, −3.1 (−5.4 to −0.8).
+
+| Build | Without | With | Difference (95%) |
+|---|---:|---:|---:|
+| Male Soul Hound | 47.4 | 49.9 | +2.4 (−4.6 to +9.4) |
+| Storm Screamer | 59.2 | 60.8 | +1.5 (−5.3 to +8.4) |
+| Doom Oracle | 64.1 | 64.5 | +0.4 (−6.3 to +7.1) |
+| Mystic Muse | 60.0 | 60.0 | +0.0 (−6.9 to +6.9) |
+| Soultaker | 72.6 | 72.1 | −0.5 (−6.8 to +5.8) |
+| Sagittarius | 68.2 | 66.7 | −1.5 (−8.1 to +5.0) |
+| Moonlight Sentinel | 61.5 | 59.5 | −2.1 (−8.9 to +4.8) |
+| Dominator | 41.8 | 39.7 | −2.1 (−8.9 to +4.8) |
+| Trickster | 47.4 | 44.1 | −3.3 (−10.3 to +3.7) |
+| Archmage | 72.3 | 67.9 | −4.4 (−10.8 to +2.1) |
+| Flame Warchief | 46.0 | 40.3 | −5.8 (−12.7 to +1.2) |
+| Female Soul Hound | 48.5 | 42.7 | −5.8 (−12.7 to +1.2) |
+| Ghost Sentinel | 67.6 | 60.4 | −7.2 (−13.9 to −0.5) |
+
+- No single build gained clearly; Ghost Sentinel lost clearly, and 9 of 13 moved down.
+- The losses come from melee: summed over the 13 builds, against Duelist −15.4, Male Soul Hound Hybrid −13.5, Judicator −13.1, Eva's Templar −11.5, Grand Khavatari −10.0, War Dancer −8.5 points. The −15% P.Def costs more against physical damage than stun immunity saves. Those melee builds are the ones that rose most (Male Soul Hound Hybrid +10.4, Judicator +7.1).
+- Left as it was: the builds don't take it by default. To try it again, give a build `keystones="+!Unwavering Stance"` (the Soultaker `"+!Unwavering Stance;Soul Link*0.3"`). `tools/simulation/matrix_compare.py <baseline> <changed> --builds ... --pairs` compares two matrices like this.
