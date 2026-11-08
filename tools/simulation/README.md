@@ -2,6 +2,8 @@
 
 `ab_test.py` compares the AI brains; `matrix.py` turns a class-vs-class matrix into a win rate table.
 
+`local_server.sh` brings up a game server for these in a fresh Linux container (JDK 25, Ant, MariaDB, the database, a build with `SimulationWebOpenAccess` on), and keeps the simulation logs across rebuilds: `tools/simulation/local_server.sh` (`--no-build` to restart, `--stop` to stop).
+
 ## A/B tests
 
 `ab_test.py` compares the two fake player AI brains (A = current, B = experimental) through the simulation web page's API. See `docs/fake-player-simulation-issues.md` for what the brains are and how a change is tested.
