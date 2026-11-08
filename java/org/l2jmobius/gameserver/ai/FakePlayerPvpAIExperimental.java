@@ -7066,7 +7066,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		if (_fightRead == null)
 		{
-			_fightRead = new FightReadFeed(npc, profile.getPersonality(), SkillWeights.of(profile.getRole().name()).burstReflexTtd());
+			_fightRead = new FightReadFeed(npc, profile.getPersonality(), SkillWeights.of(profile.getRole().name(), true).burstReflexTtd());
 			_fightRead.setOnEvent(this::scheduleReflex);
 		}
 		_fightRead.update(target, getFightEnemies(npc, party), now);
@@ -7127,12 +7127,17 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 		final Skill skill = skills.get(best.option());
-		if (!useSkill(npc, target, skill, distance, collision, canMove))
+		final CastResult result = castOrApproach(npc, target, skill, distance, collision, canMove);
+		if (result == CastResult.FAILED)
 		{
 			return false;
 		}
-		scorer.onSkillUsed(skill.getId());
-		_fightRead.noteOwnCc(target, skill);
+		// Walking into range isn't a cast: the plan and the record of its crowd control wait for the real one.
+		if (result == CastResult.CAST)
+		{
+			scorer.onSkillUsed(skill.getId());
+			_fightRead.noteOwnCc(target, skill);
+		}
 		return true;
 	}
 	
@@ -7158,7 +7163,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return null;
 		}
 		
-		final double autoDps = mage ? 0 : estimateAutoAttackDps(npc, target);
+		double autoDps = mage ? 0 : estimateAutoAttackDps(npc, target);
+		// Deathmatch: Mayhem: a fighter with many kills auto attacks more (see PassiveDeathmatchManager.getSkillChanceFactor), here by valuing its normal attack higher.
+		if (TeamVsTeamManager.ACTIVE && (autoDps > 0))
+		{
+			autoDps /= Math.max(0.1, PassiveDeathmatchManager.getInstance().getSkillChanceFactor(npc));
+		}
 		if (!mage)
 		{
 			options.add(new SkillOption(SkillOption.Kind.AUTO_ATTACK, null, 0, true));
@@ -7230,7 +7240,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		
 		if (_reflexes == null)
 		{
-			_reflexes = new Reflexes(_fightRead.read(), scorer, SkillWeights.of(profile.getRole().name()));
+			_reflexes = new Reflexes(_fightRead.read(), scorer, SkillWeights.of(profile.getRole().name(), true));
 		}
 		final Reaction reaction = _reflexes.decide(events, ctx, options, current);
 		if (reaction == null)
@@ -7260,13 +7270,29 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			npc.doCast(skill);
 			npc.setTarget(target);
 		}
-		else if (!useSkill(npc, target, skill, distance, collision, canMove))
+		else
 		{
-			return false;
+			final CastResult result = castOrApproach(npc, target, skill, distance, collision, canMove);
+			if (result == CastResult.FAILED)
+			{
+				return false;
+			}
+			if (result == CastResult.MOVING)
+			{
+				return true;
+			}
 		}
 		scorer.onSkillUsed(skill.getId());
 		_fightRead.noteOwnCc(target, skill);
 		return true;
+	}
+	
+	@Override
+	public void stopAITask()
+	{
+		// Despawned or deleted (or its region went quiet): it stops listening to the enemies of its fight.
+		closeFightRead();
+		super.stopAITask();
 	}
 	
 	/**
@@ -7365,7 +7391,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		if (_scorer == null)
 		{
-			_scorer = new SkillScorer(_fightRead.read(), SkillWeights.of(profile.getRole().name()), npc.getObjectId());
+			_scorer = new SkillScorer(_fightRead.read(), SkillWeights.of(profile.getRole().name(), true), npc.getObjectId());
 		}
 		return _scorer;
 	}

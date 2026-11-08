@@ -104,6 +104,17 @@ public class ReflexesTest
 				final Reaction reaction = reflexes(read).decide(List.of(new ReflexEvent(ReflexEvent.Kind.HP_CRASH, 0, null, 4000)), ctx(4000, false), List.of(nuke(1230, 1000), AUTO), nuke(1230, 1000));
 				Check.isTrue((reaction == null) || (reaction.option() != null), "no empty reaction");
 			}, //
+			() -> // An enemy other than its target heals: it doesn't stun its own target for that.
+			{
+				final FightRead read = new FightRead(1, 1);
+				final Reflexes reflexes = reflexes(read);
+				final SkillFacts heal = new SkillFacts(1011, 1, false, false, 600, 1500, 0, 0, 0, "NONE", Set.of("HEAL"), false, 0, 0, 76, "NONE");
+				read.onEnemyCast(99, heal, 99, 1000, 2500);
+				Check.isTrue(reflexes.decide(List.of(new ReflexEvent(ReflexEvent.Kind.ENEMY_HEAL, 99, heal, 1000)), ctx(1000, false), List.of(nuke(1230, 1000), stun(0)), nuke(1230, 1000)) == null, "not its target's heal");
+				read.onEnemyCast(99, nukeFacts(1235), SELF, 1000, 2500);
+				final Reaction other = reflexes.decide(List.of(new ReflexEvent(ReflexEvent.Kind.ENEMY_CAST_AT_ME, 99, nukeFacts(1235), 1001)), ctx(1001, false), List.of(nuke(1230, 1000), stun(0)), nuke(1230, 1000));
+				Check.isTrue((other == null) || (other.option().kind() != Kind.SKILL), "no stun on its target for another enemy's cast");
+			}, //
 			() -> // Stunned or silenced: no reflex.
 			{
 				final FightRead read = new FightRead(1, 1);

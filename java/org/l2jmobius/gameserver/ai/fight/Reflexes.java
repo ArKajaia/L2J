@@ -158,9 +158,10 @@ public class Reflexes
 			case ENEMY_CAST_AT_ME:
 			{
 				final ActiveCast cast = _read.currentCast(event.enemyId(), now);
+				final boolean target = event.enemyId() == ctx.targetId();
 				for (SkillOption option : options)
 				{
-					if (has(option, SkillMeaning.CC) && (cast != null) && (option.skill().hitTimeMs() < (cast.end() - now)))
+					if (target && has(option, SkillMeaning.CC) && (cast != null) && (option.skill().hitTimeMs() < (cast.end() - now)))
 					{
 						candidates.add(option);
 					}
@@ -173,6 +174,11 @@ public class Reflexes
 			}
 			case ENEMY_HEAL:
 			{
+				// Its skills go on its target: a heal by another enemy isn't stopped by them.
+				if (event.enemyId() != ctx.targetId())
+				{
+					break;
+				}
 				for (SkillOption option : options)
 				{
 					if (has(option, SkillMeaning.CC) || has(option, SkillMeaning.CANCEL))
@@ -184,7 +190,7 @@ public class Reflexes
 			}
 			case ENEMY_GAP_CLOSER:
 			{
-				if (ctx.ranged())
+				if (ctx.ranged() && (event.enemyId() == ctx.targetId()))
 				{
 					for (SkillOption option : options)
 					{

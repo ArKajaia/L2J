@@ -97,6 +97,24 @@ public class SkillScorerTest
 				final SkillScorer scorer = new SkillScorer(read, SkillWeights.DEFAULT, 1);
 				Check.isTrue(!scorer.raceWon(new ScoreContext(SELF, TARGET, 4000, 100000, 300, 0.5, 0.99, false, true, false, false, ClassGroup.LIGHT_FIGHTER, 1)), "50 dps dealt against 250 taken is not winning");
 			}, //
+			() -> // An invulnerable target: no race won, no value in crowd control or debuffs.
+			{
+				final FightRead read = new FightRead(1, 1);
+				read.onHp(0, SELF, 6000, 10000, TARGET, 2000, 20000);
+				read.onHp(4000, SELF, 5800, 10000, TARGET, 1000, 20000);
+				read.onEffects(TARGET, Map.of(EffectMeaning.INVULNERABLE, 30000L), 4000);
+				final SkillScorer scorer = new SkillScorer(read, SkillWeights.DEFAULT, 1);
+				Check.isTrue(!scorer.raceWon(ctx(4000, 1, false, true)), "no race against an invulnerable target");
+				final Scored top = scorer.score(List.of(skill(stun(0), 0), AUTO, HOLD), ctx(4000, 1, false, true)).get(0);
+				Check.isTrue(top.option().kind() != Kind.SKILL, "no stun into the shield: " + top.option().kind());
+			}, //
+			() -> // HP that doesn't drop for a while (healed as fast as hit): the race isn't won on the estimate.
+			{
+				final FightRead read = new FightRead(1, 1);
+				read.onHp(0, SELF, 6000, 10000, TARGET, 20000, 20000);
+				read.onHp(4000, SELF, 5800, 10000, TARGET, 20000, 20000);
+				Check.isTrue(!new SkillScorer(read, SkillWeights.DEFAULT, 1).raceWon(new ScoreContext(SELF, TARGET, 4000, 100000, 300, 0.6, 1, false, true, false, false, ClassGroup.LIGHT_FIGHTER, 1)), "nothing landing for 4 s is no race");
+			}, //
 			() -> // Not winning (no damage seen): the long cooldown costs.
 			{
 				final FightRead read = new FightRead(1, 1);

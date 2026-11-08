@@ -326,6 +326,17 @@ public class FightRead
 		return has(creatureId, meaning, now) ? _icons.get(creatureId).get(meaning).expiresAt - now : 0;
 	}
 	
+	/**
+	 * @param now the current time
+	 * @return how long its target's HP has been watched within the HP window, in milliseconds
+	 */
+	public synchronized long targetObservedMs(long now)
+	{
+		final Sample first = _targetHp.peekFirst();
+		final Sample last = _targetHp.peekLast();
+		return (first == null) || (last == null) ? 0 : Math.min(HP_WINDOW, last.time() - Math.max(first.time(), now - HP_WINDOW));
+	}
+	
 	public synchronized double damageTakenPerSecond(long now)
 	{
 		return perSecond(_selfHp, now);

@@ -3,7 +3,8 @@ Self-play tuning of the fake player skill weights (config/Custom/FakeSkillWeight
 docs/superpowers/specs/2026-11-08-fake-player-skill-timing-design.md).
 
 For one role at a time it tries each weight at x0.7 and x1.3 (coordinate search): each try is a mirror matrix
-of that role's builds, brain A against brain B (the one that reads the weights), and a change is kept only if
+of that role's builds, brain A against brain B, with the try written as "B." lines that only brain B reads
+(brain A keeps the file's other lines), and a change is kept only if
 B's win rate rises by more than the 95% interval half-width of the best so far. The server reads the
 rewritten file through POST /api/simulation/weights/reload, so nothing restarts between tries.
 
@@ -34,25 +35,30 @@ ROLE_DEFAULTS = {"MAGE": {"risk": 1.3}, "ARCHER": {"risk": 1.3}, "TANK": {"raceM
 TUNED_KEYS = ["damage", "control", "cooldownCost", "risk", "raceMargin"]
 
 
-def read_weights(path):
-    """{role: {key: value}} from a weights file, the defaults where it sets nothing."""
+def read_weights(path, brain_b=False):
+    """{role: {key: value}} from a weights file, the defaults where it sets nothing (with brain_b, its B. lines on top)."""
     weights = {role: dict(DEFAULTS, **ROLE_DEFAULTS.get(role, {})) for role in ROLES}
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             for line in f:
-                m = re.match(r"\s*([A-Za-z]+)\.([A-Za-z]+)\s*=\s*([-0-9.]+)\s*$", line)
-                if m and m.group(1).upper() in weights and m.group(2) in DEFAULTS:
+                b = line.strip().startswith("B.")
+                m = re.match(r"\s*(?:B\.)?([A-Za-z]+)\.([A-Za-z]+)\s*=\s*([-0-9.]+)\s*$", line)
+                if m and m.group(1).upper() in weights and m.group(2) in DEFAULTS and (not b or brain_b):
                     weights[m.group(1).upper()][m.group(2)] = float(m.group(3))
     return weights
 
 
-def write_weights(path, weights, header):
-    """Writes every weight that differs from its default."""
+def write_weights(path, shared, weights, header):
+    """Writes the shared weights (both brains) as they were, and every weight of brain B that differs from them as a B. line."""
     lines = [f"# {header}", "# Written by tools/simulation/tune_weights.py; see dist/game/config/Custom/FakeSkillWeights.ini for what each key does.", ""]
     for role in ROLES:
-        for key, value in weights[role].items():
+        for key, value in shared[role].items():
             if abs(value - DEFAULTS[key]) > 1e-9:
                 lines.append(f"{role}.{key} = {round(value, 4)}")
+    for role in ROLES:
+        for key, value in weights[role].items():
+            if abs(value - shared[role][key]) > 1e-9:
+                lines.append(f"B.{role}.{key} = {round(value, 4)}")
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
@@ -100,7 +106,8 @@ def main():
     keys = [k.strip() for k in args.keys.split(",") if k.strip()]
     factors = [float(x) for x in args.factors.split(",")]
     ini = os.path.join(args.server, "config", "Custom", "FakeSkillWeights.ini")
-    weights = read_weights(ini)
+    shared = read_weights(ini)
+    weights = read_weights(ini, brain_b=True)
 
     if args.dry_run:
         for role in roles:
@@ -125,7 +132,7 @@ def main():
     writer.writerow(["role", "pass", "key", "value", "b_rate", "battles", "kept", "matrix"])
 
     def run(role, label):
-        write_weights(ini, weights, f"Tuning {role}: {label}")
+        write_weights(ini, shared, weights, f"Tuning {role}: {label}")
         reload_api.call("reload", {}, post=True)
         builds = role_builds(role)
         params = {"battles": max(args.battles, math.ceil(args.min_battles / max(1, len(builds)))), "parallel": args.parallel, "level": 85, "time": args.time, "brain": "A:B", "mirror": "1", "builds": ",".join(builds), "seed": args.seed}
@@ -155,11 +162,11 @@ def main():
                     weights[role][key] = old
             if not changed:
                 break
-    write_weights(ini, weights, "Tuned")
+    write_weights(ini, shared, weights, "Tuned (B. lines: what tuning kept, for brain B only)")
     reload_api.call("reload", {}, post=True)
     shutil.copy(ini, os.path.join(out, "final.ini"))
     log.close()
-    print(f"Done: {out}/final.ini (also in use on the server). Copy it to dist/game/config/Custom/FakeSkillWeights.ini to keep it.")
+    print(f"Done: {out}/final.ini (also in use on the server). To keep a tuned weight for every fake player, write its B. line without the B. in dist/game/config/Custom/FakeSkillWeights.ini.")
 
 
 if __name__ == "__main__":

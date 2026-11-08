@@ -44,6 +44,7 @@ public record SkillWeights(double damage, double control, double setup, double c
 	public static final List<String> ROLES = List.of("FIGHTER", "TANK", "DAGGER", "ARCHER", "MAGE");
 	
 	private static volatile Map<String, SkillWeights> _table = parse(List.of());
+	private static volatile Map<String, SkillWeights> _tableB = _table;
 	
 	/**
 	 * @param lines the lines of a weights file: ROLE.key = value, # for comments
@@ -61,9 +62,29 @@ public record SkillWeights(double damage, double control, double setup, double c
 				default -> DEFAULT;
 			});
 		}
+		return apply(table, lines, false);
+	}
+	
+	/**
+	 * @param base the weights to start from
+	 * @param lines the lines of a weights file
+	 * @param brainB {@code true} to apply only the lines starting with "B." (without it), {@code false} for only the others
+	 * @return the weights with those lines applied
+	 */
+	private static Map<String, SkillWeights> apply(Map<String, SkillWeights> base, List<String> lines, boolean brainB)
+	{
+		final Map<String, SkillWeights> table = new HashMap<>(base);
 		for (String raw : lines)
 		{
-			final String line = raw.trim();
+			String line = raw.trim();
+			if (line.startsWith("B.") != brainB)
+			{
+				continue;
+			}
+			if (brainB)
+			{
+				line = line.substring(2);
+			}
 			final int eq = line.indexOf('=');
 			final int dot = line.indexOf('.');
 			if (line.startsWith("#") || (eq < 0) || (dot < 0) || (dot > eq))
@@ -95,7 +116,9 @@ public record SkillWeights(double damage, double control, double setup, double c
 	 */
 	public static void load(List<String> lines)
 	{
-		_table = parse(lines);
+		final Map<String, SkillWeights> table = parse(lines);
+		_tableB = apply(table, lines, true);
+		_table = table;
 	}
 	
 	/**
@@ -104,7 +127,17 @@ public record SkillWeights(double damage, double control, double setup, double c
 	 */
 	public static SkillWeights of(String role)
 	{
-		return _table.getOrDefault(role, DEFAULT);
+		return of(role, false);
+	}
+	
+	/**
+	 * @param role a role name
+	 * @param brainB {@code true} for brain B's weights: brain A's with the "B." lines on top (the self-play tuning tries a change on brain B against brain A)
+	 * @return its weights, {@link #DEFAULT} for an unknown role
+	 */
+	public static SkillWeights of(String role, boolean brainB)
+	{
+		return (brainB ? _tableB : _table).getOrDefault(role, DEFAULT);
 	}
 	
 	/**

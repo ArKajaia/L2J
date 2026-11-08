@@ -31,6 +31,16 @@ public class SkillWeightsTest
 				Check.near(weights.get("TANK").raceMargin(), 0.6, 0, "tank race margin");
 				Check.eq(weights.get("DAGGER"), SkillWeights.DEFAULT, "dagger");
 			}, //
+			() -> // Lines starting with B. only change brain B's weights (the self-play tuning tries them on brain B against brain A).
+			{
+				SkillWeights.load(List.of("MAGE.risk = 1.5", "B.MAGE.risk = 0.9", "B.TANK.damage = 2"));
+				Check.near(SkillWeights.of("MAGE").risk(), 1.5, 0, "brain A mage");
+				Check.near(SkillWeights.of("MAGE", true).risk(), 0.9, 0, "brain B mage");
+				Check.near(SkillWeights.of("TANK", true).damage(), 2, 0, "brain B tank");
+				Check.near(SkillWeights.of("TANK").damage(), 1, 0, "brain A tank");
+				Check.near(SkillWeights.of("FIGHTER", true).risk(), 1, 0, "brain B fighter keeps brain A's");
+				SkillWeights.load(List.of());
+			}, //
 			() -> Check.eq(SkillWeights.of("NOT_A_ROLE"), SkillWeights.DEFAULT, "unknown role"));
 	}
 }

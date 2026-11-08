@@ -51,6 +51,8 @@ public class SkillScorer
 	/** Share of a skill's value lost per second of its cast when a melee near may interrupt it: magic casts break on damage and stuns, physical skills only on stuns. */
 	private static final double MAGIC_INTERRUPT_SHARE = 0.2;
 	private static final double PHYSICAL_INTERRUPT_SHARE = 0.1;
+	/** How long a target is watched before no damage seen means no damage dealt (before that the estimate stands in). */
+	private static final long ESTIMATE_ONLY_MS = 3000;
 	/** Chance at skill level 0 to take the second-best option (none at level 1). */
 	private static final double MISPLAY_CHANCE = 0.2;
 	/** Bonus of a plan's next step, in damage weights. */
@@ -86,8 +88,17 @@ public class SkillScorer
 	 */
 	public boolean raceWon(ScoreContext ctx)
 	{
-		// The damage it really deals decides, its estimate only before any is seen.
+		// No race against a target nothing gets through, or one whose HP hasn't dropped for a while (healed as fast as it is hit).
+		if (_read.has(ctx.targetId(), EffectMeaning.INVULNERABLE, ctx.now()))
+		{
+			return false;
+		}
+		// The damage it really deals decides, its estimate only before its target was watched for a while.
 		final double dealt = _read.damageDealtPerSecond(ctx.now());
+		if ((dealt <= 0) && (_read.targetObservedMs(ctx.now()) >= ESTIMATE_ONLY_MS))
+		{
+			return false;
+		}
 		final double ttk = _read.timeToKill(ctx.now(), dealt > 0 ? dealt : ctx.myDps());
 		final double ttd = _read.timeToDie(ctx.now(), 0);
 		if (Double.isInfinite(ttk) || Double.isInfinite(ttd))
@@ -207,7 +218,7 @@ public class SkillScorer
 		if (meanings.contains(SkillMeaning.CC))
 		{
 			double control = 0;
-			if (!held)
+			if (!held && !invulnerable)
 			{
 				final double chance = _read.landChance(target, skill, ctx.targetGroup(), now);
 				final double heldSeconds = Math.min(MAX_HELD_SECONDS, skill.abnormalTimeMs() / 1000.0);
@@ -217,7 +228,7 @@ public class SkillScorer
 		}
 		if (meanings.contains(SkillMeaning.DEBUFF) || meanings.contains(SkillMeaning.CANCEL))
 		{
-			terms.put("setup", _weights.setup() * (ctx.burstReady() ? 1 : 0.3));
+			terms.put("setup", invulnerable ? 0 : _weights.setup() * (ctx.burstReady() ? 1 : 0.3));
 		}
 		if (skill.reuseMs() >= LONG_COOLDOWN)
 		{
