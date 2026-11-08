@@ -85,6 +85,12 @@ python tools/simulation/matrix.py --start --battles 20 --parallel 100 --level 85
 python tools/simulation/matrix.py --resume
 ```
 
+`matrix_compare.py` compares two matrices build by build: each build's overall win rate in both, the difference and its 95% interval. `--builds` marks the builds a change was made to (and adds their totals), `--pairs` shows where those builds won or lost, per opponent. Run both matrices with the same `--seed` so the fighters match:
+
+```bash
+python tools/simulation/matrix_compare.py log/simulation-matrix/matrix-20261108-103602 log/simulation-matrix/matrix-20261108-105938 --builds "Archmage,Sagittarius" --pairs
+```
+
 ## Race war: army against army, the dead coming back
 
 `//Simulate war [races=all] [ffa] [power=orc=1.2,dwarf=2/2.1] [repeats=1] [size=50] [level=85] [parallel=2] [time=600] [respawn=10] [distance=2000] [seed=<n>]` (or `POST /api/simulation/war/start` with the same names, `mode=ffa` for `ffa`; `/war/status`, `/war/stop`) fights an army of every race against an army of every other race, each battle in an instance of its own at the GM's place (from the web without a GM: the Cruma Marshlands field). With `ffa`, every battle has an army of each race instead, all against all, the bases around a circle `distance` across (`repeats` battles, the races seated differently in each).
