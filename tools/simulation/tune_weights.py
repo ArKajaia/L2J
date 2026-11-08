@@ -84,6 +84,7 @@ def main():
     parser.add_argument("--role", required=True, help="FIGHTER, TANK, DAGGER, ARCHER, MAGE or ALL")
     parser.add_argument("--passes", type=int, default=1, help="passes over the weights per role (at most 3)")
     parser.add_argument("--battles", type=int, default=40, help="battles per build in each matrix")
+    parser.add_argument("--min-battles", type=int, default=400, help="at least this many battles per matrix (a role with few builds fights more per build)")
     parser.add_argument("--parallel", type=int, default=700)
     parser.add_argument("--seed", default="4040")
     parser.add_argument("--keys", default=",".join(TUNED_KEYS))
@@ -125,7 +126,8 @@ def main():
     def run(role, label):
         write_weights(ini, weights, f"Tuning {role}: {label}")
         reload_api.call("reload", {}, post=True)
-        params = {"battles": args.battles, "parallel": args.parallel, "level": 85, "brain": "A:B", "mirror": "1", "builds": ",".join(role_builds(role)), "seed": args.seed}
+        builds = role_builds(role)
+        params = {"battles": max(args.battles, math.ceil(args.min_battles / max(1, len(builds)))), "parallel": args.parallel, "level": 85, "brain": "A:B", "mirror": "1", "builds": ",".join(builds), "seed": args.seed}
         print("\n".join(api.call("start", params, post=True)["lines"][:1]), flush=True)
         folder = follow(api)
         return ab_result(folder) + (os.path.basename(folder),)
