@@ -89,6 +89,8 @@ public class FightRead
 	private final Deque<Sample> _targetHp = new ArrayDeque<>();
 	private int _targetId;
 	private int _seenCasts;
+	private int _ccAttempts;
+	private int _ccLanded;
 	
 	/**
 	 * @param knowledge the fake player's knowledge, -1 to 1 (see FakePlayerPvpPersonality)
@@ -202,9 +204,11 @@ public class FightRead
 	{
 		final int[] record = _ccRecord.computeIfAbsent(enemyId, k -> new int[2]);
 		record[0]++;
+		_ccAttempts++;
 		if (landed)
 		{
 			record[1]++;
+			_ccLanded++;
 		}
 	}
 	
@@ -226,6 +230,22 @@ public class FightRead
 	public synchronized int seenCasts()
 	{
 		return _seenCasts;
+	}
+	
+	/**
+	 * @return how many of its crowd control attempts it saw in all
+	 */
+	public synchronized int ccAttempts()
+	{
+		return _ccAttempts;
+	}
+	
+	/**
+	 * @return how many of them landed
+	 */
+	public synchronized int ccLanded()
+	{
+		return _ccLanded;
 	}
 	
 	/**

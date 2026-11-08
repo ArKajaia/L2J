@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.ai;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -50,6 +51,16 @@ import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.ai.fight.FightRead;
 import org.l2jmobius.gameserver.ai.fight.FightReadFeed;
+import org.l2jmobius.gameserver.ai.fight.ScoreContext;
+import org.l2jmobius.gameserver.ai.fight.Scored;
+import org.l2jmobius.gameserver.ai.fight.SkillFacts;
+import org.l2jmobius.gameserver.ai.fight.SkillFactsReader;
+import org.l2jmobius.gameserver.ai.fight.SkillMeaning;
+import org.l2jmobius.gameserver.ai.fight.SkillMeanings;
+import org.l2jmobius.gameserver.ai.fight.SkillOption;
+import org.l2jmobius.gameserver.ai.fight.SkillPlan;
+import org.l2jmobius.gameserver.ai.fight.SkillScorer;
+import org.l2jmobius.gameserver.ai.fight.SkillWeights;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.Reason;
@@ -256,6 +267,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final int SKILL_CHAIN_MIN_DELAY = 150;
 	/** How often its fight read is noted in the simulation log during a fight. */
 	private static final long FIGHT_READ_NOTE_INTERVAL = 2000;
+	/** An attack skill with at least this reuse is its burst: with one ready, it may plan a burst. */
+	private static final int BURST_SKILL_REUSE = 10000;
+	/** Within this gap a melee fake player counts its enemy as on it (its long casts risk an interrupt). */
+	private static final double MELEE_NEAR = 150;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
 	/** Skill ids of the stuns, roots, sleeps... which a disabled target doesn't need again. */
 	private static final Map<Integer, Boolean> HARD_DISABLES = new ConcurrentHashMap<>();
@@ -451,6 +466,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	/** Skill timing: what it sees of its fight (see ai/fight), {@code null} until its first PvP fight. */
 	private FightReadFeed _fightRead;
 	private long _nextFightReadNote;
+	private SkillScorer _scorer;
+	/** The plan it last started, to note when it ends. */
+	private SkillPlan _lastPlan;
 	
 	public FakePlayerPvpAIExperimental(Attackable creature)
 	{
@@ -1208,28 +1226,39 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 		
-		// Stuns, roots and debuffs are mostly for players (and half as often for a class that fights with its normal attack).
 		final double reach = distance - collision;
-		final FakePlayerPvpPersonality personality = profile.getPersonality();
-		final int debuffChance = pvp ? (_autoAttacker ? (personality.getPvpDebuffChance() / 2) : personality.getPvpDebuffChance()) : 5;
-		// With the bow out it only uses what reaches the target from where it stands, instead of running in.
-		if (!arrowsFirst && (Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
+		// Skill timing: in a PvP, brain B picks its debuff or attack skill by value (ai/fight) instead of by chance. Its normal attacks and a mage's positioning below stay as they are, and so do fights with monsters, the spare bow or polearm, and archers whose arrows land.
+		if (pvp && !bowHeld && !polearmHeld && (_fightRead != null))
 		{
-			return;
+			if (!arrowsFirst && useScoredSkill(npc, profile, target, role, mage, defenses, safeCast, distance, collision, canMove, pressed, now))
+			{
+				return;
+			}
 		}
+		else
+		{
+			// Stuns, roots and debuffs are mostly for players (and half as often for a class that fights with its normal attack).
+			final FakePlayerPvpPersonality personality = profile.getPersonality();
+			final int debuffChance = pvp ? (_autoAttacker ? (personality.getPvpDebuffChance() / 2) : personality.getPvpDebuffChance()) : 5;
+			// With the bow out it only uses what reaches the target from where it stands, instead of running in.
+			if (!arrowsFirst && (Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
+			{
+				return;
+			}
 		
-		// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
-		int skillChance = _autoAttacker ? (pvp ? personality.getAutoAttackPvpSkillChance() : personality.getAutoAttackSkillChance()) : (pvp ? personality.getPvpSkillChance() : personality.getSkillChance());
-		// Deathmatch: Mayhem: a fighter with many kills auto attacks more (see PassiveDeathmatchManager.getSkillChanceFactor).
-		if (TeamVsTeamManager.ACTIVE)
-		{
-			skillChance = (int) (skillChance * PassiveDeathmatchManager.getInstance().getSkillChanceFactor(npc));
-		}
-		// #29: an archer whose arrows would miss uses its skills every time (they don't miss), one whose arrows land none.
-		final boolean archerSkills = pvp && (role == Role.ARCHER);
-		if ((archerSkills ? !arrowsFirst : (mage || (Rnd.get(100) < skillChance))) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
-		{
-			return;
+			// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
+			int skillChance = _autoAttacker ? (pvp ? personality.getAutoAttackPvpSkillChance() : personality.getAutoAttackSkillChance()) : (pvp ? personality.getPvpSkillChance() : personality.getSkillChance());
+			// Deathmatch: Mayhem: a fighter with many kills auto attacks more (see PassiveDeathmatchManager.getSkillChanceFactor).
+			if (TeamVsTeamManager.ACTIVE)
+			{
+				skillChance = (int) (skillChance * PassiveDeathmatchManager.getInstance().getSkillChanceFactor(npc));
+			}
+			// #29: an archer whose arrows would miss uses its skills every time (they don't miss), one whose arrows land none.
+			final boolean archerSkills = pvp && (role == Role.ARCHER);
+			if ((archerSkills ? !arrowsFirst : (mage || (Rnd.get(100) < skillChance))) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
+			{
+				return;
+			}
 		}
 		
 		// Mages never melee: between spells they stay in casting range.
@@ -7023,7 +7052,149 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			final FightRead read = _fightRead.read();
 			final double ttk = read.timeToKill(now, read.damageDealtPerSecond(now));
 			final double ttd = read.timeToDie(now, 0);
-			FakeAiTrace.note(npc, Reason.FIGHT_READ, target, "seen=" + read.seenCasts() + ";remembered=" + read.rememberedCount() + ";ttk=" + (Double.isInfinite(ttk) ? "inf" : String.format(Locale.ROOT, "%.1f", ttk)) + ";ttd=" + (Double.isInfinite(ttd) ? "inf" : String.format(Locale.ROOT, "%.1f", ttd)));
+			FakeAiTrace.note(npc, Reason.FIGHT_READ, target, "seen=" + read.seenCasts() + ";remembered=" + read.rememberedCount() + ";ccTried=" + read.ccAttempts() + ";ccLanded=" + read.ccLanded() + ";ttk=" + (Double.isInfinite(ttk) ? "inf" : String.format(Locale.ROOT, "%.1f", ttk)) + ";ttd=" + (Double.isInfinite(ttd) ? "inf" : String.format(Locale.ROOT, "%.1f", ttd)));
+		}
+	}
+	
+	/**
+	 * Skill timing: picks its debuff or attack skill by value (see {@link SkillScorer}) and uses it. A normal attack or holding is left to the code after it.
+	 * @return {@code true} if it used (or went to use) a skill
+	 */
+	private boolean useScoredSkill(Attackable npc, FakePlayerPvpProfile profile, Creature target, Role role, boolean mage, int defenses, long safeCast, double distance, int collision, boolean canMove, boolean pressed, long now)
+	{
+		final double reach = distance - collision;
+		final boolean ranged = role.isRanged();
+		final List<SkillOption> options = new ArrayList<>();
+		final Map<SkillOption, Skill> skills = new IdentityHashMap<>();
+		final boolean dagger = profile.getRole() == Role.DAGGER;
+		addScoredOptions(npc, target, affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, reach, defenses, dagger, options, skills);
+		addScoredOptions(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, reach, defenses, dagger, options, skills);
+		if (skills.isEmpty())
+		{
+			return false;
+		}
+		
+		final double autoDps = mage ? 0 : estimateAutoAttackDps(npc, target);
+		if (!mage)
+		{
+			options.add(new SkillOption(SkillOption.Kind.AUTO_ATTACK, null, 0, true));
+		}
+		options.add(new SkillOption(SkillOption.Kind.HOLD, null, 0, true));
+		double bestRate = 0;
+		boolean burstReady = false;
+		for (Map.Entry<SkillOption, Skill> entry : skills.entrySet())
+		{
+			final SkillFacts facts = entry.getKey().skill();
+			bestRate = Math.max(bestRate, entry.getKey().expectedDamage() / Math.max(0.5, (facts.hitTimeMs() + facts.coolTimeMs()) / 1000.0));
+			burstReady |= (facts.reuseMs() >= BURST_SKILL_REUSE) && (entry.getKey().expectedDamage() > 0);
+		}
+		final FightRead read = _fightRead.read();
+		final double myDps = Math.max(read.damageDealtPerSecond(now), Math.max(autoDps, 0.5 * bestRate));
+		final boolean meleeNear = ranged ? pressed : (reach < MELEE_NEAR);
+		final boolean disabled = npc.isStunned() || npc.isSleeping() || npc.isParalyzed() || npc.isMuted();
+		final ScoreContext ctx = new ScoreContext(npc.getObjectId(), target.getObjectId(), now, myDps, autoDps, npc.getCurrentHp() / npc.getMaxHp(), target.getCurrentHp() / Math.max(1, target.getMaxHp()), meleeNear, ranged, burstReady, disabled, FightReadFeed.groupOf(target), FightRead.level(profile.getPersonality().getSkill()));
+		
+		final SkillScorer scorer = scorer(npc, profile);
+		notePlanEnd(npc, target, scorer);
+		if (scorer.currentPlan() == null)
+		{
+			SkillPlan plan = scorer.buildCcChain(options, ctx);
+			if ((plan == null) && burstReady)
+			{
+				plan = scorer.buildBurst(options, ctx);
+			}
+			if ((plan != null) && scorer.startPlan(plan, now, ctx.skillLevel()))
+			{
+				_lastPlan = plan;
+				FakeAiTrace.note(npc, Reason.PLAN_START, target, plan.type() + ";steps=" + plan.steps());
+			}
+		}
+		
+		final Scored best = scorer.score(options, ctx).get(0);
+		if (best.option().kind() != SkillOption.Kind.SKILL)
+		{
+			return false;
+		}
+		final Skill skill = skills.get(best.option());
+		final StringBuilder terms = new StringBuilder();
+		best.terms().entrySet().stream().sorted((a, b) -> Double.compare(Math.abs(b.getValue()), Math.abs(a.getValue()))).limit(3).forEach(term -> terms.append(';').append(term.getKey()).append('=').append(String.format(Locale.ROOT, "%.2f", term.getValue())));
+		FakeAiTrace.note(npc, Reason.SCORED_SKILL, target, skill.getName() + " (" + skill.getId() + ");value=" + String.format(Locale.ROOT, "%.2f", best.value()) + terms);
+		if (!useSkill(npc, target, skill, distance, collision, canMove))
+		{
+			return false;
+		}
+		scorer.onSkillUsed(skill.getId());
+		_fightRead.noteOwnCc(target, skill);
+		return true;
+	}
+	
+	/**
+	 * Adds its skills that may be used on the target now as scorer options (the same filters as {@link #pickSkill}).
+	 */
+	private static void addScoredOptions(Attackable npc, Creature target, List<Skill> list, boolean debuff, double reach, int defenses, boolean dagger, List<SkillOption> options, Map<SkillOption, Skill> skills)
+	{
+		final boolean disabled = debuff && isDisabled(target);
+		for (Skill skill : list)
+		{
+			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, true))
+			{
+				continue;
+			}
+			final int range = skill.getCastRange() > 0 ? skill.getCastRange() : skill.getAffectRange();
+			final SkillFacts facts = SkillFactsReader.of(skill);
+			final SkillOption option = new SkillOption(SkillOption.Kind.SKILL, facts, SkillMeanings.classify(facts).contains(SkillMeaning.NUKE) ? estimateDamage(npc, target, skill, dagger) : 0, (range <= 0) || (range >= reach));
+			options.add(option);
+			skills.put(option, skill);
+		}
+	}
+	
+	/**
+	 * @return the damage it expects a skill to deal to the target, without critical hits (no side effects: nothing is sent to anyone)
+	 */
+	private static double estimateDamage(Attackable npc, Creature target, Skill skill, boolean dagger)
+	{
+		if (skill.getPower() <= 0)
+		{
+			return 0;
+		}
+		if (skill.isMagic())
+		{
+			return ((91 * Math.sqrt(npc.getMAtk(target, skill) * 4)) / Math.max(1, target.getMDef(npc, skill))) * skill.getPower(npc, target, false, false);
+		}
+		return dagger ? Formulas.calcBlowDamage(npc, target, skill, (byte) 0, true) : Formulas.calcPhysDam(npc, target, skill, (byte) 0, false, true);
+	}
+	
+	/**
+	 * @return the damage per second it expects from its normal attacks on the target, without critical hits
+	 */
+	private static double estimateAutoAttackDps(Attackable npc, Creature target)
+	{
+		final double damage = Formulas.calcPhysDam(npc, target, null, (byte) 0, false, true);
+		final int interval = Math.max(npc.calculateTimeBetweenAttacks(), npc.getActiveWeaponItem() != null ? npc.calculateReuseTime(npc.getActiveWeaponItem()) : 0);
+		return (damage * 1000) / Math.max(200, interval);
+	}
+	
+	/**
+	 * @return its skill scorer, made with its fight read
+	 */
+	private SkillScorer scorer(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		if (_scorer == null)
+		{
+			_scorer = new SkillScorer(_fightRead.read(), SkillWeights.of(profile.getRole().name()), npc.getObjectId());
+		}
+		return _scorer;
+	}
+	
+	/**
+	 * Notes in the simulation log that its last plan ended (done, or dropped).
+	 */
+	private void notePlanEnd(Attackable npc, Creature target, SkillScorer scorer)
+	{
+		if ((_lastPlan != null) && (scorer.currentPlan() != _lastPlan))
+		{
+			FakeAiTrace.note(npc, Reason.PLAN_DROP, target, _lastPlan.type() + (_lastPlan.done() ? ";done" : ";dropped"));
+			_lastPlan = null;
 		}
 	}
 	

@@ -124,6 +124,16 @@ public class FightReadTest
 				Check.isTrue(read.knownCcOnCooldown(7, 5000), "its stun is on cooldown");
 				Check.isTrue(!read.knownCcOnCooldown(7, 11001), "its stun is back");
 			}, //
+			() -> // Crowd control totals for the log, kept when an enemy is forgotten.
+			{
+				final FightRead read = new FightRead(EXPERT, 1);
+				read.onCcAttempt(7, 100, true);
+				read.onCcAttempt(7, 100, false);
+				read.onCcAttempt(8, 100, true);
+				read.forget(7);
+				Check.eq(read.ccAttempts(), 3, "attempts");
+				Check.eq(read.ccLanded(), 2, "landed");
+			}, //
 			() -> // Skill id 0 starts no cooldown memory.
 			{
 				final FightRead read = new FightRead(EXPERT, 1);

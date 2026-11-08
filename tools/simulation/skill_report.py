@@ -6,7 +6,8 @@ How brain A and brain B fake players use their skills, from the battle logs of a
 
 Per build and brain: battles, decisions by reason (the most common ones), and for brain B's fight read
 (FIGHT_READ lines, see docs/superpowers/specs/2026-11-08-fake-player-skill-timing-design.md) the share of
-battles in which it saw enemy casts, and the average casts seen and cooldowns remembered.
+battles in which it saw enemy casts, the average casts seen and cooldowns remembered, its crowd control
+tried and landed, its scored skills, and its plans started and finished.
 """
 import argparse
 import json
@@ -47,6 +48,10 @@ def main():
     seen_battles = Counter()
     seen_sum = Counter()
     remembered_sum = Counter()
+    cc_tried = Counter()
+    cc_landed = Counter()
+    plans_started = Counter()
+    plans_done = Counter()
     for root in args.folders:
         battles_dir = os.path.join(root, "battles")
         for name in sorted(os.listdir(battles_dir)) if os.path.isdir(battles_dir) else []:
@@ -68,6 +73,10 @@ def main():
                     reasons[key][d.get("reason")] += 1
                     if d.get("reason") == "FIGHT_READ":
                         last_read[d.get("id")] = parse_kind(d.get("kind"))
+                    elif d.get("reason") == "PLAN_START":
+                        plans_started[key] += 1
+                    elif d.get("reason") == "PLAN_DROP" and (d.get("kind") or "").endswith(";done"):
+                        plans_done[key] += 1
             for member_id, key in members.items():
                 battles[key] += 1
                 fields = last_read.get(member_id)
@@ -76,6 +85,8 @@ def main():
                     seen = int(fields.get("seen", 0))
                     seen_sum[key] += seen
                     remembered_sum[key] += int(fields.get("remembered", 0))
+                    cc_tried[key] += int(fields.get("ccTried", 0))
+                    cc_landed[key] += int(fields.get("ccLanded", 0))
                     if seen > 0:
                         seen_battles[key] += 1
 
@@ -85,6 +96,10 @@ def main():
         if read_battles[key]:
             n = read_battles[key]
             line += f"; fight read in {n}, saw casts in {100 * seen_battles[key] / n:.0f}%, avg seen {seen_sum[key] / n:.1f}, remembered {remembered_sum[key] / n:.1f}"
+            if cc_tried[key]:
+                line += f", CC landed {cc_landed[key]}/{cc_tried[key]}"
+            if plans_started[key]:
+                line += f", plans {plans_done[key]}/{plans_started[key]} finished"
         print(line)
         top = ", ".join(f"{r} {c}" for r, c in reasons[key].most_common(args.top))
         print("    " + top)
