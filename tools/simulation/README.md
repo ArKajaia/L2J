@@ -2,6 +2,8 @@
 
 `ab_test.py` compares the AI brains; `matrix.py` turns a class-vs-class matrix into a win rate table.
 
+`local_server.sh` brings up a game server for these in a fresh Linux container (JDK 25, Ant, MariaDB, the database, a build with `SimulationWebOpenAccess` on), and keeps the simulation logs across rebuilds: `tools/simulation/local_server.sh` (`--no-build` to restart, `--stop` to stop).
+
 ## A/B tests
 
 `ab_test.py` compares the two fake player AI brains (A = current, B = experimental) through the simulation web page's API. See `docs/fake-player-simulation-issues.md` for what the brains are and how a change is tested.
@@ -41,6 +43,21 @@ To watch the battles:
 ```bash
 python tools/simulation/party_report.py build/server/game/log/simulation-arena/arena-20261028-191653
 ```
+
+## Team vs Team batches: tactics against tactics, many matches at once
+
+`//tvt batch [count] [level=] [a=] [b=] [size=] [minutes=] [map=]` (or `POST /api/tvt/batch` with the same names; `GET /api/tvt/batches` for the summaries) starts `count` simulated Team vs Team matches at once, each in an instance of its own, the fake players of one team playing tactics `a` and the other `b` (see `ai/FakeTvtTactics`: healer priority, healer calls, nukers on damage dealers, archers and mages staying back). Both teams get the same builds at the same levels, the tactics change sides every match, and every two matches share a map.
+
+```bash
+# 10 matches at once, 30 a side, 5 minute fights at levels 79-81: legacy against the default.
+curl -X POST http://127.0.0.1:8788/api/tvt/batch -d 'count=10&level=80&a=legacy&b=best&size=30&minutes=5'
+# A healer priority of your own against legacy.
+curl -X POST http://127.0.0.1:8788/api/tvt/batch --data-urlencode 'b=legacy:healer=1.2,assassin=2.4,nukerHealer=1.2'
+# Report on one or more batches.
+python tools/simulation/tvt_report.py build/server/game/log/simulation-tvt/batch-*
+```
+
+Output goes to `log/simulation-tvt/batch-<time>/`: `results.csv` (a line per team per match: score, win, damage, the share of it on enemy healers, the share of the members' time on an enemy healer, deaths by role, first healer death, where the archers and mages stood), `roles.csv` (damage and target time by attacker role and target role) and `summary.txt`. The findings are in `docs/tvt-tactics.md`. A full `ant` build deletes `build/server`, logs included: copy the batches out first.
 
 ## Class-vs-class matrix
 

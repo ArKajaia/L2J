@@ -1,0 +1,2 @@
+A healer=0.0,assassin=0.0,nukerHealer=0.0,nukerDps=0.3,calls=0,standoff=0,wait=0,name=ignore
+B healer=0.0,assassin=0.0,nukerHealer=0.0,nukerDps=0.3,calls=0,standoff=1,wait=0,name=ignore-so0

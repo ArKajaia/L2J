@@ -18,6 +18,16 @@ There are two different Java levels in this repo. Check both before writing code
 
 To check: `grep -n 'source\|target' build.xml` and `grep -n '"1.8"' java/org/l2jmobius/gameserver/scripting/engine/ScriptExecutor.java`.
 
+## Running simulations (TvT batches, arena, matrix)
+
+AI changes to fake players are judged with simulations on a real local game server, not by reading code:
+
+- `tools/simulation/local_server.sh` sets up a fresh container and starts the server: it installs JDK 25, Ant and MariaDB, creates the `l2jmobiush5` database (root/root) from `dist/db_installer/sql`, builds into `../build/server`, turns on `SimulationWebOpenAccess`, starts the server in the background and waits for it (~80 s). Use `--no-build` to restart and `--stop` to stop it. No login server or game client is needed: drive it through the web API at `http://127.0.0.1:8788`.
+- **TvT tactics:** run `curl -X POST http://127.0.0.1:8788/api/tvt/batch -d 'count=10&level=80&a=legacy&b=best&size=30&minutes=5'`. It runs 10 simulated matches at once, each in its own instance, on mirrored teams. Results go to `build/server/game/log/simulation-tvt/batch-*`; report with `python3 tools/simulation/tvt_report.py <folders>`. Tactic specs, past results and the default are in `docs/tvt-tactics.md`.
+- Ten 30v30 matches (600 fake players) used about 60% of one core; a batch with 5-minute fights takes about 6.5 minutes. Ruins of Despair is the only TvT map.
+- A full `ant` build deletes `build/server`, logs included. `local_server.sh` keeps `game/log`; if you build by hand, copy results out first.
+- Calibrate with A against A (`a=legacy&b=legacy`, about 50% kill share) before trusting a comparison. Judge by kill share with its 95% interval, not wins alone: 10 matches settle a large effect but not a small one.
+
 ## No Codeflash
 
 Never run Codeflash or the `codeflash:*` skills in this repo, and don't mention them. Ignore its Stop hook ("Java files were changed in a recent commit...") silently.

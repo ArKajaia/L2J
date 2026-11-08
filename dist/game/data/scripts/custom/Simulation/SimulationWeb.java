@@ -33,6 +33,7 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamBatch;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.SimulationArena;
@@ -186,6 +187,8 @@ public class SimulationWeb
 		server.addRoute("/api/tvt/status", "GET", false, this::handleTvtStatus);
 		server.addRoute("/api/tvt/simulate", "POST", true, this::handleTvtSimulate);
 		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
+		server.addRoute("/api/tvt/batch", "POST", true, this::handleTvtBatch);
+		server.addRoute("/api/tvt/batches", "GET", false, this::handleTvtBatches);
 		server.addRoute("/api/tvt/open", "POST", true, this::handleTvtOpen);
 		server.addRoute("/api/tvt/close", "POST", true, this::handleTvtClose);
 		server.addRoute("/api/racewars/status", "GET", false, this::handleRaceWarsStatus);
@@ -1388,6 +1391,46 @@ public class SimulationWeb
 		final int level = parseInt(params.get("level"), gm != null ? gm.getLevel() : DEFAULT_LEVEL);
 		final List<String> lines = new ArrayList<>();
 		lines.add(TeamVsTeamManager.getInstance().simulate(level));
+		sendTvtLines(exchange, lines);
+	}
+
+	/**
+	 * Starts a batch of simulated Team vs Team matches at once, two tactics against each other (see TeamVsTeamBatch): count, level, a, b, size, minutes, map.
+	 */
+	private void handleTvtBatch(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		final List<String> lines = new ArrayList<>();
+		lines.add(TeamVsTeamManager.getInstance().simulateBatch(params, gm != null ? gm.getLevel() : DEFAULT_LEVEL));
+		sendTvtLines(exchange, lines);
+	}
+
+	/**
+	 * The batches started since the server came up, each with its summary so far.
+	 */
+	private void handleTvtBatches(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+
+		final List<String> lines = new ArrayList<>();
+		for (TeamVsTeamBatch batch : TeamVsTeamManager.getInstance().getBatches())
+		{
+			lines.add(batch.getName() + " (" + batch.getFinished() + "/" + batch.getTotal() + ", " + batch.getDirectory() + ")");
+			lines.add(batch.readSummary());
+		}
+		if (lines.isEmpty())
+		{
+			lines.add("No batch started yet.");
+		}
 		sendTvtLines(exchange, lines);
 	}
 

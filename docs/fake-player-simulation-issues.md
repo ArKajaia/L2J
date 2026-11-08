@@ -52,6 +52,8 @@ Rules:
   - When B is next promoted, A gets the same two tiers: a `FakePartyBrain` for `FakePlayerParty`.
 - Promoted on 2026-10-28: the two tiers, the party stance (the whole party engages together), #30 and #31. B won 181 of 300 arena battles (60%, 95% 55-66%; levels 40 / 61 / 80: 65, 59, 57; arena `arena-20261028-202157`). A now has the same two tiers: `FakePartyBrain`, held by `FakePlayerParty` (`getBrain`), so roaming parties use them too. Brain B is a fresh copy again: `FakePlayerPvpAIExperimental` and `FakePartyBrainExperimental` differ from A only in their names and in how B finds its party brain.
 
+- 2026-11-07: Team vs Team fake players (brain A only: brain B never plays TvT) got per-team tactics (`FakeTvtTactics`, `TvTFakeTactics`), measured with `//tvt batch` (10 matches at once, tactics against tactics). Hunting the enemy healer lost every comparison; the default now ignores healers, sends nukers and archers onto the damage dealers and keeps them back. Everywhere else brain A plays `FakeTvtTactics.LEGACY`, unchanged. See `docs/tvt-tactics.md`.
+
 ### Running an experiment
 
 `//Simulate 5 rounds=10 brains=A:B swap` (or the web page: Brains "A vs B", "Swap sides" ticked):

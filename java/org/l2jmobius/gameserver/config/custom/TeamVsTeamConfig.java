@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
+import org.l2jmobius.gameserver.ai.FakeTvtTactics;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.holders.ItemChanceHolder;
@@ -52,6 +53,8 @@ public class TeamVsTeamConfig
 	public static int FIGHT_TIME;
 	public static int TEAM_SIZE;
 	public static int PARTY_SIZE;
+	/** How the fake players of a team pick targets and where its archers and mages stand (see {@link FakeTvtTactics}). */
+	public static FakeTvtTactics FAKE_TACTICS = FakeTvtTactics.LEGACY;
 	public static int MIN_PLAYERS;
 	/** The level brackets, lowest first: {min, max} each. */
 	public static List<int[]> BRACKETS;
@@ -160,6 +163,16 @@ public class TeamVsTeamConfig
 		TEAM_SIZE = Math.max(1, Math.min(100, config.getInt("TvTTeamSize", 20)));
 		PARTY_SIZE = Math.max(2, Math.min(9, config.getInt("TvTPartySize", 7)));
 		MIN_PLAYERS = Math.max(1, config.getInt("TvTMinPlayers", 1));
+		final String tactics = config.getString("TvTFakeTactics", "best");
+		try
+		{
+			FAKE_TACTICS = FakeTvtTactics.parse(tactics);
+		}
+		catch (IllegalArgumentException e)
+		{
+			LOGGER.warning("TeamVsTeamConfig: TvTFakeTactics '" + tactics + "': " + e.getMessage() + " Using best.");
+			FAKE_TACTICS = FakeTvtTactics.parse("best");
+		}
 
 		final List<int[]> brackets = new ArrayList<>();
 		for (String part : config.getString("TvTBrackets", "41-45;46-50;51-55;56-60;61-65;66-70;71-75;76-78;79-81;82-84;85-85").split(";"))

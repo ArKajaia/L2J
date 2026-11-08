@@ -32,6 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,6 +42,7 @@ import org.l2jmobius.commons.time.TimeUtil;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.FakeBrain;
+import org.l2jmobius.gameserver.ai.FakeTvtTactics;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.EventRotationConfig;
@@ -385,6 +387,14 @@ public class TeamVsTeamManager
 			return _side;
 		}
 
+		/**
+		 * @return the slot it fills (a fake player's role, a player's from its class)
+		 */
+		public SimRole getRole()
+		{
+			return _role;
+		}
+
 		public boolean isPlayer()
 		{
 			return _creature.isPlayer();
@@ -445,6 +455,8 @@ public class TeamVsTeamManager
 		private final List<Fighter> _fighters = new CopyOnWriteArrayList<>();
 		private final List<FakePlayerParty> _parties = new CopyOnWriteArrayList<>();
 		private final AtomicInteger _score = new AtomicInteger();
+		// How its fake players pick targets and where its archers and mages stand (a batch can set each team's own).
+		private volatile FakeTvtTactics _tactics = TeamVsTeamConfig.FAKE_TACTICS;
 		// Worked out by the tick for the fake players: where team mates fight right now, and where the enemy groups are.
 		private volatile List<Location> _clashes = List.of();
 		// When the next group of its dead comes back, and where: the ones that die close together come back together at one spawn point, instead of one after the other into the enemies.
@@ -550,6 +562,14 @@ public class TeamVsTeamManager
 		{
 			return _score.get();
 		}
+
+		/**
+		 * @return how its fake players pick targets and where its archers and mages stand
+		 */
+		public FakeTvtTactics getTactics()
+		{
+			return _tactics;
+		}
 		
 		/**
 		 * Puts one that died into a wave: the wave already waiting if it comes in at least half the respawn delay, else a new wave after the full delay, at a spawn point picked by chance.
@@ -620,6 +640,13 @@ public class TeamVsTeamManager
 		private volatile ScheduledFuture<?> _task;
 		// A match of fake players only (//tvt simulate): it plays to its end without players, and logs its kills.
 		private volatile boolean _simulated;
+		// Its size a side and its fight's length (a batch can play shorter matches of smaller teams than the event's).
+		private int _teamSize = TeamVsTeamConfig.TEAM_SIZE;
+		private int _fightMinutes = TeamVsTeamConfig.FIGHT_TIME;
+		// A match of a batch (//tvt batch): what it counts, and the builds and levels of Blue that Red gets too (mirrored teams), in their order.
+		private volatile TeamVsTeamBatch.MatchStats _batchStats;
+		private List<Object[]> _mirror;
+		private int _mirrorIndex;
 		// When its fake players may say something again.
 		private long _nextChat;
 		// The fence round its field (see TeamVsTeamBarrier).
@@ -746,6 +773,24 @@ public class TeamVsTeamManager
 		{
 			final long end = _phase == Phase.PREP ? _prepEnd : _fightEnd;
 			return (int) Math.max(0, (end - System.currentTimeMillis()) / 1000);
+		}
+
+		/**
+		 * @return what it counts for its batch, {@code null} if it is not part of one
+		 */
+		TeamVsTeamBatch.MatchStats getBatchStats()
+		{
+			return _batchStats;
+		}
+
+		public int getMinLevel()
+		{
+			return _minLevel;
+		}
+
+		public int getMaxLevel()
+		{
+			return _maxLevel;
 		}
 
 		List<Fighter> getAllFighters()
@@ -1448,6 +1493,14 @@ public class TeamVsTeamManager
 
 	private Match startMatch(EventMap map, Mode mode, int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated)
 	{
+		return startMatch(map, mode, bracket, blueGroups, redGroups, simulated, null);
+	}
+
+	/**
+	 * @param setup what to set on the match before its teams are built (a batch's tactics, size and mirrored builds), {@code null} for nothing
+	 */
+	private Match startMatch(EventMap map, Mode mode, int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated, Consumer<Match> setup)
+	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(INSTANCE_TEMPLATE_ID);
 		if (instance == null)
 		{
@@ -1456,6 +1509,10 @@ public class TeamVsTeamManager
 
 		final Match match = new Match(_nextMatchId.getAndIncrement(), mode, map, bracket[0], bracket[1], instance.getId());
 		match._simulated = simulated;
+		if (setup != null)
+		{
+			setup.accept(match);
+		}
 		if (match.isDeathmatch())
 		{
 			match._spots = map.deathmatch();
@@ -1642,10 +1699,10 @@ public class TeamVsTeamManager
 		{
 			players += group.size();
 		}
-		int slots = fakes ? Math.max(0, TeamVsTeamConfig.TEAM_SIZE - players) : 0;
+		int slots = fakes ? Math.max(0, match._teamSize - players) : 0;
 
 		// Lone players get a party each while the team has room for parties of its size, the others join theirs.
-		final int partyCount = Math.max(1, (TeamVsTeamConfig.TEAM_SIZE + TeamVsTeamConfig.PARTY_SIZE - 1) / TeamVsTeamConfig.PARTY_SIZE);
+		final int partyCount = Math.max(1, (match._teamSize + TeamVsTeamConfig.PARTY_SIZE - 1) / TeamVsTeamConfig.PARTY_SIZE);
 		final List<List<Player>> parties = new ArrayList<>();
 		final List<List<Player>> soloParties = new ArrayList<>();
 		final List<Player> solos = new ArrayList<>();
@@ -1749,7 +1806,9 @@ public class TeamVsTeamManager
 		final List<Npc> spawned = new ArrayList<>();
 		for (SimRole role : roles)
 		{
-			FakePlayerPvpBuild build = SimulationComposer.pick(role, ThreadLocalRandom.current());
+			// A batch's mirrored teams: Red gets the builds and levels Blue got, in the same order.
+			final Object[] mirrored = (match._mirror != null) && (side == match._red) && (match._mirrorIndex < match._mirror.size()) ? match._mirror.get(match._mirrorIndex++) : null;
+			FakePlayerPvpBuild build = mirrored != null ? (FakePlayerPvpBuild) mirrored[0] : SimulationComposer.pick(role, ThreadLocalRandom.current());
 			// A Deathmatch makes no fake players of the classes in DeathmatchFakeExcludedClasses (support classes the AI fights badly with): another build of the role instead.
 			for (int retry = 0; match.isDeathmatch() && (build != null) && (build.getPlayerClass() != null) && TeamVsTeamConfig.DM_FAKE_EXCLUDED_CLASSES.contains(build.getPlayerClass().name()) && (retry < 20); retry++)
 			{
@@ -1760,7 +1819,15 @@ public class TeamVsTeamManager
 				continue;
 			}
 
-			final int level = Rnd.get(match._minLevel, match._maxLevel);
+			final int level = mirrored != null ? (int) mirrored[1] : Rnd.get(match._minLevel, match._maxLevel);
+			if ((match._mirror != null) && (side == match._blue))
+			{
+				match._mirror.add(new Object[]
+				{
+					build,
+					level
+				});
+			}
 			final Location location = match.isDeathmatch() ? pickSpawnSpot(match, null) : QuestSpawnUtil.findPoint(side._base, 20, Math.max(40, TeamVsTeamConfig.SPAWN_RADIUS), true, instance.getId());
 			final Npc fake = FakePlayerPvpManager.getInstance().spawnTvtFighter(build, level, side._name, match.getId(), side._team, side._nameColor, location.getX(), location.getY(), location.getZ(), instance.getId());
 			if (fake == null)
@@ -1992,6 +2059,7 @@ public class TeamVsTeamManager
 					}
 
 					updateTactics(match);
+					TeamVsTeamBatch.sample(match);
 
 					// Every player left: the fake players don't fight on alone.
 					if (!match._simulated && match.getPlayers().isEmpty())
@@ -2035,7 +2103,7 @@ public class TeamVsTeamManager
 	private void startFight(Match match)
 	{
 		match._phase = Phase.FIGHT;
-		match._fightEnd = System.currentTimeMillis() + ((match.isDeathmatch() ? TeamVsTeamConfig.DM_FIGHT_TIME : TeamVsTeamConfig.FIGHT_TIME) * 60000L);
+		match._fightEnd = System.currentTimeMillis() + ((match.isDeathmatch() ? TeamVsTeamConfig.DM_FIGHT_TIME : match._fightMinutes) * 60000L);
 		sendState(match, Ex2TeamEventState.RESULT_NONE);
 		for (Player player : match.getPlayers())
 		{
@@ -2377,6 +2445,7 @@ public class TeamVsTeamManager
 		final Match match = dead._match;
 		final boolean deadAlone = dead._alliesNear == 0;
 		dead._deaths++;
+		TeamVsTeamBatch.onDeath(dead);
 		showScore(dead);
 		dead._loneUntil = 0;
 		dead._ambushSpot = null;
@@ -2593,6 +2662,11 @@ public class TeamVsTeamManager
 		}
 
 		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") ended: " + result);
+		final TeamVsTeamBatch.MatchStats batchStats = match._batchStats;
+		if (batchStats != null)
+		{
+			batchStats._batch.onMatchEnd(match, abandoned);
+		}
 		ThreadPool.schedule(() -> cleanup(match), abandoned ? 2000 : END_DELAY);
 	}
 
@@ -4014,6 +4088,157 @@ public class TeamVsTeamManager
 		return "Simulated match " + match.getId() + " (levels " + match.getBracketName() + ") started on " + picked.name() + ": " + match._blue._fighters.size() + " vs " + match._red._fighters.size() + " fake players, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
 	}
 	
+	/** The batches started since the server came up, the newest last. */
+	private final List<TeamVsTeamBatch> _batches = new CopyOnWriteArrayList<>();
+
+	/**
+	 * Starts a batch of simulated Team vs Team matches, all at once, each in an instance of its own, to measure tactics {@code a} against {@code b} (see {@link TeamVsTeamBatch}): both teams of a match
+	 * get the same builds at the same levels, the tactics change sides every match, and every two matches are played on the same map.
+	 * @param count how many matches (rounded up to an even number)
+	 * @param level a level of the bracket to play
+	 * @param map the map to play on, {@code null} for one picked by chance for every two matches
+	 * @param a the first tactics
+	 * @param b the second tactics
+	 * @param teamSize fighters a side, 0 for {@link TeamVsTeamConfig#TEAM_SIZE}
+	 * @param minutes the fight's length, 0 for {@link TeamVsTeamConfig#FIGHT_TIME}
+	 * @return what to tell the GM
+	 */
+	public synchronized String simulateBatch(int count, int level, EventMap map, FakeTvtTactics a, FakeTvtTactics b, int teamSize, int minutes)
+	{
+		if (!FakePlayerPvpManager.getInstance().isEnabled())
+		{
+			return "Fake players are disabled (EnableFakePlayers, FakePvpEnabled).";
+		}
+		final int index = getBracket(level);
+		if (index < 0)
+		{
+			return "Level " + level + " is outside every bracket (" + describeBrackets() + ").";
+		}
+		final int total = Math.max(2, count + (count % 2));
+		final TeamVsTeamBatch batch = new TeamVsTeamBatch(a, b, total);
+		_batches.add(batch);
+		EventMap picked = null;
+		int started = 0;
+		for (int i = 0; i < total; i++)
+		{
+			if ((i % 2) == 0)
+			{
+				picked = map != null ? map : EventMapData.getInstance().getRandomMap(Mode.TVT.getMapType(), Mode.TVT.getAllowedMaps());
+			}
+			if ((picked == null) || !picked.isComplete(Mode.TVT.getMapType()))
+			{
+				return "There is no complete Team vs Team map to play on.";
+			}
+			final Match match = startBatchMatch(picked, TeamVsTeamConfig.BRACKETS.get(index), batch, i, teamSize, minutes);
+			if (match != null)
+			{
+				started++;
+			}
+		}
+		return "Batch " + batch.getName() + ": " + started + " of " + total + " matches started (levels " + TeamVsTeamConfig.BRACKETS.get(index)[0] + "-" + TeamVsTeamConfig.BRACKETS.get(index)[1] + ", " + a.name() + " against " + b.name() + "), results in " + batch.getDirectory() + ".";
+	}
+
+	/**
+	 * Starts a batch from named settings (the GM command and the web page): {@code count} (10), {@code level} (the GM's), {@code a} and {@code b} (tactics specs, see {@link FakeTvtTactics#parse};
+	 * {@code legacy} and {@code best} by default), {@code size} (fighters a side), {@code minutes} (the fight's length) and {@code map} (a map id).
+	 * @param params the settings
+	 * @param defaultLevel the level when none is given
+	 * @return what to tell the GM
+	 */
+	public String simulateBatch(Map<String, String> params, int defaultLevel)
+	{
+		try
+		{
+			final int count = Integer.parseInt(params.getOrDefault("count", "10").trim());
+			final int level = params.containsKey("level") ? Integer.parseInt(params.get("level").trim()) : defaultLevel;
+			final FakeTvtTactics a = FakeTvtTactics.parse(params.getOrDefault("a", "legacy"));
+			final FakeTvtTactics b = FakeTvtTactics.parse(params.getOrDefault("b", "best"));
+			final int size = Integer.parseInt(params.getOrDefault("size", "0").trim());
+			final int minutes = Integer.parseInt(params.getOrDefault("minutes", "0").trim());
+			EventMap map = null;
+			final String mapId = params.get("map");
+			if ((mapId != null) && !mapId.isBlank())
+			{
+				map = EventMapData.getInstance().getMap(mapId.trim());
+				if (map == null)
+				{
+					return "No map " + mapId + ".";
+				}
+			}
+			if (a.name().equals(b.name()))
+			{
+				// The results are by tactics name: the same tactics on both sides (a calibration) need two names.
+				return simulateBatch(count, level, map, rename(a, a.name() + "-1"), rename(b, b.name() + "-2"), size, minutes);
+			}
+			return simulateBatch(count, level, map, a, b, size, minutes);
+		}
+		catch (IllegalArgumentException e)
+		{
+			return "Batch not started: " + e.getMessage();
+		}
+	}
+
+	private static FakeTvtTactics rename(FakeTvtTactics tactics, String name)
+	{
+		return new FakeTvtTactics(name, tactics.healer(), tactics.assassinHealer(), tactics.nukerHealer(), tactics.nukerDps(), tactics.healerCalls(), tactics.standoff(), tactics.standoffWait());
+	}
+
+	/**
+	 * Starts one match of a batch: a simulated match whose teams play the batch's tactics on mirrored builds.
+	 */
+	private Match startBatchMatch(EventMap map, int[] bracket, TeamVsTeamBatch batch, int index, int teamSize, int minutes)
+	{
+		return startMatch(map, Mode.TVT, bracket, List.of(), List.of(), true, match ->
+		{
+			if (teamSize > 0)
+			{
+				match._teamSize = Math.min(100, teamSize);
+			}
+			if (minutes > 0)
+			{
+				match._fightMinutes = minutes;
+			}
+			match._blue._tactics = batch.blueOf(index);
+			match._red._tactics = batch.redOf(index);
+			match._mirror = new ArrayList<>();
+			match._batchStats = new TeamVsTeamBatch.MatchStats(batch, index, match._blue._tactics, match._red._tactics);
+		});
+	}
+
+	/**
+	 * @return the batches started since the server came up, the newest last
+	 */
+	public List<TeamVsTeamBatch> getBatches()
+	{
+		return _batches;
+	}
+
+	/**
+	 * Called by the combat log for every hit: a batch counts what each team dealt to which role of the other.
+	 * @param target who took the damage
+	 * @param attacker who dealt it
+	 * @param damage how much
+	 */
+	public static void onDamage(Creature target, Creature attacker, double damage)
+	{
+		if (!ACTIVE || (attacker == null) || (target == null) || (damage <= 0))
+		{
+			return;
+		}
+		final Fighter hitter = getFighter(attacker);
+		if ((hitter == null) || (hitter._match._batchStats == null) || (hitter._match._phase != Phase.FIGHT))
+		{
+			return;
+		}
+		final Fighter victim = getFighter(target);
+		// Not a servitor (getFighter gives its owner), nor a team mate.
+		if ((victim == null) || (victim._creature != target) || (victim._match != hitter._match) || (victim._side == hitter._side))
+		{
+			return;
+		}
+		TeamVsTeamBatch.onDamage(hitter, victim, damage);
+	}
+
 	/**
 	 * Ends a match now, without rewards.
 	 * @param id the match id, 0 for all
