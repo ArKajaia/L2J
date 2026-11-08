@@ -250,8 +250,9 @@ public class FakePlayerPvpPassiveTree
 	 * @param index its node index
 	 * @param gearToken the armour or weapon condition the fake player must meet for it to be of use ({@code SHIELD} for Riposte...), {@code null} for none
 	 * @param weight how much likelier than the others a tree heads for it (Name*2 in the list), 1 by default
+	 * @param first {@code true} for a keystone every tree takes at the first keystone point, on top of the ones it heads for there and after (!Name in the list)
 	 */
-	private record Keystone(int index, String gearToken, double weight)
+	private record Keystone(int index, String gearToken, double weight, boolean first)
 	{
 	}
 
@@ -421,7 +422,7 @@ public class FakePlayerPvpPassiveTree
 	}
 
 	/**
-	 * @param entries keystone names, each one with an optional @TOKEN armour or weapon condition (Riposte@SHIELD) and an optional *weight (Far Shot@BOW*2)
+	 * @param entries keystone names, each one with an optional @TOKEN armour or weapon condition (Riposte@SHIELD), an optional *weight (Far Shot@BOW*2) and an optional ! in front for a keystone every tree takes on top of the others (!Unwavering Stance)
 	 * @param source where the list comes from, for the warnings
 	 * @return the keystones, in that order
 	 */
@@ -430,7 +431,12 @@ public class FakePlayerPvpPassiveTree
 		final List<Keystone> keystones = new ArrayList<>();
 		for (String listed : entries)
 		{
-			String entry = listed;
+			String entry = listed.trim();
+			final boolean first = entry.startsWith("!");
+			if (first)
+			{
+				entry = entry.substring(1);
+			}
 			double weight = 1;
 			final int star = entry.lastIndexOf('*');
 			if (star > 0)
@@ -459,7 +465,7 @@ public class FakePlayerPvpPassiveTree
 			}
 			else
 			{
-				keystones.add(new Keystone(keystone, token, weight));
+				keystones.add(new Keystone(keystone, token, weight, first));
 			}
 		}
 		return List.copyOf(keystones);
@@ -685,6 +691,7 @@ public class FakePlayerPvpPassiveTree
 		{
 			// The keystones of the role (or build) that are of use with this gear, and their weights.
 			final List<Integer> keystones = new ArrayList<>();
+			final List<Integer> firstKeystones = new ArrayList<>();
 			final double[] keystoneWeights = new double[_nodes.length];
 			for (Keystone keystone : getKeystones(key))
 			{
@@ -695,6 +702,10 @@ public class FakePlayerPvpPassiveTree
 						keystones.add(keystone.index());
 					}
 					keystoneWeights[keystone.index()] = keystone.weight();
+					if (keystone.first() && !firstKeystones.contains(keystone.index()))
+					{
+						firstKeystones.add(keystone.index());
+					}
 				}
 			}
 
@@ -728,7 +739,7 @@ public class FakePlayerPvpPassiveTree
 					}
 				}
 
-				pool[v] = new Growth(key.origin(), effectWeights, keystones, keystoneWeights, (key.keystones() != null) && !addsToRole(key.keystones()), style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
+				pool[v] = new Growth(key.origin(), effectWeights, keystones, firstKeystones, keystoneWeights, (key.keystones() != null) && !addsToRole(key.keystones()), style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
 			}
 			return pool;
 		});
@@ -797,6 +808,8 @@ public class FakePlayerPvpPassiveTree
 	{
 		private final double[][] _effectWeights;
 		private final List<Integer> _keystoneChoices;
+		/** The keystones every order takes at the first keystone point on top of its others (!Name in the list), in list order. */
+		private final List<Integer> _firstKeystones;
 		/** Index -> the weight of the keystone in the list (Name*2), for the ones headed for by chance. */
 		private final double[] _keystoneWeights;
 		/** A build's own keystones are headed for in its order (the first one in reach first), a role's by chance. */
@@ -820,10 +833,11 @@ public class FakePlayerPvpPassiveTree
 		private final double[] _pathWorth;
 		private final int[] _previous;
 
-		Growth(int origin, double[][] effectWeights, List<Integer> keystones, double[] keystoneWeights, boolean ordered, Style style, int maxPoints)
+		Growth(int origin, double[][] effectWeights, List<Integer> keystones, List<Integer> firstKeystones, double[] keystoneWeights, boolean ordered, Style style, int maxPoints)
 		{
 			_effectWeights = effectWeights;
 			_keystoneChoices = keystones;
+			_firstKeystones = firstKeystones;
 			_keystoneWeights = keystoneWeights;
 			_orderedKeystones = ordered;
 			_isKeystoneChoice = new boolean[_nodes.length];
@@ -849,9 +863,25 @@ public class FakePlayerPvpPassiveTree
 		{
 			final int[] targets = FakePlayerPvpConfig.PASSIVE_TREE_KEYSTONE_POINTS;
 			int nextTarget = 0;
+			int nextFirst = 0;
 			while ((_points < _maxPoints) && (_count < _nodes.length))
 			{
 				search();
+
+				// The keystones marked with ! come at the first keystone point, before (and on top of) the ones it heads for there.
+				if ((nextFirst < _firstKeystones.size()) && (targets.length > 0) && (_points >= targets[0]))
+				{
+					final int first = _firstKeystones.get(nextFirst++);
+					if (!_taken[first] && (_distance[first] != Long.MAX_VALUE) && !conflictsWithChosen(first))
+					{
+						final List<Integer> path = path(first);
+						for (int i = 0; i < path.size(); i++)
+						{
+							take(path.get(i), i == 0, i == (path.size() - 1));
+						}
+					}
+					continue;
+				}
 
 				// Head for the next keystone once enough points are spent.
 				final boolean keystone = (nextTarget < targets.length) && (_points >= targets[nextTarget]);

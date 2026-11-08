@@ -43,7 +43,8 @@
 	     keystones - the passive tree keystones it heads for, in order (the first one in reach first), instead of the
 	               FakePvpKeystones.* list of its role (config/Custom/FakePlayerPvp.ini), e.g. "Battlemage;Unending Fury".
 	               Starting with "+" it adds them to its role's list instead, picked like the others (not first),
-	               e.g. "+Soul Link".
+	               e.g. "+Soul Link". A "!" in front of a name makes it a keystone every tree takes at the first
+	               keystone point, on top of the ones it heads for (e.g. "+!Unwavering Stance").
 	     hybrid  - true for a melee build whose M. Atk. counts too (the Battlemage keystone adds part of it to its P. Atk.):
 	               its passive tree wants the magic stats as much as the physical ones.
 	     weights - how much more (or less) its passive tree wants some stats than its role does, "KEY:factor;KEY:factor"
@@ -532,7 +533,7 @@
 	</buffs>
 
 	<!-- Mages -->
-	<build name="Archmage" classId="94" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
+	<build name="Archmage" classId="94" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+!Unwavering Stance" weight="2">
 		<attack>1296,1292,1289,1288,1339,1451,1230,1555,1231,1275,1220,1274,1184,1177,1147</attack>
 		<debuff>1083,1160,1056,1452,1338</debuff>
 		<buff>1285,1532</buff>
@@ -557,7 +558,7 @@
 		</combo>
 		<variant name="Archmage Legacy" armor="ROBE_LEGACY" weight="1" />
 	</build>
-	<build name="Mystic Muse" classId="103" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
+	<build name="Mystic Muse" classId="103" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+!Unwavering Stance" weight="2">
 		<attack>1295,1293,1290,1288,1340,1453,1342,1235,1555,1236,1237,1265,1275,1175,1274,1184,1177</attack>
 		<debuff>1071,1164,1056,1455,1338</debuff>
 		<buff>1286,1532,1047</buff>
@@ -579,7 +580,7 @@
 		</combo>
 		<variant name="Mystic Muse Tallum" weapon="MAGE_ALT" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Storm Screamer" classId="110" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
+	<build name="Storm Screamer" classId="110" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+!Unwavering Stance" weight="2">
 		<attack>1176,1294,1291,1288,1343,1341,1456,1239,1555,1148,1234,1267,1159,1178,1184,1177,1147</attack>
 		<debuff>1074,1160,1064,1458,1338</debuff>
 		<buff>1287,1532,1457</buff>
@@ -601,7 +602,7 @@
 		</combo>
 		<variant name="Storm Screamer Legacy" weapon="MAGE_ALT" armor="ROBE_LEGACY" weight="1" />
 	</build>
-	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="2"> <!-- Overlord line -->
+	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" keystones="+!Unwavering Stance" weight="2"> <!-- Overlord line -->
 		<attack>1245,1090,1107,1100,1102,1095,1101</attack>
 		<debuff>1246,1367,1366,1462,1208,1097,1105,1104,1099,1096,1209</debuff>
 		<buff>1533</buff>
@@ -628,7 +629,7 @@
 		</combo>
 		<variant name="Dominator Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+Soul Link*0.3" weight="2"> <!-- Necromancer line: Soul Link sends part of its damage to its servitor, like Transfer Pain -->
+	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+!Unwavering Stance;Soul Link*0.3" weight="2"> <!-- Necromancer line: Soul Link sends part of its damage to its servitor, like Transfer Pain -->
 		<attack>1467,1343,1159,1148,1234,1382,1181,1147,1220,1184,1177</attack>
 		<debuff>1336,1337,1064,1263,1269,1160,1164,1222,1163,1168,1298</debuff>
 		<buff>1532</buff>
@@ -870,7 +871,7 @@
 	</build>
 
 	<!-- Archers -->
-	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
+	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" keystones="+!Unwavering Stance" weight="2">
 		<attack>987,24,990,771,343,19,56</attack>
 		<debuff>354,101</debuff>
 		<buff>99,131,415,416,303</buff>
@@ -892,7 +893,7 @@
 		<variant name="Sagittarius Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
 		<variant name="Sagittarius Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
-	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
+	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" keystones="+!Unwavering Stance" weight="2">
 		<attack>987,24,990,772,343,369,19,56</attack>
 		<debuff>354,101,102</debuff>
 		<buff>99,413,415,416,303,230</buff>
@@ -915,7 +916,7 @@
 		<variant name="Moonlight Sentinel Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
 		<variant name="Moonlight Sentinel Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
-	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
+	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" keystones="+!Unwavering Stance" weight="2">
 		<attack>987,990,773,343,314,369,19,56</attack>
 		<debuff>354,101,115,122</debuff>
 		<buff>99,414,415,303</buff>
@@ -1037,7 +1038,7 @@
 		</combo>
 		<variant name="Doombringer Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" weight="2"> <!-- Kamael, male -->
+	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" keystones="+!Unwavering Stance" weight="2"> <!-- Kamael, male -->
 		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
@@ -1060,7 +1061,7 @@
 		</combo>
 		<variant name="Male Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" weight="2"> <!-- Kamael, female -->
+	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" keystones="+!Unwavering Stance" weight="2"> <!-- Kamael, female -->
 		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
@@ -1193,7 +1194,7 @@
 		</combo>
 		<variant name="Judicator Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Trickster" classId="134" role="ARCHER" weapon="CROSSBOW" armor="LIGHT_ARCHER" weight="2"> <!-- Kamael, female -->
+	<build name="Trickster" classId="134" role="ARCHER" weapon="CROSSBOW" armor="LIGHT_ARCHER" keystones="+!Unwavering Stance" weight="2"> <!-- Kamael, female -->
 		<attack>790,990,987,507,509,508,487,939</attack>
 		<debuff>522,1435,792,1445,627</debuff>
 		<buff>490,482,1514,1470</buff>
@@ -1333,7 +1334,7 @@
 	                 instead of its role's.
 	     hybrid    - a melee build whose M. Atk. counts too (Battlemage adds part of it to its P. Atk.): its passive tree
 	                 wants the magic stats as much as the physical ones. -->
-	<build name="Doom Oracle" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="1"> <!-- Prophet line: Prophecy of Doom is its damage -->
+	<build name="Doom Oracle" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" keystones="+!Unwavering Stance" weight="1"> <!-- Prophet line: Prophecy of Doom is its damage -->
 		<attack>27530,1398,1177,1184</attack> <!-- Prophecy of Doom (stacked and spread by Inevitable Doom), Mana Burn, Wind Strike, Ice Bolt -->
 		<debuff>27533,27536,1201</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Dryad Root (a Doom on a target that stays put deals x1.5) -->
 		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->
@@ -1369,7 +1370,7 @@
 		</combo>
 		<variant name="Battle Oracle Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Flame Warchief" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="2"> <!-- Warcryer line: the Totem of Flames and Steal Essence are its damage -->
+	<build name="Flame Warchief" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" keystones="+!Unwavering Stance" weight="2"> <!-- Warcryer line: the Totem of Flames and Steal Essence are its damage -->
 		<attack>1245,1090,1107</attack> <!-- Steal Essence, Life Drain, Frost Flame (Orc Shaman) -->
 		<debuff>1244|1100</debuff> <!-- Freezing Flame / Chill Flame -->
 		<buff>27559,27548,27545,27547,27550,27553,27558</buff> <!-- Totems of Flames, Frost-Teeth, Blood, the Horde and Ancestors where they work, Shatter, Great Totem of the Horde-Father -->
