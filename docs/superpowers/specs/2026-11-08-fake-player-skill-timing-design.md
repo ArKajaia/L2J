@@ -2,7 +2,7 @@
 
 Design for making fake players use their existing skills the way a good PvP player does: reading the enemy, holding burst for an opening, chaining crowd control, interrupting casts, answering burst, and racing when they can out-damage.
 
-Status: design approved in conversation on 2026-11-08; this spec awaits review before the implementation plan.
+Status: approved 2026-11-08 (reflex delays halved on review).
 
 ## 1. Goal and constraints
 
@@ -64,7 +64,7 @@ Weights come from `FakeSkillWeights` by role.
 
 ## 5. Reflexes (`FakeReflexes`)
 
-Act when an event arrives, after a reaction delay from personality (about 150–250 ms skilled, 600–1000 ms weak). A reflex acts only if reacting is worth more than carrying on (asked of the scorer).
+Act when an event arrives, after a reaction delay from personality (about 75–125 ms skilled, 300–500 ms weak). A reflex acts only if reacting is worth more than carrying on (asked of the scorer).
 
 **Kill race first.** Before any reflex: if time to kill is clearly below time to die (margin by personality and role), the reflex is skipped and the offensive choice stands. A defensive or interrupt wins only if the race would be lost without it, or when it is nearly free (an instant interrupt). The race weighs most for nukers and other damage dealers; tanks and supports react more readily.
 
