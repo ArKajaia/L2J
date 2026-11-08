@@ -9,3 +9,4 @@
 # Bestiary art: made from your own client (client/Bestiary/extract_models.py) and by the bake page
 /dist/game/data/html/custom/bestiary/
 /client/Bestiary/work/
+__pycache__/

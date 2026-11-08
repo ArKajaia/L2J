@@ -49,6 +49,7 @@ import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
+import org.l2jmobius.gameserver.config.custom.FakeSkillWeightsConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.FindPvpConfig;
 import org.l2jmobius.gameserver.config.custom.FreeMountsConfig;
@@ -154,6 +155,7 @@ public class ConfigLoader
 		FactionSystemConfig.load();
 		FakePlayersConfig.load();
 		FakePlayerPvpConfig.load();
+		FakeSkillWeightsConfig.load();
 		FakePartyConfig.load();
 		FakeSimulationConfig.load();
 		RaceWarsConfig.load();

@@ -135,6 +135,20 @@ public enum Reason
 	/** Alone in a Team vs Team match: doesn't take on (or chase into) a group of enemies, waits in its corner or slips back to its team mates. */
 	LONE_AVOID,
 
+	// Skill timing (brain B, see ai/fight)
+	/** Not a decision: what its fight read holds (casts seen, cooldowns remembered, time to kill and to die), every 2 seconds of a fight. */
+	FIGHT_READ,
+	/** Not a decision: the debuff or attack skill its scorer picked, with its value and the biggest parts of it. */
+	SCORED_SKILL,
+	/** Not a decision: it started a plan (a burst, a crowd control chain), with its steps. */
+	PLAN_START,
+	/** Not a decision: its plan ended, done or dropped. */
+	PLAN_DROP,
+	/** Not a decision: a reflex fired (the event it answered and what it did). */
+	REFLEX,
+	/** Not a decision: events it didn't answer because it is winning the race (it keeps attacking). */
+	REFLEX_RACE_SKIP,
+
 	/** Nothing else to do this think. */
 	IDLE
 }

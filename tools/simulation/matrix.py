@@ -231,6 +231,7 @@ def main():
     parser.add_argument("--distance", type=int, default=1000, help="how far apart the two spawn")
     parser.add_argument("--brain", default="A")
     parser.add_argument("--builds", help="build names separated by commas (default: every build)")
+    parser.add_argument("--mirror", action="store_true", help="an A/B test: every build only fights itself (use with --brain A:B)")
     parser.add_argument("--seed")
     parser.add_argument("--place", help="x,y,z[,heading] instead of the default place")
     args = parser.parse_args()
@@ -244,6 +245,8 @@ def main():
         params = {"battles": args.battles, "parallel": args.parallel, "level": args.level, "time": args.time, "distance": args.distance, "brain": args.brain}
         if args.builds:
             params["builds"] = args.builds
+        if args.mirror:
+            params["mirror"] = "1"
         if args.seed:
             params["seed"] = args.seed
         if args.place:

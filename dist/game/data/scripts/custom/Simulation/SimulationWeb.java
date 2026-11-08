@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
+import org.l2jmobius.gameserver.config.custom.FakeSkillWeightsConfig;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamBatch;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
@@ -73,6 +74,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /api/racewars/status, POST /api/racewars/simulate (level, map), /open, /close, /stop - Race Wars, like //racewars</li>
  * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, or all at once (mode=ffa), the dead coming back (start: races, mode, power, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
  * place, the Cruma Marshlands field by default)</li>
+ * <li>POST /api/simulation/weights/reload - reads config/Custom/FakeSkillWeights.ini again (tools/simulation/tune_weights.py)</li>
  * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
  * place by default, else the simulation field by Cruma Marshlands)</li>
  * </ul>
@@ -184,6 +186,7 @@ public class SimulationWeb
 		server.addRoute("/api/simulation/matrix/resume", "POST", true, this::handleMatrixResume);
 		server.addRoute("/api/simulation/matrix/stop", "POST", true, this::handleMatrixStop);
 		server.addRoute("/api/simulation/matrix/status", "GET", false, this::handleMatrixStatus);
+		server.addRoute("/api/simulation/weights/reload", "POST", true, this::handleWeightsReload);
 		server.addRoute("/api/tvt/status", "GET", false, this::handleTvtStatus);
 		server.addRoute("/api/tvt/simulate", "POST", true, this::handleTvtSimulate);
 		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
@@ -911,6 +914,23 @@ public class SimulationWeb
 		sendMatrixLines(exchange, lines);
 	}
 
+	/**
+	 * Reads config/Custom/FakeSkillWeights.ini again (the self-play tuning rewrites it between matrices); fake players spawned after it use the new weights.
+	 */
+	private void handleWeightsReload(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+		
+		FakeSkillWeightsConfig.load();
+		final List<String> lines = new ArrayList<>();
+		lines.add("Skill weights reloaded from config/Custom/FakeSkillWeights.ini.");
+		sendMatrixLines(exchange, lines);
+	}
+	
 	private void handleMatrixStatus(HttpExchange exchange) throws IOException
 	{
 		if (!authorize(exchange))
