@@ -2185,7 +2185,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if (isHealer(enemy))
 		{
 			// With healerInReach, only while the team's archers or nukers reach it.
-			if (!tactics.healerInReach() || isInShooterReach(npc, enemy))
+			if (((tank || assassin) && isHealerHunter(npc, tactics)))
+			{
+				// Team vs Team hunters: one of the tanks and daggers picked to hunt healers.
+				score -= tactics.hunterHealer();
+			}
+			else if (!tactics.healerInReach() || isInShooterReach(npc, enemy))
 			{
 				if (tank)
 				{
@@ -2231,6 +2236,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if (nuker && (tactics.nukerNuker() > 0) && isNuker(enemy))
 		{
 			score -= tactics.nukerNuker();
+		}
+
+		// Team vs Team ease: of the enemies close by, the easiest class to kill in a team fight.
+		if ((tactics.ease() > 0) && (distance <= (ranged ? getThreatReach(npc) : EASE_MELEE_RANGE)))
+		{
+			score -= tactics.ease() * FakeTvtKillEase.of(enemy);
 		}
 
 		// Team vs Team standoff: an archer or mage would rather shoot what it reaches from behind its front than walk up into the enemy for something better.
@@ -2294,6 +2305,25 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	// When it may look for an enemy healer to lock again, and the healer it just cast a lock on (its target goes back to its fight after the cast).
 	private long _nextHealerLock;
 	private Creature _lockTarget;
+
+	/** Team vs Team ease: how close an enemy is to a melee fake player to be "close by". */
+	private static final int EASE_MELEE_RANGE = 600;
+
+	/**
+	 * Team vs Team hunters: whether this tank or dagger is one of the share of them that hunt healers. Decided by its object id, so it stays the same all match long and the share holds over a team.
+	 * @param npc a tank or dagger
+	 * @param tactics its team's tactics
+	 * @return {@code true} if it hunts healers
+	 */
+	private static boolean isHealerHunter(Attackable npc, FakeTvtTactics tactics)
+	{
+		if (tactics.hunters() <= 0)
+		{
+			return false;
+		}
+		final int hash = (npc.getObjectId() * 0x9E3779B1) >>> 16;
+		return (hash % 1000) < (tactics.hunters() * 1000);
+	}
 
 	/**
 	 * Team vs Team assassinRush: whether {@code enemy} is within reach of one of its gap closers (a dagger's Shadow Step, 600).

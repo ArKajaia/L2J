@@ -19,6 +19,9 @@ How the fake players of a Team vs Team match pick their targets and where their 
 | `nukerNuker` | How much better an enemy nuker (a mage that isn't a support) is as a target for a nuker or archer, on top of `nukerDps` | 0 |
 | `rush` | A dagger weighs an enemy healer by `assassin` only while the healer is within reach of its gap closer (Shadow Step, 600, for all three dagger classes); farther it is a target like any other | 0 |
 | `tankHealer` | How much better an enemy healer is as a target for a tank | 0 |
+| `ease` | How much better an enemy close by is the easier its class is to kill in a team fight (`FakeTvtKillEase`, 0 for the toughest class, a tank, 1 for the easiest, a dagger), times this. Close by: within its reach for an archer or mage, within 600 for anyone else | 0 |
+| `hunters` | The share of tanks and daggers (each decided once, by object id) that hunt healers at `hunterHealer` | 0 |
+| `hunterHealer` | With `hunters`: their healer priority | 1.2 |
 | `reach` | An enemy healer is worth its priority, and called for the party, only while one of the team's archers or nukers reaches it (a nuker's own reach; for anyone else, an archer or nuker of its party). Out of that reach it is a target like any other | 0 |
 
 Presets: `legacy`, `focus` (healer ×2), `ignore` (nobody hunts healers, no healer calls, nukers +0.3 on damage dealers), `dps` (nukers and archers on damage dealers), `split` (daggers on healers, nukers and archers on damage dealers), `standoff`, `best` (the default, see the end).
@@ -98,7 +101,7 @@ Deaths by role per team per match over those 30: legacy lost 28.8 archers, 20.3 
 
 Then a small healer priority for the daggers only (`assassin=0.6`) against that, 30 matches at levels 79-81 and 61-65: the daggers' variant won 68% (95%: 50-82) with a kill share of 52% (46-58), and its own healers died 4.4 times a match against 6.3. A lean rather than a clear win, but it agrees with the first batch and it is the safer choice with real players in the match: a healer nobody ever comes for heals freely. It is the default:
 
-**`best` = `ignore:assassin=0.6,standoff=1,wait=0`**: nobody calls the party onto a healer; melee and nukers don't prefer healers; daggers prefer them a little (0.6, half the legacy 1.2); nukers and archers prefer the enemy damage dealers (+0.3); archers and mages weigh the walk to a target twice and the enemies on the way, and a mage between casts holds at the edge of its reach.
+**`best` = `ignore:assassin=0.6,standoff=1,wait=0`** (since round 7 also `ease=2`): nobody calls the party onto a healer; melee and nukers don't prefer healers; daggers prefer them a little (0.6, half the legacy 1.2); nukers and archers prefer the enemy damage dealers (+0.3); archers and mages weigh the walk to a target twice and the enemies on the way, and a mage between casts holds at the edge of its reach.
 
 The shipped preset (`best-a0.6` in the data), read from `TvTFakeTactics = best` on a rebuilt server, against legacy at levels 79-81: **10/10, 115 - 42 kills (73.0%, 95%: 68-78)**, healer focus 10% against 25%, archers and nukers lost 6.0 + 3.8 against 27.9 + 19.6.
 
@@ -138,6 +141,44 @@ The first try left a locker's target on the healer after the cast, which its par
 | tanks 0.6 alone | 10 | 6/10 | 52.0% (44-60) | 42 - 38 | 10% | 2.7 (3.6) |
 
 None of them beats `best`: all three are within noise of it (the first 10 matches of the daggers and tanks variant leaned its way, 56%, the next 10 didn't). Pulling the healer focus onto the melee that are already close costs little, unlike sending the archers and nukers after it, but it doesn't win more either. One side effect stands out: with the tanks on the enemy healers, a team's own healers died about a quarter less often (2.6-2.7 against 3.6 a match), likely because the enemy tanks and melee turn on the tanks in their backline. The default stays `best`.
+
+## Round 7: the easiest kill close by; half the tanks and daggers on the healers (2026-11-08)
+
+**How easy each class is to kill.** From the about 12,000 kills logged in the simulated matches of 2026-11-07/08 (mostly `best` teams): each class's deaths per appearance relative to the average fighter (a class is drawn evenly within its role's slots: 5 tanks, 5 archers, 4 healers, 8 melee, 4 nukers and 4 buffers a team of 30):
+
+| Class | Rate | Class | Rate | Class | Rate |
+|---|---|---|---|---|---|
+| Ghost Hunter | 1.94 | Archmage | 1.28 | Dreadnought | 1.06 |
+| Adventurer | 1.94 | Doomcryer | 1.27 | Sagittarius | 1.03 |
+| Wind Rider | 1.88 | Grand Khavatari | 1.24 | Fortune Seeker | 1.01 |
+| Trickster | 1.52 | Male Soul Hound | 1.24 | Maestro | 0.97 |
+| Doombringer | 1.42 | Titan | 1.23 | Duelist | 0.96 |
+| Moonlight Sentinel | 1.34 | Flame Warchief | 1.21 | Shillien Saint | 0.79 |
+| Ghost Sentinel | 1.32 | Storm Screamer | 1.19 | Sword Muse | 0.77 |
+| Doom Oracle | 1.30 | Judicator | 1.18 | Eva's Saint | 0.72 |
+| War Dancer | 1.28 | Female Soul Hound | 1.17 | Hierophant | 0.70 |
+| | | Soultaker | 1.11 | Cardinal | 0.66 |
+| | | Spectral Dancer | 1.09 | Hell Knight | 0.40 |
+| | | Mystic Muse | 1.08 | Phoenix Knight | 0.36 |
+| | | | | Shillien Templar | 0.35 |
+| | | | | Battle Bard | 0.33 |
+| | | | | Eva's Templar | 0.29 |
+
+Daggers die twice as often as the average fighter, tanks a third as often, healers about two thirds. These are deaths in matches where `best` already leans onto damage dealers, so they mix how fragile a class is with how often it is targeted. The table is `FakeTvtKillEase`.
+
+`ease=w`: an enemy close by gets `w` times its class's place on that scale (0 for Eva's Templar, 1 for the daggers) off its score. Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once:
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) | B's damage (A) |
+|---|---|---|---|---|---|
+| ease 0.6 | 10 | 6/10 | 50.3% (42-59) | 43 - 43 | 1.7M (1.6M) |
+| ease 1.2 | 20 | 13/20 | 56.4% (50-63) | 48 - 37 | 1.8M (1.6M) |
+| ease 2.0 | 20 | 14/20 | 56.3% (49-64) | 47 - 36 | 1.8M (1.6M) |
+| ease 3.0 | 10 | 5/10 | 50.4% (41-60) | 43 - 41 | 1.7M (1.6M) |
+| half of the tanks and daggers hunt healers (1.2) | 20 | 10/20 | 49.9% (43-56) | 40 - 41 | 1.5M (1.6M) |
+
+Ease peaks between 1.2 and 2.0: there its teams dealt more damage and lost fewer members in every role (at 2.0, 13.3 melee and 2.3 healer deaths a match against 19.3 and 2.8). At 3.0 the class outweighs how hurt and how close an enemy is, and the gain is gone. Over the 40 matches at 1.2 and 2.0 together ease wins about 56% of the kills. Half of the tanks and daggers on the healers is even with `best`, like the other healer options of rounds 4 to 6.
+
+`best` now has `ease=2`. Against legacy (3 minute fights): **20/20, kill share 82.7% (80-86)**, 80 - 17 kills, at levels 79-81 (74 - 20) and 61-65 (86 - 14).
 
 ## Limits
 
