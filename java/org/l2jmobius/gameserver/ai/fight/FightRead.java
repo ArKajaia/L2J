@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.ai.fight;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -54,7 +55,7 @@ public class FightRead
 	private static final Set<String> STUN_TYPE = Set.of("STUN", "PARALYZE");
 	private static final Set<String> MEN_TYPE = Set.of("SLEEP", "SILENCE", "SILENCE_PHYSICAL", "SILENCE_ALL", "MUTE");
 	
-	private record Cooldown(long usedAt, int reuse)
+	private record Cooldown(long usedAt, int reuse, boolean cc)
 	{
 	}
 	
@@ -127,12 +128,13 @@ public class FightRead
 	public synchronized void onEnemyCast(int enemyId, SkillFacts skill, int targetId, long now, long end)
 	{
 		_seenCasts++;
-		_casts.put(enemyId, new ActiveCast(enemyId, skill, SkillMeanings.classify(skill), targetId, now, end));
+		final EnumSet<SkillMeaning> meanings = SkillMeanings.classify(skill);
+		_casts.put(enemyId, new ActiveCast(enemyId, skill, meanings, targetId, now, end));
 		if ((skill.id() > 0) && (skill.reuseMs() > 0))
 		{
 			final long key = key(enemyId, skill.id());
 			_cooldowns.remove(key);
-			_cooldowns.put(key, new Cooldown(now, skill.reuseMs()));
+			_cooldowns.put(key, new Cooldown(now, skill.reuseMs(), meanings.contains(SkillMeaning.CC)));
 			while (_cooldowns.size() > _memory)
 			{
 				final Iterator<Long> oldest = _cooldowns.keySet().iterator();
@@ -249,6 +251,28 @@ public class FightRead
 	{
 		final Cooldown cooldown = _cooldowns.get(key(enemyId, skillId));
 		return (cooldown != null) && (now < (cooldown.usedAt() + cooldown.reuse()));
+	}
+	
+	/**
+	 * @param enemyId an enemy
+	 * @param now the current time
+	 * @return {@code true} if it saw the enemy use crowd control and every one it remembers is on cooldown (one it never saw used may be ready: then {@code false})
+	 */
+	public synchronized boolean knownCcOnCooldown(int enemyId, long now)
+	{
+		boolean seen = false;
+		for (Map.Entry<Long, Cooldown> entry : _cooldowns.entrySet())
+		{
+			if (((int) (entry.getKey() >> 32) == enemyId) && entry.getValue().cc())
+			{
+				seen = true;
+				if (now >= (entry.getValue().usedAt() + entry.getValue().reuse()))
+				{
+					return false;
+				}
+			}
+		}
+		return seen;
 	}
 	
 	/**

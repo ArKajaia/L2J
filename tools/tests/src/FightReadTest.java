@@ -115,6 +115,15 @@ public class FightReadTest
 				Check.eq(read.seenCasts(), 3, "seen");
 				Check.eq(read.rememberedCount(), 2, "remembered");
 			}, //
+			() -> // The enemy's crowd control is known on cooldown only once seen, and while every seen one is.
+			{
+				final FightRead read = new FightRead(EXPERT, 1);
+				Check.isTrue(!read.knownCcOnCooldown(7, 0), "nothing seen: may be ready");
+				read.onEnemyCast(7, stun(80), 1, 1000, 1000);
+				read.onEnemyCast(7, skill(1235, 30000), 1, 1500, 2500);
+				Check.isTrue(read.knownCcOnCooldown(7, 5000), "its stun is on cooldown");
+				Check.isTrue(!read.knownCcOnCooldown(7, 11001), "its stun is back");
+			}, //
 			() -> // Skill id 0 starts no cooldown memory.
 			{
 				final FightRead read = new FightRead(EXPERT, 1);
