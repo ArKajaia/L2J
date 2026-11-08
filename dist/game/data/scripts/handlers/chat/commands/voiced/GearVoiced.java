@@ -14,7 +14,8 @@ import custom.PassiveSkillTree.BuildSnapshot;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 
 /**
- * ".gear" - opens the web planner on the full build of the targeted player or fake player (yourself with no target): its gear, stats and passive tree. From there the tree can be copied as a build code or imported straight into your own tree.
+ * ".gear" - opens the web planner on the full build of the targeted player or fake player (yourself with no target): its gear, stats and passive tree. From there the tree can be copied as a build code or imported straight into your own tree. The "Gear" buttons of the
+ * Community Board's PvP Ranking open the same view (see {@link #showBuild}).
  * <p>
  * The build is taken when the command is used and the link stays valid for an hour, even if the target logs off or despawns meanwhile. The link also carries your own .treelink token (PassiveTreeWebTokenLifetime), which is what the import button uses.
  */
@@ -37,15 +38,25 @@ public class GearVoiced implements IVoicedCommandHandler
 			return false;
 		}
 
+		showBuild(player, player.getTarget());
+		return true;
+	}
+
+	/**
+	 * Sends the player a link to the build of a player or fake player, as ".gear" does on a target (also used by the Community Board's PvP Ranking).
+	 * @param player the player that asks
+	 * @param target the player or fake player to show, {@code null} or the player itself for its own build
+	 */
+	public static void showBuild(Player player, WorldObject target)
+	{
 		final long now = System.currentTimeMillis();
 		final Long last = LAST_USE.get(player.getObjectId());
 		if ((last != null) && ((now - last) < REUSE_MS))
 		{
 			player.sendMessage("Wait a moment before using .gear again.");
-			return true;
+			return;
 		}
 
-		final WorldObject target = player.getTarget();
 		final String json;
 		final String name;
 		if ((target == null) || (target == player))
@@ -66,7 +77,7 @@ public class GearVoiced implements IVoicedCommandHandler
 		else
 		{
 			player.sendMessage("Target a player or a fake player to view their build (or nothing, to view your own).");
-			return true;
+			return;
 		}
 		LAST_USE.put(player.getObjectId(), now);
 
@@ -76,7 +87,6 @@ public class GearVoiced implements IVoicedCommandHandler
 		player.sendMessage("Link to " + name + " build (click to open, valid " + PassiveTreeApiServer.describeInspectLifetime() + "):");
 		player.sendMessage(url);
 		player.sendPacket(new ExLinkOpen(url));
-		return true;
 	}
 
 	@Override

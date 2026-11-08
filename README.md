@@ -845,7 +845,7 @@ Beyond the core combat loop, the server implements a number of self-contained si
 
 ## Community Board
 
-The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), a PvP ranking of the top 20 players and fake players by PvP kills (fake players' kills are kept by name in `fake_player_pvp`: kills of flagged or karma targets, or of anyone in a PvP spot), a session log of what the character achieved since logging in (see [Session Log](#session-log)), the Adventurer's Guidebook (see [Adventurer's Guide](#adventurers-guide)), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
+The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), a PvP ranking of the top 20 players and fake players by PvP kills, with their class and a button to view the build (`.gear`) of anyone in the world now (fake players' kills and class are kept by name in `fake_player_pvp`: kills of flagged or karma targets, or of anyone in a PvP spot), a session log of what the character achieved since logging in (see [Session Log](#session-log)), the Adventurer's Guidebook (see [Adventurer's Guide](#adventurers-guide)), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
 
 ---
 
@@ -979,6 +979,9 @@ This program is free software, licensed under the **GNU General Public License, 
 ---
 
 ## Recent Updates
+
+### PvP Ranking: classes and gear
+- **New**: the Community Board's PvP Ranking shows the class of every player and fake player on it, and a **Gear** button for anyone in the world now opens their build (gear, stats and passive tree) in the web planner, like `.gear` on them. Fake players keep the class they last made a PvP kill with (`fake_player_pvp.class_id`, added to an existing table at startup).
 
 ### Sealed Cache treasures
 - **New**: every Sealed Cache tier draws from a wider pool of crafting materials. Common adds D-Grade crystals and gemstones, soul and spirit ore, more crafted materials and all four ores; Rare adds C/B crystals and gemstones, Metal Hardener, maestro parts, Metallic Thread and Durable Metal Plate; Epic adds A/S crystals and gemstones, Metal Hardener and maestro parts.
