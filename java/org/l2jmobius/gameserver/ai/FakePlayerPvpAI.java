@@ -686,6 +686,16 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		_traced = false;
 
+		// Team vs Team healerLock: its lock on an enemy healer is off, so it turns back to the enemy it fights (left on the healer, its target drew its party's focus fire onto it).
+		if ((_lockTarget != null) && !npc.isCastingNow())
+		{
+			if ((npc.getTarget() == _lockTarget) && (getAttackTarget() != null) && (getAttackTarget() != _lockTarget))
+			{
+				npc.setTarget(getAttackTarget());
+			}
+			_lockTarget = null;
+		}
+
 		// Casting (a spell, a Scroll of Escape...): a player still drinks potions meanwhile.
 		if (npc.isCastingNow())
 		{
@@ -1028,6 +1038,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 
 		// An archer or mage stops whoever is on its party's healer (root, stun, sleep), from where it stands.
 		if (pvp && (party != null) && role.isRanged() && !isPureHealer(profile) && peelForHealer(npc, profile, party, now))
+		{
+			return;
+		}
+
+		// Team vs Team healerLock: an archer or nuker with an enemy healer within its own reach stuns, silences or paralyzes it, then goes back to its target.
+		if (pvp && role.isRanged() && !profile.getBuild().isSupport() && lockHealer(npc, profile, now))
 		{
 			return;
 		}
@@ -1982,6 +1998,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		{
 			called = null;
 		}
+		// With healerInReach, a call on a healer the team's archers and nukers no longer reach isn't followed.
+		if ((called != null) && isHealer(called) && FakeTvtTactics.of(npc).healerInReach() && !isInShooterReach(npc, called))
+		{
+			called = null;
+		}
 		if ((called != null) && isPvpEnemy(called) && !called.isInvul() && !isPlayedAround(npc, called) && (npc.calculateDistance2D(called) <= getFocusScanRange(npc)) && isValidTarget(npc, called))
 		{
 			if (!hates(npc, called, FakePlayerPvpManager.PVP_HATE))
@@ -2163,7 +2184,31 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
 		if (isHealer(enemy))
 		{
-			score -= tank ? 0 : assassin ? tactics.assassinHealer() : nuker ? tactics.nukerHealer() : tactics.healer();
+			// With healerInReach, only while the team's archers or nukers reach it.
+			if (((tank || assassin) && isHealerHunter(npc, tactics)))
+			{
+				// Team vs Team hunters: one of the tanks and daggers picked to hunt healers.
+				score -= tactics.hunterHealer();
+			}
+			else if (!tactics.healerInReach() || isInShooterReach(npc, enemy))
+			{
+				if (tank)
+				{
+					score -= tactics.tankHealer();
+				}
+				else if (assassin)
+				{
+					// With assassinRush, a dagger goes for a healer only within reach of its gap closer.
+					if (!tactics.assassinRush() || isInRushReach(npc, profile, enemy))
+					{
+						score -= tactics.assassinHealer();
+					}
+				}
+				else
+				{
+					score -= nuker ? tactics.nukerHealer() : tactics.healer();
+				}
+			}
 		}
 		else if (isSupport(enemy))
 		{
@@ -2183,10 +2228,21 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			score += assassin ? ASSASSIN_TANK_PENALTY : TANK_PENALTY;
 		}
 
-		// Team vs Team tactics: a nuker (or archer) goes for the enemy damage dealers, the ones that kill its team.
+		// Team vs Team tactics: a nuker (or archer) goes for the enemy damage dealers, the ones that kill its team, and the enemy nukers above all with nukerNuker.
 		if (nuker && (tactics.nukerDps() > 0) && isDamageDealer(enemy))
 		{
 			score -= tactics.nukerDps();
+		}
+		if (nuker && (tactics.nukerNuker() > 0) && isNuker(enemy))
+		{
+			score -= tactics.nukerNuker();
+		}
+
+		// Team vs Team ease: of the enemies close by, the easiest class to kill in a team fight (with easeHunter, the daggers and Tricksters weigh it their own way).
+		final double easeWeight = (tactics.easeHunter() > 0) && (assassin || isTrickster(profile)) ? tactics.easeHunter() : tactics.ease();
+		if ((easeWeight > 0) && (distance <= (ranged ? getThreatReach(npc) : EASE_MELEE_RANGE)))
+		{
+			score -= easeWeight * FakeTvtKillEase.of(enemy);
 		}
 
 		// Team vs Team standoff: an archer or mage would rather shoot what it reaches from behind its front than walk up into the enemy for something better.
@@ -2241,6 +2297,197 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	static boolean isDamageDealer(Creature creature)
 	{
 		return !isHealer(creature) && !isSupport(creature) && !isTank(creature);
+	}
+
+	/** Team vs Team healerLock: how often an archer or nuker looks for an enemy healer to lock. */
+	private static final long HEALER_LOCK_INTERVAL = 1500;
+	/** Skill ids of the stuns, silences and paralyses (what healerLock casts on a healer). */
+	private static final Map<Integer, Boolean> HEALER_LOCKS = new ConcurrentHashMap<>();
+	// When it may look for an enemy healer to lock again, and the healer it just cast a lock on (its target goes back to its fight after the cast).
+	private long _nextHealerLock;
+	private Creature _lockTarget;
+
+	/**
+	 * @param profile a fake player's profile
+	 * @return {@code true} for a Trickster build
+	 */
+	private static boolean isTrickster(FakePlayerPvpProfile profile)
+	{
+		return (profile != null) && (profile.getBuild() != null) && "Trickster".equals(profile.getBuild().getName());
+	}
+
+	/** Team vs Team ease: how close an enemy is to a melee fake player to be "close by". */
+	private static final int EASE_MELEE_RANGE = 600;
+
+	/**
+	 * Team vs Team hunters: whether this tank or dagger is one of the share of them that hunt healers. Decided by its object id, so it stays the same all match long and the share holds over a team.
+	 * @param npc a tank or dagger
+	 * @param tactics its team's tactics
+	 * @return {@code true} if it hunts healers
+	 */
+	private static boolean isHealerHunter(Attackable npc, FakeTvtTactics tactics)
+	{
+		if (tactics.hunters() <= 0)
+		{
+			return false;
+		}
+		final int hash = (npc.getObjectId() * 0x9E3779B1) >>> 16;
+		return (hash % 1000) < (tactics.hunters() * 1000);
+	}
+
+	/**
+	 * Team vs Team assassinRush: whether {@code enemy} is within reach of one of its gap closers (a dagger's Shadow Step, 600).
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param enemy an enemy
+	 * @return {@code true} if it is, {@code false} if it has no gap closer
+	 */
+	private static boolean isInRushReach(Attackable npc, FakePlayerPvpProfile profile, Creature enemy)
+	{
+		final double gap = npc.calculateDistance2D(enemy) - npc.getTemplate().getCollisionRadius() - enemy.getTemplate().getCollisionRadius();
+		for (Skill skill : profile.getSkills(SkillCategory.RUSH))
+		{
+			if (gap <= getSkillReach(skill))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @param creature an enemy
+	 * @return {@code true} for a nuker: a fake player's mage build that isn't a support (not transformed), a player of a mage class that isn't a healer nor a buffer
+	 */
+	static boolean isNuker(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			return creature.asPlayer().isMageClass() && !isHealer(creature) && !isSupport(creature);
+		}
+		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.MAGE) && !profile.getBuild().isSupport();
+	}
+
+	/**
+	 * @param skill a skill
+	 * @return {@code true} for a stun, a silence or a paralysis
+	 */
+	private static boolean isHealerLock(Skill skill)
+	{
+		return HEALER_LOCKS.computeIfAbsent(skill.getId(), _ ->
+		{
+			final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+			if (effects != null)
+			{
+				for (AbstractEffect effect : effects)
+				{
+					switch (effect.getClass().getSimpleName())
+					{
+						case "Stun":
+						case "Mute":
+						case "Paralyze":
+						{
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		});
+	}
+
+	/**
+	 * Team vs Team healerLock: an archer or nuker that has an enemy healer within its own reach (seen, not stunned, silenced nor paralyzed yet) stuns, silences or paralyzes it with a skill it has ready,
+	 * from where it stands, then goes back to its target (it doesn't change its focus). It doesn't walk for it.
+	 * @param npc the archer or nuker
+	 * @param profile its profile
+	 * @param now the current time
+	 * @return {@code true} if it cast on a healer
+	 */
+	private boolean lockHealer(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		if ((now < _nextHealerLock) || !FakeTvtTactics.of(npc).healerLock())
+		{
+			return false;
+		}
+		_nextHealerLock = now + HEALER_LOCK_INTERVAL;
+
+		final int reach = getThreatReach(npc);
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, reach + 100))
+		{
+			if (!isHealer(enemy) || !isPvpEnemy(enemy) || enemy.isAlikeDead() || enemy.isInvul() || enemy.isStunned() || enemy.isParalyzed() || enemy.isMuted() || !isValidTarget(npc, enemy) || !GeoEngine.getInstance().canSeeTarget(npc, enemy))
+			{
+				continue;
+			}
+			final double distance = npc.calculateDistance2D(enemy);
+			final int collision = npc.getTemplate().getCollisionRadius() + enemy.getTemplate().getCollisionRadius();
+			for (SkillCategory category : HEALER_LOCK_SKILLS)
+			{
+				for (Skill skill : profile.getSkills(category))
+				{
+					if (isHealerLock(skill) && (skill.getCastRange() > 0) && ((distance - collision) <= getSkillReach(skill)) && !enemy.isAffectedBySkill(skill.getId()) && canCast(npc, skill, enemy))
+					{
+						trace(Reason.PEEL_FOR_ALLY, enemy, skill, "HEALER_LOCK");
+						if (useSkill(npc, enemy, skill, distance, collision, false))
+						{
+							_lockTarget = enemy;
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/** The skills healerLock looks through. */
+	private static final SkillCategory[] HEALER_LOCK_SKILLS =
+	{
+		SkillCategory.DEBUFF,
+		SkillCategory.PEEL
+	};
+
+	/**
+	 * @param creature a party member
+	 * @return {@code true} for an archer or nuker: a fake player's archer or mage build that isn't a support (not transformed), a player with a bow or a mage class that isn't a healer or buffer
+	 */
+	private static boolean isShooter(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			return isSquishy(creature) && !isHealer(creature) && !isSupport(creature);
+		}
+		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && !profile.isTransformed() && profile.getRole().isRanged() && !profile.getBuild().isSupport();
+	}
+
+	/**
+	 * Team vs Team healerInReach: whether its team's archers and nukers reach {@code enemy} now. An archer or nuker counts its own reach; anyone else counts the archers and nukers of its party.
+	 * @param npc the fake player
+	 * @param enemy an enemy (a healer)
+	 * @return {@code true} if one of them has {@code enemy} within its reach
+	 */
+	static boolean isInShooterReach(Attackable npc, Creature enemy)
+	{
+		if (isShooter(npc))
+		{
+			return npc.calculateDistance2D(enemy) <= (getThreatReach(npc) + enemy.getTemplate().getCollisionRadius());
+		}
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final FakePlayerParty party = profile != null ? profile.getParty() : null;
+		if (party == null)
+		{
+			return false;
+		}
+		for (Creature member : party.getMembers())
+		{
+			if ((member != npc) && !member.isAlikeDead() && isShooter(member) && (member.calculateDistance2D(enemy) <= (getThreatReach(member) + enemy.getTemplate().getCollisionRadius())))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

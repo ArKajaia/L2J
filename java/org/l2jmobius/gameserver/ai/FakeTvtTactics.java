@@ -36,11 +36,25 @@ import org.l2jmobius.gameserver.model.actor.Creature;
  * @param standoff archers and mages stay back: they don't walk past their party's front to reach a target, prefer one within their reach, and a mage between casts holds at the edge of
  *            its reach instead of 600 from its target (legacy {@code false})
  * @param standoffWait with {@code standoff}: how long (milliseconds) an archer or mage waits behind its party's front for the front to go in before it walks up to its target anyway, 0 not to wait
+ * @param healerInReach an enemy healer is worth its priority (and called for the party) only while one of the team's archers or nukers reaches it: a nuker's own reach, for anyone else one of the
+ *            archers or nukers of its party; out of that reach it is a target like any other (legacy {@code false})
+ * @param healerLock an archer or nuker with an enemy healer within its own reach stuns, silences or paralyzes it (a skill it has ready), then goes back to its target (legacy {@code false})
+ * @param nukerNuker how much better an enemy nuker (a mage that isn't a support) is as a target for a nuker or an archer, on top of {@code nukerDps} (legacy 0)
+ * @param assassinRush a dagger weighs an enemy healer by {@code assassinHealer} only while the healer is within reach of its gap closer (Shadow Step); farther it is a target like any other (legacy {@code false})
+ * @param tankHealer how much better an enemy healer is as a target for a tank (legacy 0)
+ * @param ease how much better an enemy close by is as a target the easier its class is to kill in a team fight ({@link FakeTvtKillEase}: 0 for a tank, 1 for a dagger), times this; close by is within
+ *            its reach for an archer or mage, within 600 for anyone else (legacy 0)
+ * @param hunters the share of the tanks and daggers that hunt healers (each one decided once, by its object id): they weigh an enemy healer by {@code hunterHealer}, the others play the rest of
+ *            the tactics (legacy 0)
+ * @param hunterHealer with {@code hunters}: how much better an enemy healer is as a target for a hunter
+ * @param easeHunter the {@code ease} weight of the daggers and Tricksters instead of {@code ease}, 0 for {@code ease} (legacy 0)
  */
-public record FakeTvtTactics(String name, double healer, double assassinHealer, double nukerHealer, double nukerDps, boolean healerCalls, boolean standoff, int standoffWait)
+public record FakeTvtTactics(String name, double healer, double assassinHealer, double nukerHealer, double nukerDps, boolean healerCalls, boolean standoff, int standoffWait, boolean healerInReach, boolean healerLock, double nukerNuker, boolean assassinRush, double tankHealer, double ease, double hunters, double hunterHealer, double easeHunter)
 {
+	/** How much a healer hunter weighs an enemy healer by default (hunters). */
+	public static final double DEFAULT_HUNTER_HEALER = 1.2;
 	/** Brain A before the tactics: what every fake player plays outside Team vs Team. */
-	public static final FakeTvtTactics LEGACY = new FakeTvtTactics("legacy", 0.6, 1.2, 0.6, 0, true, false, 0);
+	public static final FakeTvtTactics LEGACY = new FakeTvtTactics("legacy", 0.6, 1.2, 0.6, 0, true, false, 0, false, false, 0, false, 0, 0, 0, DEFAULT_HUNTER_HEALER, 0);
 	/** How long an archer or mage waits behind its front by default (standoff). */
 	public static final int DEFAULT_STANDOFF_WAIT = 4000;
 
@@ -60,7 +74,7 @@ public record FakeTvtTactics(String name, double healer, double assassinHealer, 
 
 	/**
 	 * Reads tactics from a spec: a preset name ({@code legacy}, {@code focus}, {@code split}, {@code dps}, {@code standoff}, {@code best}), optionally followed by {@code :} and
-	 * {@code key=value} pairs separated by commas that change it ({@code healer}, {@code assassin}, {@code nukerHealer}, {@code nukerDps}, {@code calls}, {@code standoff}, {@code name}), or
+	 * {@code key=value} pairs separated by commas that change it ({@code healer}, {@code assassin}, {@code nukerHealer}, {@code nukerDps}, {@code calls}, {@code standoff}, {@code wait}, {@code reach}, {@code lock}, {@code nukerNuker}, {@code rush}, {@code tankHealer}, {@code ease}, {@code hunters}, {@code hunterHealer}, {@code easeHunter}, {@code name}), or
 	 * only pairs (on {@link #LEGACY}). For example {@code legacy:healer=1.2,name=h12} or {@code healer=0,calls=0}.
 	 * @param spec the spec
 	 * @return the tactics
@@ -87,6 +101,15 @@ public record FakeTvtTactics(String name, double healer, double assassinHealer, 
 		boolean calls = tactics.healerCalls;
 		boolean standoff = tactics.standoff;
 		int wait = tactics.standoffWait;
+		boolean reach = tactics.healerInReach;
+		boolean lock = tactics.healerLock;
+		double nukerNuker = tactics.nukerNuker;
+		boolean rush = tactics.assassinRush;
+		double tankHealer = tactics.tankHealer;
+		double ease = tactics.ease;
+		double hunters = tactics.hunters;
+		double hunterHealer = tactics.hunterHealer;
+		double easeHunter = tactics.easeHunter;
 		for (String pair : pairs.split(","))
 		{
 			if (pair.isBlank())
@@ -117,14 +140,23 @@ public record FakeTvtTactics(String name, double healer, double assassinHealer, 
 					}
 				}
 				case "wait", "standoffwait" -> wait = Math.max(0, Integer.parseInt(value));
-				default -> throw new IllegalArgumentException("Unknown tactics key '" + key + "' (healer, assassin, nukerHealer, nukerDps, calls, standoff, wait, name).");
+				case "reach", "healerinreach" -> reach = parseBoolean(value);
+				case "lock", "healerlock" -> lock = parseBoolean(value);
+				case "nukernuker" -> nukerNuker = Double.parseDouble(value);
+				case "rush", "assassinrush" -> rush = parseBoolean(value);
+				case "tankhealer" -> tankHealer = Double.parseDouble(value);
+				case "ease" -> ease = Double.parseDouble(value);
+				case "hunters" -> hunters = Math.max(0, Math.min(1, Double.parseDouble(value)));
+				case "hunterhealer" -> hunterHealer = Double.parseDouble(value);
+				case "easehunter" -> easeHunter = Double.parseDouble(value);
+				default -> throw new IllegalArgumentException("Unknown tactics key '" + key + "' (healer, assassin, nukerHealer, nukerDps, calls, standoff, wait, reach, lock, nukerNuker, rush, tankHealer, ease, hunters, hunterHealer, easeHunter, name).");
 			}
 		}
 		if (name == null)
 		{
-			name = describe(healer, assassin, nukerHealer, nukerDps, calls, standoff, wait);
+			name = describe(healer, assassin, nukerHealer, nukerDps, calls, standoff, wait, reach, lock, nukerNuker, rush, tankHealer) + (ease > 0 ? String.format(Locale.ROOT, "-ease%.2f", ease) : "") + (hunters > 0 ? String.format(Locale.ROOT, "-hunt%.2f@%.2f", hunters, hunterHealer) : "") + (easeHunter > 0 ? String.format(Locale.ROOT, "-eh%.2f", easeHunter) : "");
 		}
-		return new FakeTvtTactics(name, healer, assassin, nukerHealer, nukerDps, calls, standoff, wait);
+		return new FakeTvtTactics(name, healer, assassin, nukerHealer, nukerDps, calls, standoff, wait, reach, lock, nukerNuker, rush, tankHealer, ease, hunters, hunterHealer, easeHunter);
 	}
 
 	/**
@@ -137,17 +169,18 @@ public record FakeTvtTactics(String name, double healer, double assassinHealer, 
 		{
 			case "legacy" -> LEGACY;
 			// Everyone on the healer: twice the legacy priority, the nukers too.
-			case "focus" -> new FakeTvtTactics("focus", 1.2, 2.4, 1.2, 0, true, false, 0);
+			case "focus" -> new FakeTvtTactics("focus", 1.2, 2.4, 1.2, 0, true, false, 0, false, false, 0, false, 0, 0, 0, DEFAULT_HUNTER_HEALER, 0);
 			// Nobody hunts the healer: the damage dealers first.
-			case "ignore" -> new FakeTvtTactics("ignore", 0, 0, 0, 0.3, false, false, 0);
+			case "ignore" -> new FakeTvtTactics("ignore", 0, 0, 0, 0.3, false, false, 0, false, false, 0, false, 0, 0, 0, DEFAULT_HUNTER_HEALER, 0);
 			// Divided labor: the daggers and melee on the healer, the nukers and archers on the enemy damage dealers.
-			case "split" -> new FakeTvtTactics("split", 0.6, 1.6, 0, 0.4, true, false, 0);
+			case "split" -> new FakeTvtTactics("split", 0.6, 1.6, 0, 0.4, true, false, 0, false, false, 0, false, 0, 0, 0, DEFAULT_HUNTER_HEALER, 0);
 			// Only the nukers change: on the damage dealers.
-			case "dps" -> new FakeTvtTactics("dps", 0.6, 1.2, 0, 0.4, true, false, 0);
+			case "dps" -> new FakeTvtTactics("dps", 0.6, 1.2, 0, 0.4, true, false, 0, false, false, 0, false, 0, 0, 0, DEFAULT_HUNTER_HEALER, 0);
 			// Only the positions change: archers and mages stay back.
-			case "standoff" -> new FakeTvtTactics("standoff", 0.6, 1.2, 0.6, 0, true, true, DEFAULT_STANDOFF_WAIT);
-			// What the batches of 2026-11-07 found best (docs/tvt-tactics.md): ignore, but daggers still look at a healer a little, and archers and mages stay back without waiting for the front.
-			case "best" -> new FakeTvtTactics("best", 0, 0.6, 0, 0.3, false, true, 0);
+			case "standoff" -> new FakeTvtTactics("standoff", 0.6, 1.2, 0.6, 0, true, true, DEFAULT_STANDOFF_WAIT, false, false, 0, false, 0, 0, 0, DEFAULT_HUNTER_HEALER, 0);
+			// What the batches of 2026-11-07/08 found best (docs/tvt-tactics.md): ignore, but daggers still look at a healer a little, archers and mages stay back without waiting for the front, and
+			// everyone prefers the enemies close by that are easiest to kill (ease 2.0, round 7).
+			case "best" -> new FakeTvtTactics("best", 0, 0.6, 0, 0.3, false, true, 0, false, false, 0, false, 0, 2.0, 0, DEFAULT_HUNTER_HEALER, 0);
 			default -> throw new IllegalArgumentException("Unknown tactics preset '" + name + "' (legacy, focus, ignore, split, dps, standoff, best).");
 		};
 	}
@@ -162,9 +195,9 @@ public record FakeTvtTactics(String name, double healer, double assassinHealer, 
 		};
 	}
 
-	private static String describe(double healer, double assassin, double nukerHealer, double nukerDps, boolean calls, boolean standoff, int wait)
+	private static String describe(double healer, double assassin, double nukerHealer, double nukerDps, boolean calls, boolean standoff, int wait, boolean reach, boolean lock, double nukerNuker, boolean rush, double tankHealer)
 	{
-		return String.format(Locale.ROOT, "h%.2f-a%.2f-nh%.2f-nd%.2f%s%s", healer, assassin, nukerHealer, nukerDps, calls ? "" : "-nocall", standoff ? "-standoff" + wait : "");
+		return String.format(Locale.ROOT, "h%.2f-a%.2f-nh%.2f-nd%.2f%s%s%s%s%s%s%s", healer, assassin, nukerHealer, nukerDps, calls ? "" : "-nocall", standoff ? "-standoff" + wait : "", reach ? "-reach" : "", lock ? "-lock" : "", nukerNuker > 0 ? String.format(Locale.ROOT, "-nn%.2f", nukerNuker) : "", rush ? "-rush" : "", tankHealer > 0 ? String.format(Locale.ROOT, "-th%.2f", tankHealer) : "");
 	}
 
 	/**
@@ -172,6 +205,6 @@ public record FakeTvtTactics(String name, double healer, double assassinHealer, 
 	 */
 	public String toSpec()
 	{
-		return String.format(Locale.ROOT, "healer=%s,assassin=%s,nukerHealer=%s,nukerDps=%s,calls=%d,standoff=%d,wait=%d,name=%s", healer, assassinHealer, nukerHealer, nukerDps, healerCalls ? 1 : 0, standoff ? 1 : 0, standoffWait, name);
+		return String.format(Locale.ROOT, "healer=%s,assassin=%s,nukerHealer=%s,nukerDps=%s,calls=%d,standoff=%d,wait=%d,reach=%d,lock=%d,nukerNuker=%s,rush=%d,tankHealer=%s,ease=%s,hunters=%s,hunterHealer=%s,easeHunter=%s,name=%s", healer, assassinHealer, nukerHealer, nukerDps, healerCalls ? 1 : 0, standoff ? 1 : 0, standoffWait, healerInReach ? 1 : 0, healerLock ? 1 : 0, nukerNuker, assassinRush ? 1 : 0, tankHealer, ease, hunters, hunterHealer, easeHunter, name);
 	}
 }

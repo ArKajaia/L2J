@@ -1,0 +1,7 @@
+batch-20261108-051109: 10/10 matches done.
+A = healer=0.0,assassin=0.6,nukerHealer=0.0,nukerDps=0.3,calls=0,standoff=1,wait=0,reach=0,lock=0,nukerNuker=0.0,name=best
+B = healer=0.0,assassin=0.6,nukerHealer=0.0,nukerDps=0.3,calls=0,standoff=1,wait=0,reach=0,lock=1,nukerNuker=0.0,name=best-lock2
+
+tactics                games   win %  kills-deaths heal dmg% heal tgt%  healer dth   rng dist  rng ahd%    damage
+best                      10   90±19    55.4-28.6        8.8       6.4        1.90        469      21.7   1897634
+best-lock2                10   10±19    28.6-55.4        8.0       6.0        4.80        495      23.6   1304499

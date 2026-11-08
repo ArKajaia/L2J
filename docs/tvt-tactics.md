@@ -15,6 +15,15 @@ How the fake players of a Team vs Team match pick their targets and where their 
 | `calls` | Whether a member calls its party onto an enemy healer (and onto the healer of a low enemy) | 1 |
 | `standoff` | Archers and mages stay back: a target they'd have to walk up to counts the walk twice and the enemies on the way (+0.8 each, as brain B's #35), they don't walk past their party's front (the closest tank or melee) for up to `wait` ms, and a mage between casts holds at the edge of its reach (its attack skills' reach - 50, up to 900) instead of 600 from its target, stepping back when it is well inside that and ahead of its front | 0 |
 | `wait` | With `standoff`: how long it waits behind the front before it walks up anyway | 0 (4000 with `standoff`) |
+| `lock` | An archer or nuker with an enemy healer within its own reach stuns, silences or paralyzes it with a skill it has ready (Stun Shot, Silence, Voice Bind...; not Archmage, Mystic Muse nor Trickster, which have none), from where it stands, then turns back to its own target | 0 |
+| `nukerNuker` | How much better an enemy nuker (a mage that isn't a support) is as a target for a nuker or archer, on top of `nukerDps` | 0 |
+| `rush` | A dagger weighs an enemy healer by `assassin` only while the healer is within reach of its gap closer (Shadow Step, 600, for all three dagger classes); farther it is a target like any other | 0 |
+| `tankHealer` | How much better an enemy healer is as a target for a tank | 0 |
+| `ease` | How much better an enemy close by is the easier its class is to kill in a team fight (`FakeTvtKillEase`, 0 for the toughest class, a tank, 1 for the easiest, a dagger), times this. Close by: within its reach for an archer or mage, within 600 for anyone else | 0 |
+| `easeHunter` | The `ease` weight of the daggers and Tricksters instead of `ease` (0: they use `ease`) | 0 |
+| `hunters` | The share of tanks and daggers (each decided once, by object id) that hunt healers at `hunterHealer` | 0 |
+| `hunterHealer` | With `hunters`: their healer priority | 1.2 |
+| `reach` | An enemy healer is worth its priority, and called for the party, only while one of the team's archers or nukers reaches it (a nuker's own reach; for anyone else, an archer or nuker of its party). Out of that reach it is a target like any other | 0 |
 
 Presets: `legacy`, `focus` (healer ×2), `ignore` (nobody hunts healers, no healer calls, nukers +0.3 on damage dealers), `dps` (nukers and archers on damage dealers), `split` (daggers on healers, nukers and archers on damage dealers), `standoff`, `best` (the default, see the end).
 
@@ -93,9 +102,95 @@ Deaths by role per team per match over those 30: legacy lost 28.8 archers, 20.3 
 
 Then a small healer priority for the daggers only (`assassin=0.6`) against that, 30 matches at levels 79-81 and 61-65: the daggers' variant won 68% (95%: 50-82) with a kill share of 52% (46-58), and its own healers died 4.4 times a match against 6.3. A lean rather than a clear win, but it agrees with the first batch and it is the safer choice with real players in the match: a healer nobody ever comes for heals freely. It is the default:
 
-**`best` = `ignore:assassin=0.6,standoff=1,wait=0`**: nobody calls the party onto a healer; melee and nukers don't prefer healers; daggers prefer them a little (0.6, half the legacy 1.2); nukers and archers prefer the enemy damage dealers (+0.3); archers and mages weigh the walk to a target twice and the enemies on the way, and a mage between casts holds at the edge of its reach.
+**`best` = `ignore:assassin=0.6,standoff=1,wait=0`** (since round 7 also `ease=2`): nobody calls the party onto a healer; melee and nukers don't prefer healers; daggers prefer them a little (0.6, half the legacy 1.2); nukers and archers prefer the enemy damage dealers (+0.3); archers and mages weigh the walk to a target twice and the enemies on the way, and a mage between casts holds at the edge of its reach.
 
 The shipped preset (`best-a0.6` in the data), read from `TvTFakeTactics = best` on a rebuilt server, against legacy at levels 79-81: **10/10, 115 - 42 kills (73.0%, 95%: 68-78)**, healer focus 10% against 25%, archers and nukers lost 6.0 + 3.8 against 27.9 + 19.6.
+
+## Round 4: focus the healer only while the archers and nukers reach it (2026-11-08)
+
+`reach=1`: the healer priority and healer calls count only while one of the team's archers or nukers has the healer within its reach, so nobody walks through the enemy front for it. Shorter runs: 3 minute fights, two batches of 10 matches at once (20 matches, 1200 fake players), levels 79-81.
+
+| A | B | B's wins | B's kill share (95%) | Kills (B - A) | Healer focus, dmg (A / B) | Damage dealt (A / B) |
+|---|---|---|---|---|---|---|
+| legacy | legacy + reach | 9/10 | 72.3% (64-80) | 67 - 25 | 30% / 16% | 1.0M / 2.1M |
+| best | best + healer focus in reach (`healer=0.6,assassin=1.2,nukerHealer=0.6,calls=1,reach=1`) | 3/10 | 42.6% (33-52) | 37 - 48 | 9% / 16% | 1.8M / 1.4M |
+
+Limiting healer focus to what the shooters reach fixes most of what was wrong with legacy: it halves the healer focus, doubles the damage dealt and wins 9 of 10. But on top of `best`, putting the healer focus back even within reach still does a little worse than leaving healers alone (the interval touches 50%, so it isn't settled). The default stays `best`; `reach=1` is there for a server that wants its fake players to go for healers without running into the enemy for them. Data in `docs/tvt-tactics-data/batch-20261108-*`.
+
+## Round 5: archers and nukers only lock the healer in their own reach, then go back to the enemy nukers (2026-11-08)
+
+`lock=1`: an archer or nuker that has an enemy healer within its own reach stuns, silences or paralyzes it (once it isn't locked already), without walking for it, then goes back to its target. `nukerNuker=0.3`: archers and nukers then prefer the enemy nukers. Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once.
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) | B's archers on healers (time) |
+|---|---|---|---|---|---|
+| lock (first try) | 10 | 1/10 | 40.1% (32-48) | 34 - 51 | 17% (A 5%) |
+| lock + nukerNuker 0.3 (first try) | 10 | 1.5/10 | 35.4% (27-44) | 31 - 58 | 17% |
+| lock (fixed) | 10 | 1/10 | 34.1% (26-42) | 29 - 55 | 15% |
+| **lock + nukerNuker 0.3 (fixed), the option asked for** | 20 | 5/20 | 45.4% (38-53) | 40 - 50 | 17% |
+| nukerNuker 0.3 alone | 10 | 3/10 | 47.3% (37-58) | 40 - 45 | |
+
+The first try left a locker's target on the healer after the cast, which its party read as focus fire on the healer; the fix turns it back to the enemy it fights once the cast is over. Even so, the lock costs: an archer's Stun Shot or a nuker's silence on the healer is a cast not spent on a damage dealer, the healer is healed or cleansed by its party anyway, and the team lost more archers and nukers (11.5 + 7.7 deaths a match against 8.4 + 6.9). Preferring the enemy nukers is neutral. Neither is in the default; both are there to try (`best:lock=1,nukerNuker=0.3`).
+
+## Round 6: only daggers within Shadow Step range go for the healer, and tanks with them (2026-11-08)
+
+`rush=1` with `assassin=1.2`: a dagger goes for an enemy healer (at the legacy dagger weight) only while the healer is within its Shadow Step range; nobody else does. `tankHealer=0.6`: tanks go for healers too. Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once.
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) | Healer focus, dmg (B) | B's own healer deaths (A) |
+|---|---|---|---|---|---|---|
+| daggers in Shadow Step range | 10 | 5/10 | 45.8% (34-58) | 42 - 48 | 8% | 3.5 (3.6) |
+| daggers in Shadow Step range + tanks 0.6 | 20 | 9/20 | 51.5% (45-59) | 42 - 40 | 10% | 2.6 (3.6) |
+| tanks 0.6 alone | 10 | 6/10 | 52.0% (44-60) | 42 - 38 | 10% | 2.7 (3.6) |
+
+None of them beats `best`: all three are within noise of it (the first 10 matches of the daggers and tanks variant leaned its way, 56%, the next 10 didn't). Pulling the healer focus onto the melee that are already close costs little, unlike sending the archers and nukers after it, but it doesn't win more either. One side effect stands out: with the tanks on the enemy healers, a team's own healers died about a quarter less often (2.6-2.7 against 3.6 a match), likely because the enemy tanks and melee turn on the tanks in their backline. The default stays `best`.
+
+## Round 7: the easiest kill close by; half the tanks and daggers on the healers (2026-11-08)
+
+**How easy each class is to kill.** From the about 12,000 kills logged in the simulated matches of 2026-11-07/08 (mostly `best` teams): each class's deaths per appearance relative to the average fighter (a class is drawn evenly within its role's slots: 5 tanks, 5 archers, 4 healers, 8 melee, 4 nukers and 4 buffers a team of 30):
+
+| Class | Rate | Class | Rate | Class | Rate |
+|---|---|---|---|---|---|
+| Ghost Hunter | 1.94 | Archmage | 1.28 | Dreadnought | 1.06 |
+| Adventurer | 1.94 | Doomcryer | 1.27 | Sagittarius | 1.03 |
+| Wind Rider | 1.88 | Grand Khavatari | 1.24 | Fortune Seeker | 1.01 |
+| Trickster | 1.52 | Male Soul Hound | 1.24 | Maestro | 0.97 |
+| Doombringer | 1.42 | Titan | 1.23 | Duelist | 0.96 |
+| Moonlight Sentinel | 1.34 | Flame Warchief | 1.21 | Shillien Saint | 0.79 |
+| Ghost Sentinel | 1.32 | Storm Screamer | 1.19 | Sword Muse | 0.77 |
+| Doom Oracle | 1.30 | Judicator | 1.18 | Eva's Saint | 0.72 |
+| War Dancer | 1.28 | Female Soul Hound | 1.17 | Hierophant | 0.70 |
+| | | Soultaker | 1.11 | Cardinal | 0.66 |
+| | | Spectral Dancer | 1.09 | Hell Knight | 0.40 |
+| | | Mystic Muse | 1.08 | Phoenix Knight | 0.36 |
+| | | | | Shillien Templar | 0.35 |
+| | | | | Battle Bard | 0.33 |
+| | | | | Eva's Templar | 0.29 |
+
+Daggers die twice as often as the average fighter, tanks a third as often, healers about two thirds. These are deaths in matches where `best` already leans onto damage dealers, so they mix how fragile a class is with how often it is targeted. The table is `FakeTvtKillEase`.
+
+`ease=w`: an enemy close by gets `w` times its class's place on that scale (0 for Eva's Templar, 1 for the daggers) off its score. Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once:
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) | B's damage (A) |
+|---|---|---|---|---|---|
+| ease 0.6 | 10 | 6/10 | 50.3% (42-59) | 43 - 43 | 1.7M (1.6M) |
+| ease 1.2 | 20 | 13/20 | 56.4% (50-63) | 48 - 37 | 1.8M (1.6M) |
+| ease 2.0 | 20 | 14/20 | 56.3% (49-64) | 47 - 36 | 1.8M (1.6M) |
+| ease 3.0 | 10 | 5/10 | 50.4% (41-60) | 43 - 41 | 1.7M (1.6M) |
+| half of the tanks and daggers hunt healers (1.2) | 20 | 10/20 | 49.9% (43-56) | 40 - 41 | 1.5M (1.6M) |
+
+Ease peaks between 1.2 and 2.0: there its teams dealt more damage and lost fewer members in every role (at 2.0, 13.3 melee and 2.3 healer deaths a match against 19.3 and 2.8). At 3.0 the class outweighs how hurt and how close an enemy is, and the gain is gone. Over the 40 matches at 1.2 and 2.0 together ease wins about 56% of the kills. Half of the tanks and daggers on the healers is even with `best`, like the other healer options of rounds 4 to 6.
+
+`best` now has `ease=2`. Against legacy (3 minute fights): **20/20, kill share 82.7% (80-86)**, 80 - 17 kills, at levels 79-81 (74 - 20) and 61-65 (86 - 14).
+
+## Round 8: a stronger pull to the easiest kill for daggers and Tricksters only (2026-11-08)
+
+`easeHunter=w`: the daggers and Tricksters weigh the easiest class to kill close by with `w` instead of `best`'s 2.0; everyone else plays `best` (ease 2.0). Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once:
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) |
+|---|---|---|---|---|
+| daggers and Tricksters at ease 3.0 | 10 | 5/10 | 51.9% (45-59) | 45 - 42 |
+| daggers and Tricksters at ease 4.0 | 10 | 2/10 | 46.0% (35-57) | 40 - 46 |
+
+No gain: at 2.0 the daggers and Tricksters already go for the easy kills close by (their melee damage on enemy damage dealers stays at about 70% either way), and a stronger pull only takes them off hurt targets of tougher classes. The default stays `best`.
 
 ## Limits
 

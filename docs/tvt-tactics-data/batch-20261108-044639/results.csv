@@ -1,0 +1,21 @@
+batch,match,map,level_min,level_max,side,tactics,opponent,score,opponent_score,result,damage,damage_to_healer,healer_damage_pct,healer_target_pct,deaths,healer_deaths,first_healer_death_s,ranged_distance,ranged_ahead_pct,deaths_by_role
+batch-20261108-044639,0,ruins_of_despair,79,81,Blue,legacy,legacy-reach,15,79,0,594204,174945,29.4,25.9,79,9,35,605,29.4,tank=9 melee=21 archer=18 nuker=14 healer=9 buffer=8
+batch-20261108-044639,0,ruins_of_despair,79,81,Red,legacy-reach,legacy,79,15,1,2196783,290814,13.2,7.3,15,4,30,404,25.8,tank=0 melee=5 archer=3 nuker=1 healer=4 buffer=2
+batch-20261108-044639,1,ruins_of_despair,79,81,Blue,legacy-reach,legacy,74,19,1,2338769,222486,9.5,7.7,19,7,29,452,22.0,tank=1 melee=3 archer=1 nuker=2 healer=7 buffer=5
+batch-20261108-044639,1,ruins_of_despair,79,81,Red,legacy,legacy-reach,19,74,0,910540,203733,22.4,25.9,74,8,35,621,20.4,tank=10 melee=15 archer=18 nuker=13 healer=8 buffer=10
+batch-20261108-044639,2,ruins_of_despair,79,81,Blue,legacy,legacy-reach,21,74,0,992542,299701,30.2,22.5,74,9,43,552,29.0,tank=8 melee=19 archer=15 nuker=14 healer=9 buffer=9
+batch-20261108-044639,2,ruins_of_despair,79,81,Red,legacy-reach,legacy,74,21,1,2143009,284938,13.3,10.7,21,7,34,318,20.0,tank=0 melee=3 archer=4 nuker=1 healer=7 buffer=6
+batch-20261108-044639,3,ruins_of_despair,79,81,Blue,legacy-reach,legacy,42,54,0,1516390,314219,20.7,15.0,54,13,28,466,25.2,tank=3 melee=15 archer=9 nuker=7 healer=13 buffer=7
+batch-20261108-044639,3,ruins_of_despair,79,81,Red,legacy,legacy-reach,54,42,1,1764487,375941,21.3,17.3,42,9,31,426,36.3,tank=3 melee=11 archer=7 nuker=7 healer=9 buffer=5
+batch-20261108-044639,4,ruins_of_despair,79,81,Blue,legacy,legacy-reach,28,46,0,1133246,335275,29.6,20.6,46,7,39,350,41.2,tank=3 melee=13 archer=12 nuker=8 healer=7 buffer=3
+batch-20261108-044639,4,ruins_of_despair,79,81,Red,legacy-reach,legacy,46,28,1,1578255,276257,17.5,11.6,28,9,26,454,26.9,tank=0 melee=10 archer=4 nuker=3 healer=9 buffer=2
+batch-20261108-044639,5,ruins_of_despair,79,81,Blue,legacy-reach,legacy,54,32,1,1875835,369235,19.7,17.0,32,9,33,379,30.6,tank=0 melee=6 archer=8 nuker=5 healer=9 buffer=4
+batch-20261108-044639,5,ruins_of_despair,79,81,Red,legacy,legacy-reach,32,54,0,1191041,351417,29.5,27.9,54,9,32,424,38.9,tank=4 melee=16 archer=10 nuker=9 healer=9 buffer=6
+batch-20261108-044639,6,ruins_of_despair,79,81,Blue,legacy,legacy-reach,28,72,0,1062528,343610,32.3,31.3,72,12,37,567,28.7,tank=8 melee=19 archer=14 nuker=11 healer=12 buffer=8
+batch-20261108-044639,6,ruins_of_despair,79,81,Red,legacy-reach,legacy,72,28,1,2093460,335016,16.0,15.0,28,7,30,337,24.1,tank=0 melee=6 archer=6 nuker=4 healer=7 buffer=5
+batch-20261108-044639,7,ruins_of_despair,79,81,Blue,legacy-reach,legacy,77,19,1,2453911,420744,17.1,12.1,19,7,28,347,21.0,tank=0 melee=4 archer=3 nuker=2 healer=7 buffer=3
+batch-20261108-044639,7,ruins_of_despair,79,81,Red,legacy,legacy-reach,19,77,0,858790,286874,33.4,22.3,77,11,37,510,30.4,tank=6 melee=23 archer=16 nuker=12 healer=11 buffer=9
+batch-20261108-044639,8,ruins_of_despair,79,81,Blue,legacy,legacy-reach,15,80,0,874899,314005,35.9,23.8,80,10,40,574,27.7,tank=7 melee=22 archer=18 nuker=13 healer=10 buffer=10
+batch-20261108-044639,8,ruins_of_despair,79,81,Red,legacy-reach,legacy,80,15,1,2479347,339446,13.7,10.8,15,6,26,470,21.4,tank=0 melee=4 archer=1 nuker=1 healer=6 buffer=3
+batch-20261108-044639,9,ruins_of_despair,79,81,Blue,legacy-reach,legacy,73,23,1,2238474,426698,19.1,12.3,23,8,33,297,31.8,tank=0 melee=7 archer=3 nuker=3 healer=8 buffer=2
+batch-20261108-044639,9,ruins_of_despair,79,81,Red,legacy,legacy-reach,23,73,0,981914,361179,36.8,25.4,73,11,33,507,33.8,tank=4 melee=20 archer=18 nuker=12 healer=11 buffer=8
