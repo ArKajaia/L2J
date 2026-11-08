@@ -15,6 +15,7 @@ How the fake players of a Team vs Team match pick their targets and where their 
 | `calls` | Whether a member calls its party onto an enemy healer (and onto the healer of a low enemy) | 1 |
 | `standoff` | Archers and mages stay back: a target they'd have to walk up to counts the walk twice and the enemies on the way (+0.8 each, as brain B's #35), they don't walk past their party's front (the closest tank or melee) for up to `wait` ms, and a mage between casts holds at the edge of its reach (its attack skills' reach - 50, up to 900) instead of 600 from its target, stepping back when it is well inside that and ahead of its front | 0 |
 | `wait` | With `standoff`: how long it waits behind the front before it walks up anyway | 0 (4000 with `standoff`) |
+| `reach` | An enemy healer is worth its priority, and called for the party, only while one of the team's archers or nukers reaches it (a nuker's own reach; for anyone else, an archer or nuker of its party). Out of that reach it is a target like any other | 0 |
 
 Presets: `legacy`, `focus` (healer ×2), `ignore` (nobody hunts healers, no healer calls, nukers +0.3 on damage dealers), `dps` (nukers and archers on damage dealers), `split` (daggers on healers, nukers and archers on damage dealers), `standoff`, `best` (the default, see the end).
 
@@ -96,6 +97,17 @@ Then a small healer priority for the daggers only (`assassin=0.6`) against that,
 **`best` = `ignore:assassin=0.6,standoff=1,wait=0`**: nobody calls the party onto a healer; melee and nukers don't prefer healers; daggers prefer them a little (0.6, half the legacy 1.2); nukers and archers prefer the enemy damage dealers (+0.3); archers and mages weigh the walk to a target twice and the enemies on the way, and a mage between casts holds at the edge of its reach.
 
 The shipped preset (`best-a0.6` in the data), read from `TvTFakeTactics = best` on a rebuilt server, against legacy at levels 79-81: **10/10, 115 - 42 kills (73.0%, 95%: 68-78)**, healer focus 10% against 25%, archers and nukers lost 6.0 + 3.8 against 27.9 + 19.6.
+
+## Round 4: focus the healer only while the archers and nukers reach it (2026-11-08)
+
+`reach=1`: the healer priority and healer calls count only while one of the team's archers or nukers has the healer within its reach, so nobody walks through the enemy front for it. Shorter runs: 3 minute fights, two batches of 10 matches at once (20 matches, 1200 fake players), levels 79-81.
+
+| A | B | B's wins | B's kill share (95%) | Kills (B - A) | Healer focus, dmg (A / B) | Damage dealt (A / B) |
+|---|---|---|---|---|---|---|
+| legacy | legacy + reach | 9/10 | 72.3% (64-80) | 67 - 25 | 30% / 16% | 1.0M / 2.1M |
+| best | best + healer focus in reach (`healer=0.6,assassin=1.2,nukerHealer=0.6,calls=1,reach=1`) | 3/10 | 42.6% (33-52) | 37 - 48 | 9% / 16% | 1.8M / 1.4M |
+
+Limiting healer focus to what the shooters reach fixes most of what was wrong with legacy: it halves the healer focus, doubles the damage dealt and wins 9 of 10. But on top of `best`, putting the healer focus back even within reach still does a little worse than leaving healers alone (the interval touches 50%, so it isn't settled). The default stays `best`; `reach=1` is there for a server that wants its fake players to go for healers without running into the enemy for them. Data in `docs/tvt-tactics-data/batch-20261108-*`.
 
 ## Limits
 

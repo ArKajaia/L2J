@@ -4180,7 +4180,7 @@ public class TeamVsTeamManager
 
 	private static FakeTvtTactics rename(FakeTvtTactics tactics, String name)
 	{
-		return new FakeTvtTactics(name, tactics.healer(), tactics.assassinHealer(), tactics.nukerHealer(), tactics.nukerDps(), tactics.healerCalls(), tactics.standoff(), tactics.standoffWait());
+		return new FakeTvtTactics(name, tactics.healer(), tactics.assassinHealer(), tactics.nukerHealer(), tactics.nukerDps(), tactics.healerCalls(), tactics.standoff(), tactics.standoffWait(), tactics.healerInReach());
 	}
 
 	/**

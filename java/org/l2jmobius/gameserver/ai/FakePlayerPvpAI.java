@@ -1982,6 +1982,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		{
 			called = null;
 		}
+		// With healerInReach, a call on a healer the team's archers and nukers no longer reach isn't followed.
+		if ((called != null) && isHealer(called) && FakeTvtTactics.of(npc).healerInReach() && !isInShooterReach(npc, called))
+		{
+			called = null;
+		}
 		if ((called != null) && isPvpEnemy(called) && !called.isInvul() && !isPlayedAround(npc, called) && (npc.calculateDistance2D(called) <= getFocusScanRange(npc)) && isValidTarget(npc, called))
 		{
 			if (!hates(npc, called, FakePlayerPvpManager.PVP_HATE))
@@ -2163,7 +2168,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
 		if (isHealer(enemy))
 		{
-			score -= tank ? 0 : assassin ? tactics.assassinHealer() : nuker ? tactics.nukerHealer() : tactics.healer();
+			// With healerInReach, only while the team's archers or nukers reach it.
+			if (!tactics.healerInReach() || isInShooterReach(npc, enemy))
+			{
+				score -= tank ? 0 : assassin ? tactics.assassinHealer() : nuker ? tactics.nukerHealer() : tactics.healer();
+			}
 		}
 		else if (isSupport(enemy))
 		{
@@ -2241,6 +2250,48 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	static boolean isDamageDealer(Creature creature)
 	{
 		return !isHealer(creature) && !isSupport(creature) && !isTank(creature);
+	}
+
+	/**
+	 * @param creature a party member
+	 * @return {@code true} for an archer or nuker: a fake player's archer or mage build that isn't a support (not transformed), a player with a bow or a mage class that isn't a healer or buffer
+	 */
+	private static boolean isShooter(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			return isSquishy(creature) && !isHealer(creature) && !isSupport(creature);
+		}
+		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && !profile.isTransformed() && profile.getRole().isRanged() && !profile.getBuild().isSupport();
+	}
+
+	/**
+	 * Team vs Team healerInReach: whether its team's archers and nukers reach {@code enemy} now. An archer or nuker counts its own reach; anyone else counts the archers and nukers of its party.
+	 * @param npc the fake player
+	 * @param enemy an enemy (a healer)
+	 * @return {@code true} if one of them has {@code enemy} within its reach
+	 */
+	static boolean isInShooterReach(Attackable npc, Creature enemy)
+	{
+		if (isShooter(npc))
+		{
+			return npc.calculateDistance2D(enemy) <= (getThreatReach(npc) + enemy.getTemplate().getCollisionRadius());
+		}
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final FakePlayerParty party = profile != null ? profile.getParty() : null;
+		if (party == null)
+		{
+			return false;
+		}
+		for (Creature member : party.getMembers())
+		{
+			if ((member != npc) && !member.isAlikeDead() && isShooter(member) && (member.calculateDistance2D(enemy) <= (getThreatReach(member) + enemy.getTemplate().getCollisionRadius())))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -1,0 +1,2 @@
+A healer=0.6,assassin=1.2,nukerHealer=0.6,nukerDps=0.0,calls=1,standoff=0,wait=0,reach=0,name=legacy
+B healer=0.6,assassin=1.2,nukerHealer=0.6,nukerDps=0.0,calls=1,standoff=0,wait=0,reach=1,name=legacy-reach

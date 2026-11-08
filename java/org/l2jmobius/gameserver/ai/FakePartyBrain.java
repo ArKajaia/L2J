@@ -750,16 +750,21 @@ public class FakePartyBrain
 	 */
 	public Creature pickCall(Attackable npc, Creature best, long now)
 	{
-		// Team vs Team tactics: a team that doesn't hunt healers calls only enemies about to fall, and not their healer first.
-		final boolean healerCalls = FakeTvtTactics.of(npc).healerCalls();
+		// Team vs Team tactics: a team that doesn't hunt healers calls only enemies about to fall, and not their healer first. With healerInReach, it calls a healer only while its archers or nukers reach it.
+		final FakeTvtTactics tactics = FakeTvtTactics.of(npc);
+		final boolean healerCalls = tactics.healerCalls();
 		Creature call = null;
 		if (isHealer(best))
 		{
-			call = healerCalls ? best : null;
+			call = healerCalls && (!tactics.healerInReach() || FakePlayerPvpAI.isInShooterReach(npc, best)) ? best : null;
 		}
 		else if (getHealth(best) < FINISH_CALL_HEALTH)
 		{
-			final Creature enemyHealer = healerCalls ? findEnemyHealerNear(npc, best, ENEMY_HEAL_REACH) : null;
+			Creature enemyHealer = healerCalls ? findEnemyHealerNear(npc, best, ENEMY_HEAL_REACH) : null;
+			if ((enemyHealer != null) && tactics.healerInReach() && !FakePlayerPvpAI.isInShooterReach(npc, enemyHealer))
+			{
+				enemyHealer = null;
+			}
 			call = (enemyHealer != null) && (npc.calculateDistance2D(enemyHealer) <= FOCUS_SCAN_RANGE) ? enemyHealer : (enemyHealer == null ? best : null);
 		}
 		return (call != null) && !call.isInvul() && !_party.isCallDropped(call, now) ? call : null;
