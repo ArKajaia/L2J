@@ -48,10 +48,20 @@ public class SkillScorer
 	private static final double LOW_HP = 0.35;
 	/** What an option out of reach keeps of its value (it has to walk first). */
 	private static final double OUT_OF_REACH = 0.8;
+	/** Bonus of a plan's next step, in damage weights. */
+	private static final double PLAN_BONUS = 2;
+	/** Lowest land chance of the crowd control a burst is built on. */
+	private static final double BURST_MIN_LAND_CHANCE = 0.5;
+	/** How early the next crowd control of a chain is cast, before the held one ends, beyond its cast time. */
+	private static final long CHAIN_LEAD = 100;
+	/** Planning depth a burst needs, and a crowd control chain. */
+	private static final int BURST_DEPTH = 2;
+	private static final int CHAIN_DEPTH = 3;
 	
 	private final FightRead _read;
 	private final SkillWeights _weights;
 	private final Random _random;
+	private SkillPlan _plan;
 	
 	/**
 	 * @param read the fake player's fight read
@@ -87,6 +97,10 @@ public class SkillScorer
 	 */
 	public List<Scored> score(List<SkillOption> options, ScoreContext ctx)
 	{
+		if ((_plan != null) && (_plan.done() || _plan.expired(ctx.now())))
+		{
+			_plan = null;
+		}
 		final boolean raceWon = raceWon(ctx);
 		final List<Scored> scored = new ArrayList<>(options.size());
 		for (SkillOption option : options)
@@ -134,6 +148,11 @@ public class SkillScorer
 			{
 				break;
 			}
+		}
+		
+		if ((_plan != null) && (option.kind() == Kind.SKILL) && (option.skill().id() == _plan.next()))
+		{
+			terms.put("plan", _weights.damage() * PLAN_BONUS);
 		}
 		
 		double value = 0;
@@ -206,6 +225,146 @@ public class SkillScorer
 		{
 			terms.put("risk", -_weights.risk() * (skill.hitTimeMs() / 1000.0));
 		}
+	}
+	
+	/**
+	 * @return its plan, {@code null} for none
+	 */
+	public SkillPlan currentPlan()
+	{
+		return _plan;
+	}
+	
+	/**
+	 * @param plan a plan
+	 * @param now the current time
+	 * @param skillLevel the fake player's skill, 0 to 1
+	 * @return {@code true} if it took the plan up (one that doesn't plan refuses)
+	 */
+	public boolean startPlan(SkillPlan plan, long now, double skillLevel)
+	{
+		if (depth(skillLevel) < 1)
+		{
+			return false;
+		}
+		_plan = plan;
+		return true;
+	}
+	
+	public void dropPlan()
+	{
+		_plan = null;
+	}
+	
+	/**
+	 * Its skill used: the plan moves on if it was the next step.
+	 * @param skillId the skill
+	 */
+	public void onSkillUsed(int skillId)
+	{
+		if (_plan != null)
+		{
+			_plan.advance(skillId);
+		}
+	}
+	
+	/**
+	 * @param skillLevel the fake player's skill, 0 to 1
+	 * @return how many steps ahead it plans
+	 */
+	public int depth(double skillLevel)
+	{
+		return (int) Math.round(_weights.planDepth() * skillLevel);
+	}
+	
+	/**
+	 * A burst from what is ready: its burst buffs, the crowd control most likely to land (if likely enough), then its damage skills, biggest first.
+	 * @param ready its skills ready to use
+	 * @param ctx the fake player and its target
+	 * @return the plan, {@code null} without a crowd control likely to land or for one that doesn't plan that far
+	 */
+	public SkillPlan buildBurst(List<SkillOption> ready, ScoreContext ctx)
+	{
+		if (depth(ctx.skillLevel()) < BURST_DEPTH)
+		{
+			return null;
+		}
+		SkillOption control = null;
+		double best = BURST_MIN_LAND_CHANCE;
+		final List<Integer> steps = new ArrayList<>();
+		final List<SkillOption> nukes = new ArrayList<>();
+		for (SkillOption option : ready)
+		{
+			if ((option.kind() != Kind.SKILL) || (option.skill() == null))
+			{
+				continue;
+			}
+			final EnumSet<SkillMeaning> meanings = SkillMeanings.classify(option.skill());
+			if (meanings.contains(SkillMeaning.BURST_BUFF))
+			{
+				steps.add(option.skill().id());
+			}
+			else if (meanings.contains(SkillMeaning.CC))
+			{
+				final double chance = _read.landChance(ctx.targetId(), option.skill(), ctx.targetGroup(), ctx.now());
+				if (chance >= best)
+				{
+					best = chance;
+					control = option;
+				}
+			}
+			else if (meanings.contains(SkillMeaning.NUKE))
+			{
+				nukes.add(option);
+			}
+		}
+		if (control == null)
+		{
+			return null;
+		}
+		steps.add(control.skill().id());
+		nukes.sort(Comparator.comparingDouble(SkillOption::expectedDamage).reversed());
+		for (SkillOption nuke : nukes)
+		{
+			steps.add(nuke.skill().id());
+		}
+		return new SkillPlan(SkillPlan.Type.BURST, steps, ctx.now());
+	}
+	
+	/**
+	 * The next crowd control of a chain: when the one holding the target is about to end, the one most likely to land, to be cast so it lands as the other ends.
+	 * @param ready its skills ready to use
+	 * @param ctx the fake player and its target
+	 * @return the plan, {@code null} if the target isn't held, the hold isn't ending yet, there is nothing to chain, or the fake player doesn't plan that far
+	 */
+	public SkillPlan buildCcChain(List<SkillOption> ready, ScoreContext ctx)
+	{
+		if (depth(ctx.skillLevel()) < CHAIN_DEPTH)
+		{
+			return null;
+		}
+		final long now = ctx.now();
+		final int target = ctx.targetId();
+		final long held = Math.max(_read.remaining(target, EffectMeaning.STUNNED, now), Math.max(_read.remaining(target, EffectMeaning.ROOTED, now), _read.remaining(target, EffectMeaning.SLEEPING, now)));
+		if (held <= 0)
+		{
+			return null;
+		}
+		SkillOption next = null;
+		double best = 0;
+		for (SkillOption option : ready)
+		{
+			if ((option.kind() == Kind.SKILL) && (option.skill() != null) && SkillMeanings.classify(option.skill()).contains(SkillMeaning.CC) && (held <= (option.skill().hitTimeMs() + CHAIN_LEAD)))
+			{
+				final double chance = _read.landChance(target, option.skill(), ctx.targetGroup(), now);
+				if (chance > best)
+				{
+					best = chance;
+					next = option;
+				}
+			}
+		}
+		return next != null ? new SkillPlan(SkillPlan.Type.CC_CHAIN, List.of(next.skill().id()), now) : null;
 	}
 	
 	/**
