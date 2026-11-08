@@ -15,6 +15,8 @@ How the fake players of a Team vs Team match pick their targets and where their 
 | `calls` | Whether a member calls its party onto an enemy healer (and onto the healer of a low enemy) | 1 |
 | `standoff` | Archers and mages stay back: a target they'd have to walk up to counts the walk twice and the enemies on the way (+0.8 each, as brain B's #35), they don't walk past their party's front (the closest tank or melee) for up to `wait` ms, and a mage between casts holds at the edge of its reach (its attack skills' reach - 50, up to 900) instead of 600 from its target, stepping back when it is well inside that and ahead of its front | 0 |
 | `wait` | With `standoff`: how long it waits behind the front before it walks up anyway | 0 (4000 with `standoff`) |
+| `lock` | An archer or nuker with an enemy healer within its own reach stuns, silences or paralyzes it with a skill it has ready (Stun Shot, Silence, Voice Bind...; not Archmage, Mystic Muse nor Trickster, which have none), from where it stands, then turns back to its own target | 0 |
+| `nukerNuker` | How much better an enemy nuker (a mage that isn't a support) is as a target for a nuker or archer, on top of `nukerDps` | 0 |
 | `reach` | An enemy healer is worth its priority, and called for the party, only while one of the team's archers or nukers reaches it (a nuker's own reach; for anyone else, an archer or nuker of its party). Out of that reach it is a target like any other | 0 |
 
 Presets: `legacy`, `focus` (healer ×2), `ignore` (nobody hunts healers, no healer calls, nukers +0.3 on damage dealers), `dps` (nukers and archers on damage dealers), `split` (daggers on healers, nukers and archers on damage dealers), `standoff`, `best` (the default, see the end).
@@ -108,6 +110,20 @@ The shipped preset (`best-a0.6` in the data), read from `TvTFakeTactics = best` 
 | best | best + healer focus in reach (`healer=0.6,assassin=1.2,nukerHealer=0.6,calls=1,reach=1`) | 3/10 | 42.6% (33-52) | 37 - 48 | 9% / 16% | 1.8M / 1.4M |
 
 Limiting healer focus to what the shooters reach fixes most of what was wrong with legacy: it halves the healer focus, doubles the damage dealt and wins 9 of 10. But on top of `best`, putting the healer focus back even within reach still does a little worse than leaving healers alone (the interval touches 50%, so it isn't settled). The default stays `best`; `reach=1` is there for a server that wants its fake players to go for healers without running into the enemy for them. Data in `docs/tvt-tactics-data/batch-20261108-*`.
+
+## Round 5: archers and nukers only lock the healer in their own reach, then go back to the enemy nukers (2026-11-08)
+
+`lock=1`: an archer or nuker that has an enemy healer within its own reach stuns, silences or paralyzes it (once it isn't locked already), without walking for it, then goes back to its target. `nukerNuker=0.3`: archers and nukers then prefer the enemy nukers. Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once.
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) | B's archers on healers (time) |
+|---|---|---|---|---|---|
+| lock (first try) | 10 | 1/10 | 40.1% (32-48) | 34 - 51 | 17% (A 5%) |
+| lock + nukerNuker 0.3 (first try) | 10 | 1.5/10 | 35.4% (27-44) | 31 - 58 | 17% |
+| lock (fixed) | 10 | 1/10 | 34.1% (26-42) | 29 - 55 | 15% |
+| **lock + nukerNuker 0.3 (fixed), the option asked for** | 20 | 5/20 | 45.4% (38-53) | 40 - 50 | 17% |
+| nukerNuker 0.3 alone | 10 | 3/10 | 47.3% (37-58) | 40 - 45 | |
+
+The first try left a locker's target on the healer after the cast, which its party read as focus fire on the healer; the fix turns it back to the enemy it fights once the cast is over. Even so, the lock costs: an archer's Stun Shot or a nuker's silence on the healer is a cast not spent on a damage dealer, the healer is healed or cleansed by its party anyway, and the team lost more archers and nukers (11.5 + 7.7 deaths a match against 8.4 + 6.9). Preferring the enemy nukers is neutral. Neither is in the default; both are there to try (`best:lock=1,nukerNuker=0.3`).
 
 ## Limits
 

@@ -686,6 +686,16 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		_traced = false;
 
+		// Team vs Team healerLock: its lock on an enemy healer is off, so it turns back to the enemy it fights (left on the healer, its target drew its party's focus fire onto it).
+		if ((_lockTarget != null) && !npc.isCastingNow())
+		{
+			if ((npc.getTarget() == _lockTarget) && (getAttackTarget() != null) && (getAttackTarget() != _lockTarget))
+			{
+				npc.setTarget(getAttackTarget());
+			}
+			_lockTarget = null;
+		}
+
 		// Casting (a spell, a Scroll of Escape...): a player still drinks potions meanwhile.
 		if (npc.isCastingNow())
 		{
@@ -1028,6 +1038,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 
 		// An archer or mage stops whoever is on its party's healer (root, stun, sleep), from where it stands.
 		if (pvp && (party != null) && role.isRanged() && !isPureHealer(profile) && peelForHealer(npc, profile, party, now))
+		{
+			return;
+		}
+
+		// Team vs Team healerLock: an archer or nuker with an enemy healer within its own reach stuns, silences or paralyzes it, then goes back to its target.
+		if (pvp && role.isRanged() && !profile.getBuild().isSupport() && lockHealer(npc, profile, now))
 		{
 			return;
 		}
@@ -2192,10 +2208,14 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			score += assassin ? ASSASSIN_TANK_PENALTY : TANK_PENALTY;
 		}
 
-		// Team vs Team tactics: a nuker (or archer) goes for the enemy damage dealers, the ones that kill its team.
+		// Team vs Team tactics: a nuker (or archer) goes for the enemy damage dealers, the ones that kill its team, and the enemy nukers above all with nukerNuker.
 		if (nuker && (tactics.nukerDps() > 0) && isDamageDealer(enemy))
 		{
 			score -= tactics.nukerDps();
+		}
+		if (nuker && (tactics.nukerNuker() > 0) && isNuker(enemy))
+		{
+			score -= tactics.nukerNuker();
 		}
 
 		// Team vs Team standoff: an archer or mage would rather shoot what it reaches from behind its front than walk up into the enemy for something better.
@@ -2251,6 +2271,107 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	{
 		return !isHealer(creature) && !isSupport(creature) && !isTank(creature);
 	}
+
+	/** Team vs Team healerLock: how often an archer or nuker looks for an enemy healer to lock. */
+	private static final long HEALER_LOCK_INTERVAL = 1500;
+	/** Skill ids of the stuns, silences and paralyses (what healerLock casts on a healer). */
+	private static final Map<Integer, Boolean> HEALER_LOCKS = new ConcurrentHashMap<>();
+	// When it may look for an enemy healer to lock again, and the healer it just cast a lock on (its target goes back to its fight after the cast).
+	private long _nextHealerLock;
+	private Creature _lockTarget;
+
+	/**
+	 * @param creature an enemy
+	 * @return {@code true} for a nuker: a fake player's mage build that isn't a support (not transformed), a player of a mage class that isn't a healer nor a buffer
+	 */
+	static boolean isNuker(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			return creature.asPlayer().isMageClass() && !isHealer(creature) && !isSupport(creature);
+		}
+		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.MAGE) && !profile.getBuild().isSupport();
+	}
+
+	/**
+	 * @param skill a skill
+	 * @return {@code true} for a stun, a silence or a paralysis
+	 */
+	private static boolean isHealerLock(Skill skill)
+	{
+		return HEALER_LOCKS.computeIfAbsent(skill.getId(), _ ->
+		{
+			final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+			if (effects != null)
+			{
+				for (AbstractEffect effect : effects)
+				{
+					switch (effect.getClass().getSimpleName())
+					{
+						case "Stun":
+						case "Mute":
+						case "Paralyze":
+						{
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		});
+	}
+
+	/**
+	 * Team vs Team healerLock: an archer or nuker that has an enemy healer within its own reach (seen, not stunned, silenced nor paralyzed yet) stuns, silences or paralyzes it with a skill it has ready,
+	 * from where it stands, then goes back to its target (it doesn't change its focus). It doesn't walk for it.
+	 * @param npc the archer or nuker
+	 * @param profile its profile
+	 * @param now the current time
+	 * @return {@code true} if it cast on a healer
+	 */
+	private boolean lockHealer(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		if ((now < _nextHealerLock) || !FakeTvtTactics.of(npc).healerLock())
+		{
+			return false;
+		}
+		_nextHealerLock = now + HEALER_LOCK_INTERVAL;
+
+		final int reach = getThreatReach(npc);
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, reach + 100))
+		{
+			if (!isHealer(enemy) || !isPvpEnemy(enemy) || enemy.isAlikeDead() || enemy.isInvul() || enemy.isStunned() || enemy.isParalyzed() || enemy.isMuted() || !isValidTarget(npc, enemy) || !GeoEngine.getInstance().canSeeTarget(npc, enemy))
+			{
+				continue;
+			}
+			final double distance = npc.calculateDistance2D(enemy);
+			final int collision = npc.getTemplate().getCollisionRadius() + enemy.getTemplate().getCollisionRadius();
+			for (SkillCategory category : HEALER_LOCK_SKILLS)
+			{
+				for (Skill skill : profile.getSkills(category))
+				{
+					if (isHealerLock(skill) && (skill.getCastRange() > 0) && ((distance - collision) <= getSkillReach(skill)) && !enemy.isAffectedBySkill(skill.getId()) && canCast(npc, skill, enemy))
+					{
+						trace(Reason.PEEL_FOR_ALLY, enemy, skill, "HEALER_LOCK");
+						if (useSkill(npc, enemy, skill, distance, collision, false))
+						{
+							_lockTarget = enemy;
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/** The skills healerLock looks through. */
+	private static final SkillCategory[] HEALER_LOCK_SKILLS =
+	{
+		SkillCategory.DEBUFF,
+		SkillCategory.PEEL
+	};
 
 	/**
 	 * @param creature a party member
