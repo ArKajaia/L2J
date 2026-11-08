@@ -54,7 +54,7 @@ Replaces, in brain B's `thinkAttack`, the dice rolls that choose skills: the PvP
 - **Setup:** debuffs that raise later damage (Hex, Curse Gloom, P.Def and M.Def debuffs), worth more just before a burst.
 - **Cooldown cost:** using a long cooldown now loses it for later. Big nukes and burst buffs are held unless the moment is good: target held, low, or without defenses up, or its answer (a cleanse, an invulnerability skill) remembered on cooldown.
 - **Risk:** chance the cast is interrupted (a melee near, the enemy's stun or silence not remembered on cooldown).
-- **Kill race:** while time to kill is clearly below time to die, cooldown cost drops to zero and damage outweighs everything else: finishing now is the good moment.
+- **Kill race:** while time to kill is clearly below time to die (below 0.75 × time to die by default; the margin is in `FakeSkillWeights` and widens with low skill), cooldown cost drops to zero and damage outweighs everything else: finishing now is the good moment.
 
 **Plans** the scorer can start, hold or drop: **burst window** (burst buffs → CC → biggest hits while it holds; only started if its CC is likely to land), **CC chain** (the next CC lined up to land as the last ends), **kite cycle** for archers (shoot, step, shoot). Existing combos become plans too.
 
@@ -73,7 +73,7 @@ Act when an event arrives, after a reaction delay from personality (about 150–
 | Enemy starts a big nuke or CC at me | Interrupt with an instant stun / silence / knockback that lands in time; else step out of range or line of sight (archers and mages near cover); else a defensive if the hit is big enough. |
 | Enemy starts a heal on a low target | Interrupt it, or Cancel / Mana Burn. |
 | Enemy gap closer starts | An archer or mage readies its peel for when it arrives. |
-| Enemy burst buff appears, or time to die drops below a few seconds | The defensive that fits the damage type and duration (Ultimate Defense, Sonic Barrier, Vengeance, Touch of Life, Mirage, Fake Death, Hide...). Replaces fixed HP thresholds. |
+| Enemy burst buff appears, or time to die drops below 3 s (default, in `FakeSkillWeights`) | The defensive that fits the damage type and duration (Ultimate Defense, Sonic Barrier, Vengeance, Touch of Life, Mirage, Fake Death, Hide...). Replaces fixed HP thresholds. |
 | A CC lands on me | Cleanse if it matters now (a root while a melee comes); otherwise keep the cleanse. |
 | My CC lands on the target | Start the burst window if the burst is ready. |
 | Enemy invulnerability or reflect expires | Go in at once. |
