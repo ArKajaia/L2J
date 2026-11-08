@@ -2187,7 +2187,22 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			// With healerInReach, only while the team's archers or nukers reach it.
 			if (!tactics.healerInReach() || isInShooterReach(npc, enemy))
 			{
-				score -= tank ? 0 : assassin ? tactics.assassinHealer() : nuker ? tactics.nukerHealer() : tactics.healer();
+				if (tank)
+				{
+					score -= tactics.tankHealer();
+				}
+				else if (assassin)
+				{
+					// With assassinRush, a dagger goes for a healer only within reach of its gap closer.
+					if (!tactics.assassinRush() || isInRushReach(npc, profile, enemy))
+					{
+						score -= tactics.assassinHealer();
+					}
+				}
+				else
+				{
+					score -= nuker ? tactics.nukerHealer() : tactics.healer();
+				}
 			}
 		}
 		else if (isSupport(enemy))
@@ -2279,6 +2294,26 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	// When it may look for an enemy healer to lock again, and the healer it just cast a lock on (its target goes back to its fight after the cast).
 	private long _nextHealerLock;
 	private Creature _lockTarget;
+
+	/**
+	 * Team vs Team assassinRush: whether {@code enemy} is within reach of one of its gap closers (a dagger's Shadow Step, 600).
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param enemy an enemy
+	 * @return {@code true} if it is, {@code false} if it has no gap closer
+	 */
+	private static boolean isInRushReach(Attackable npc, FakePlayerPvpProfile profile, Creature enemy)
+	{
+		final double gap = npc.calculateDistance2D(enemy) - npc.getTemplate().getCollisionRadius() - enemy.getTemplate().getCollisionRadius();
+		for (Skill skill : profile.getSkills(SkillCategory.RUSH))
+		{
+			if (gap <= getSkillReach(skill))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * @param creature an enemy

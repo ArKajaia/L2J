@@ -1,0 +1,21 @@
+batch,match,map,level_min,level_max,side,tactics,opponent,score,opponent_score,result,damage,damage_to_healer,healer_damage_pct,healer_target_pct,deaths,healer_deaths,first_healer_death_s,ranged_distance,ranged_ahead_pct,deaths_by_role
+batch-20261108-052514,0,ruins_of_despair,79,81,Blue,best,best-rush-tank,17,84,0,969780,30047,3.1,2.3,84,7,44,520,23.8,tank=9 melee=23 archer=21 nuker=14 healer=7 buffer=10
+batch-20261108-052514,0,ruins_of_despair,79,81,Red,best-rush-tank,best,84,17,1,2684428,246858,9.2,9.8,17,0,,486,13.3,tank=1 melee=9 archer=3 nuker=3 healer=0 buffer=1
+batch-20261108-052514,1,ruins_of_despair,79,81,Blue,best-rush-tank,best,32,53,0,1655566,139413,8.4,7.7,53,3,73,481,22.3,tank=5 melee=20 archer=11 nuker=8 healer=3 buffer=6
+batch-20261108-052514,1,ruins_of_despair,79,81,Red,best,best-rush-tank,53,32,1,2185441,182471,8.3,6.2,32,1,46,464,19.6,tank=2 melee=13 archer=7 nuker=6 healer=1 buffer=3
+batch-20261108-052514,2,ruins_of_despair,79,81,Blue,best,best-rush-tank,24,58,0,1428706,70181,4.9,2.5,58,7,54,459,26.0,tank=4 melee=21 archer=10 nuker=9 healer=7 buffer=7
+batch-20261108-052514,2,ruins_of_despair,79,81,Red,best-rush-tank,best,58,24,1,2012046,267500,13.3,7.5,24,1,124,537,16.3,tank=0 melee=13 archer=4 nuker=3 healer=1 buffer=3
+batch-20261108-052514,3,ruins_of_despair,79,81,Blue,best-rush-tank,best,50,21,1,1839296,196681,10.7,12.2,21,1,74,478,29.7,tank=2 melee=9 archer=4 nuker=3 healer=1 buffer=2
+batch-20261108-052514,3,ruins_of_despair,79,81,Red,best,best-rush-tank,21,50,0,1145698,59090,5.2,2.7,50,5,73,445,29.9,tank=1 melee=15 archer=15 nuker=9 healer=5 buffer=5
+batch-20261108-052514,4,ruins_of_despair,79,81,Blue,best,best-rush-tank,40,39,1,1540556,76580,5.0,2.6,39,6,36,511,21.1,tank=2 melee=10 archer=9 nuker=7 healer=6 buffer=5
+batch-20261108-052514,4,ruins_of_despair,79,81,Red,best-rush-tank,best,39,40,0,1468781,282928,19.3,9.4,40,2,64,430,29.0,tank=3 melee=16 archer=11 nuker=5 healer=2 buffer=3
+batch-20261108-052514,5,ruins_of_despair,79,81,Blue,best-rush-tank,best,40,54,0,1418405,191295,13.5,12.1,54,3,61,478,29.1,tank=3 melee=20 archer=12 nuker=9 healer=3 buffer=7
+batch-20261108-052514,5,ruins_of_despair,79,81,Red,best,best-rush-tank,54,40,1,1849864,118254,6.4,4.8,40,5,75,412,30.1,tank=1 melee=14 archer=9 nuker=7 healer=5 buffer=4
+batch-20261108-052514,6,ruins_of_despair,79,81,Blue,best,best-rush-tank,25,34,0,1314401,54614,4.2,3.4,34,1,68,486,27.5,tank=1 melee=17 archer=5 nuker=6 healer=1 buffer=4
+batch-20261108-052514,6,ruins_of_despair,79,81,Red,best-rush-tank,best,34,25,1,1560084,56618,3.6,3.7,25,1,109,486,18.3,tank=1 melee=10 archer=9 nuker=3 healer=1 buffer=1
+batch-20261108-052514,7,ruins_of_despair,79,81,Blue,best-rush-tank,best,27,46,0,1388865,63384,4.6,4.9,46,4,73,499,23.5,tank=6 melee=14 archer=11 nuker=6 healer=4 buffer=5
+batch-20261108-052514,7,ruins_of_despair,79,81,Red,best,best-rush-tank,46,27,1,1863398,203722,10.9,10.1,27,1,79,407,28.3,tank=0 melee=12 archer=5 nuker=5 healer=1 buffer=4
+batch-20261108-052514,8,ruins_of_despair,79,81,Blue,best,best-rush-tank,35,47,0,1436358,88153,6.1,4.9,47,5,100,500,25.3,tank=2 melee=16 archer=10 nuker=8 healer=5 buffer=6
+batch-20261108-052514,8,ruins_of_despair,79,81,Red,best-rush-tank,best,47,35,1,1738268,235374,13.5,10.4,35,2,73,382,34.0,tank=0 melee=15 archer=7 nuker=5 healer=2 buffer=6
+batch-20261108-052514,9,ruins_of_despair,79,81,Blue,best-rush-tank,best,38,32,1,1354485,124244,9.2,7.5,32,1,45,540,27.6,tank=1 melee=11 archer=9 nuker=6 healer=1 buffer=4
+batch-20261108-052514,9,ruins_of_despair,79,81,Red,best,best-rush-tank,32,38,0,1228823,60133,4.9,2.5,38,4,54,519,21.3,tank=3 melee=9 archer=6 nuker=9 healer=4 buffer=7

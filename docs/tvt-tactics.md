@@ -17,6 +17,8 @@ How the fake players of a Team vs Team match pick their targets and where their 
 | `wait` | With `standoff`: how long it waits behind the front before it walks up anyway | 0 (4000 with `standoff`) |
 | `lock` | An archer or nuker with an enemy healer within its own reach stuns, silences or paralyzes it with a skill it has ready (Stun Shot, Silence, Voice Bind...; not Archmage, Mystic Muse nor Trickster, which have none), from where it stands, then turns back to its own target | 0 |
 | `nukerNuker` | How much better an enemy nuker (a mage that isn't a support) is as a target for a nuker or archer, on top of `nukerDps` | 0 |
+| `rush` | A dagger weighs an enemy healer by `assassin` only while the healer is within reach of its gap closer (Shadow Step, 600, for all three dagger classes); farther it is a target like any other | 0 |
+| `tankHealer` | How much better an enemy healer is as a target for a tank | 0 |
 | `reach` | An enemy healer is worth its priority, and called for the party, only while one of the team's archers or nukers reaches it (a nuker's own reach; for anyone else, an archer or nuker of its party). Out of that reach it is a target like any other | 0 |
 
 Presets: `legacy`, `focus` (healer ×2), `ignore` (nobody hunts healers, no healer calls, nukers +0.3 on damage dealers), `dps` (nukers and archers on damage dealers), `split` (daggers on healers, nukers and archers on damage dealers), `standoff`, `best` (the default, see the end).
@@ -124,6 +126,18 @@ Limiting healer focus to what the shooters reach fixes most of what was wrong wi
 | nukerNuker 0.3 alone | 10 | 3/10 | 47.3% (37-58) | 40 - 45 | |
 
 The first try left a locker's target on the healer after the cast, which its party read as focus fire on the healer; the fix turns it back to the enemy it fights once the cast is over. Even so, the lock costs: an archer's Stun Shot or a nuker's silence on the healer is a cast not spent on a damage dealer, the healer is healed or cleansed by its party anyway, and the team lost more archers and nukers (11.5 + 7.7 deaths a match against 8.4 + 6.9). Preferring the enemy nukers is neutral. Neither is in the default; both are there to try (`best:lock=1,nukerNuker=0.3`).
+
+## Round 6: only daggers within Shadow Step range go for the healer, and tanks with them (2026-11-08)
+
+`rush=1` with `assassin=1.2`: a dagger goes for an enemy healer (at the legacy dagger weight) only while the healer is within its Shadow Step range; nobody else does. `tankHealer=0.6`: tanks go for healers too. Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once.
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) | Healer focus, dmg (B) | B's own healer deaths (A) |
+|---|---|---|---|---|---|---|
+| daggers in Shadow Step range | 10 | 5/10 | 45.8% (34-58) | 42 - 48 | 8% | 3.5 (3.6) |
+| daggers in Shadow Step range + tanks 0.6 | 20 | 9/20 | 51.5% (45-59) | 42 - 40 | 10% | 2.6 (3.6) |
+| tanks 0.6 alone | 10 | 6/10 | 52.0% (44-60) | 42 - 38 | 10% | 2.7 (3.6) |
+
+None of them beats `best`: all three are within noise of it (the first 10 matches of the daggers and tanks variant leaned its way, 56%, the next 10 didn't). Pulling the healer focus onto the melee that are already close costs little, unlike sending the archers and nukers after it, but it doesn't win more either. One side effect stands out: with the tanks on the enemy healers, a team's own healers died about a quarter less often (2.6-2.7 against 3.6 a match), likely because the enemy tanks and melee turn on the tanks in their backline. The default stays `best`.
 
 ## Limits
 
