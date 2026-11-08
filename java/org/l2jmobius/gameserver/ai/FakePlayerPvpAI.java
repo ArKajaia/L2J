@@ -2238,10 +2238,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			score -= tactics.nukerNuker();
 		}
 
-		// Team vs Team ease: of the enemies close by, the easiest class to kill in a team fight.
-		if ((tactics.ease() > 0) && (distance <= (ranged ? getThreatReach(npc) : EASE_MELEE_RANGE)))
+		// Team vs Team ease: of the enemies close by, the easiest class to kill in a team fight (with easeHunter, the daggers and Tricksters weigh it their own way).
+		final double easeWeight = (tactics.easeHunter() > 0) && (assassin || isTrickster(profile)) ? tactics.easeHunter() : tactics.ease();
+		if ((easeWeight > 0) && (distance <= (ranged ? getThreatReach(npc) : EASE_MELEE_RANGE)))
 		{
-			score -= tactics.ease() * FakeTvtKillEase.of(enemy);
+			score -= easeWeight * FakeTvtKillEase.of(enemy);
 		}
 
 		// Team vs Team standoff: an archer or mage would rather shoot what it reaches from behind its front than walk up into the enemy for something better.
@@ -2305,6 +2306,15 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	// When it may look for an enemy healer to lock again, and the healer it just cast a lock on (its target goes back to its fight after the cast).
 	private long _nextHealerLock;
 	private Creature _lockTarget;
+
+	/**
+	 * @param profile a fake player's profile
+	 * @return {@code true} for a Trickster build
+	 */
+	private static boolean isTrickster(FakePlayerPvpProfile profile)
+	{
+		return (profile != null) && (profile.getBuild() != null) && "Trickster".equals(profile.getBuild().getName());
+	}
 
 	/** Team vs Team ease: how close an enemy is to a melee fake player to be "close by". */
 	private static final int EASE_MELEE_RANGE = 600;

@@ -1,0 +1,7 @@
+batch-20261108-100559: 10/10 matches done.
+A = healer=0.0,assassin=0.6,nukerHealer=0.0,nukerDps=0.3,calls=0,standoff=1,wait=0,reach=0,lock=0,nukerNuker=0.0,rush=0,tankHealer=0.0,ease=2.0,hunters=0.0,hunterHealer=1.2,easeHunter=0.0,name=best
+B = healer=0.0,assassin=0.6,nukerHealer=0.0,nukerDps=0.3,calls=0,standoff=1,wait=0,reach=0,lock=0,nukerNuker=0.0,rush=0,tankHealer=0.0,ease=2.0,hunters=0.0,hunterHealer=1.2,easeHunter=4.0,name=best-eh4
+
+tactics                games   win %  kills-deaths heal dmg% heal tgt%  healer dth   rng dist  rng ahd%    damage
+best                      10   80±25    45.9-40.2        6.7       5.9        1.70        475      20.2   1832035
+best-eh4                  10   20±25    40.2-45.9        5.1       4.1        2.80        523      22.2   1697514

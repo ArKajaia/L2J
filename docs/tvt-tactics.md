@@ -20,6 +20,7 @@ How the fake players of a Team vs Team match pick their targets and where their 
 | `rush` | A dagger weighs an enemy healer by `assassin` only while the healer is within reach of its gap closer (Shadow Step, 600, for all three dagger classes); farther it is a target like any other | 0 |
 | `tankHealer` | How much better an enemy healer is as a target for a tank | 0 |
 | `ease` | How much better an enemy close by is the easier its class is to kill in a team fight (`FakeTvtKillEase`, 0 for the toughest class, a tank, 1 for the easiest, a dagger), times this. Close by: within its reach for an archer or mage, within 600 for anyone else | 0 |
+| `easeHunter` | The `ease` weight of the daggers and Tricksters instead of `ease` (0: they use `ease`) | 0 |
 | `hunters` | The share of tanks and daggers (each decided once, by object id) that hunt healers at `hunterHealer` | 0 |
 | `hunterHealer` | With `hunters`: their healer priority | 1.2 |
 | `reach` | An enemy healer is worth its priority, and called for the party, only while one of the team's archers or nukers reaches it (a nuker's own reach; for anyone else, an archer or nuker of its party). Out of that reach it is a target like any other | 0 |
@@ -179,6 +180,17 @@ Daggers die twice as often as the average fighter, tanks a third as often, heale
 Ease peaks between 1.2 and 2.0: there its teams dealt more damage and lost fewer members in every role (at 2.0, 13.3 melee and 2.3 healer deaths a match against 19.3 and 2.8). At 3.0 the class outweighs how hurt and how close an enemy is, and the gain is gone. Over the 40 matches at 1.2 and 2.0 together ease wins about 56% of the kills. Half of the tanks and daggers on the healers is even with `best`, like the other healer options of rounds 4 to 6.
 
 `best` now has `ease=2`. Against legacy (3 minute fights): **20/20, kill share 82.7% (80-86)**, 80 - 17 kills, at levels 79-81 (74 - 20) and 61-65 (86 - 14).
+
+## Round 8: a stronger pull to the easiest kill for daggers and Tricksters only (2026-11-08)
+
+`easeHunter=w`: the daggers and Tricksters weigh the easiest class to kill close by with `w` instead of `best`'s 2.0; everyone else plays `best` (ease 2.0). Each against `best`, 3 minute fights, levels 79-81, two batches of 10 at once:
+
+| B (A = best) | Matches | B's wins | B's kill share (95%) | Kills (B - A) |
+|---|---|---|---|---|
+| daggers and Tricksters at ease 3.0 | 10 | 5/10 | 51.9% (45-59) | 45 - 42 |
+| daggers and Tricksters at ease 4.0 | 10 | 2/10 | 46.0% (35-57) | 40 - 46 |
+
+No gain: at 2.0 the daggers and Tricksters already go for the easy kills close by (their melee damage on enemy damage dealers stays at about 70% either way), and a stronger pull only takes them off hurt targets of tougher classes. The default stays `best`.
 
 ## Limits
 
