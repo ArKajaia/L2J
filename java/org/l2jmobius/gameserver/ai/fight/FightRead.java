@@ -87,6 +87,7 @@ public class FightRead
 	private final Deque<Sample> _selfHp = new ArrayDeque<>();
 	private final Deque<Sample> _targetHp = new ArrayDeque<>();
 	private int _targetId;
+	private int _seenCasts;
 	
 	/**
 	 * @param knowledge the fake player's knowledge, -1 to 1 (see FakePlayerPvpPersonality)
@@ -123,8 +124,9 @@ public class FightRead
 	 * @param now the current time
 	 * @param end when it lands
 	 */
-	public void onEnemyCast(int enemyId, SkillFacts skill, int targetId, long now, long end)
+	public synchronized void onEnemyCast(int enemyId, SkillFacts skill, int targetId, long now, long end)
 	{
+		_seenCasts++;
 		_casts.put(enemyId, new ActiveCast(enemyId, skill, SkillMeanings.classify(skill), targetId, now, end));
 		if ((skill.id() > 0) && (skill.reuseMs() > 0))
 		{
@@ -146,7 +148,7 @@ public class FightRead
 	 * @param expiresAt each meaning it shows and when it ends
 	 * @param now the current time
 	 */
-	public void onEffects(int creatureId, Map<EffectMeaning, Long> expiresAt, long now)
+	public synchronized void onEffects(int creatureId, Map<EffectMeaning, Long> expiresAt, long now)
 	{
 		final Map<EffectMeaning, Icon> before = _icons.getOrDefault(creatureId, Map.of());
 		final Map<EffectMeaning, Icon> icons = new EnumMap<>(EffectMeaning.class);
@@ -168,7 +170,7 @@ public class FightRead
 	 * @param targetHp the target's HP
 	 * @param targetMaxHp the target's max HP
 	 */
-	public void onHp(long now, int selfId, double selfHp, double selfMaxHp, int targetId, double targetHp, double targetMaxHp)
+	public synchronized void onHp(long now, int selfId, double selfHp, double selfMaxHp, int targetId, double targetHp, double targetMaxHp)
 	{
 		add(_selfHp, now, selfHp);
 		if (targetId != _targetId)
@@ -194,7 +196,7 @@ public class FightRead
 	 * @param skillId the skill
 	 * @param landed {@code true} if it landed
 	 */
-	public void onCcAttempt(int enemyId, int skillId, boolean landed)
+	public synchronized void onCcAttempt(int enemyId, int skillId, boolean landed)
 	{
 		final int[] record = _ccRecord.computeIfAbsent(enemyId, k -> new int[2]);
 		record[0]++;
@@ -208,7 +210,7 @@ public class FightRead
 	 * Drops everything about an enemy that left the fight.
 	 * @param enemyId the enemy
 	 */
-	public void forget(int enemyId)
+	public synchronized void forget(int enemyId)
 	{
 		_casts.remove(enemyId);
 		_icons.remove(enemyId);
@@ -216,7 +218,23 @@ public class FightRead
 		_cooldowns.keySet().removeIf(key -> (int) (key >> 32) == enemyId);
 	}
 	
-	public boolean isRemembered(int enemyId, int skillId)
+	/**
+	 * @return how many enemy casts it saw in all
+	 */
+	public synchronized int seenCasts()
+	{
+		return _seenCasts;
+	}
+	
+	/**
+	 * @return how many enemy cooldowns it remembers now
+	 */
+	public synchronized int rememberedCount()
+	{
+		return _cooldowns.size();
+	}
+	
+	public synchronized boolean isRemembered(int enemyId, int skillId)
 	{
 		return _cooldowns.containsKey(key(enemyId, skillId));
 	}
@@ -227,7 +245,7 @@ public class FightRead
 	 * @param now the current time
 	 * @return {@code true} if it saw the enemy use it and its reuse isn't over (an unseen skill may be ready)
 	 */
-	public boolean isOnCooldown(int enemyId, int skillId, long now)
+	public synchronized boolean isOnCooldown(int enemyId, int skillId, long now)
 	{
 		final Cooldown cooldown = _cooldowns.get(key(enemyId, skillId));
 		return (cooldown != null) && (now < (cooldown.usedAt() + cooldown.reuse()));
@@ -238,7 +256,7 @@ public class FightRead
 	 * @param now the current time
 	 * @return its cast in progress, {@code null} for none
 	 */
-	public ActiveCast currentCast(int enemyId, long now)
+	public synchronized ActiveCast currentCast(int enemyId, long now)
 	{
 		final ActiveCast cast = _casts.get(enemyId);
 		return (cast != null) && (now < cast.end()) ? cast : null;
@@ -250,7 +268,7 @@ public class FightRead
 	 * @param now the current time
 	 * @return {@code true} if the creature shows it and the fake player noticed it
 	 */
-	public boolean has(int creatureId, EffectMeaning meaning, long now)
+	public synchronized boolean has(int creatureId, EffectMeaning meaning, long now)
 	{
 		final Icon icon = _icons.getOrDefault(creatureId, Map.of()).get(meaning);
 		return (icon != null) && (now >= icon.visibleFrom) && (now < icon.expiresAt);
@@ -259,17 +277,17 @@ public class FightRead
 	/**
 	 * @return how long the icon has left, 0 if it isn't seen
 	 */
-	public long remaining(int creatureId, EffectMeaning meaning, long now)
+	public synchronized long remaining(int creatureId, EffectMeaning meaning, long now)
 	{
 		return has(creatureId, meaning, now) ? _icons.get(creatureId).get(meaning).expiresAt - now : 0;
 	}
 	
-	public double damageTakenPerSecond(long now)
+	public synchronized double damageTakenPerSecond(long now)
 	{
 		return perSecond(_selfHp, now);
 	}
 	
-	public double damageDealtPerSecond(long now)
+	public synchronized double damageDealtPerSecond(long now)
 	{
 		return perSecond(_targetHp, now);
 	}
@@ -298,7 +316,7 @@ public class FightRead
 	 * @param extraIncoming damage about to land on it (a big cast started at it)
 	 * @return seconds until it dies at the current rate, infinite with no damage coming
 	 */
-	public double timeToDie(long now, double extraIncoming)
+	public synchronized double timeToDie(long now, double extraIncoming)
 	{
 		final Sample last = _selfHp.peekLast();
 		if (last == null)
@@ -319,7 +337,7 @@ public class FightRead
 	 * @param myDps its damage per second with its best skills in reach
 	 * @return seconds until its target dies, infinite if it deals nothing
 	 */
-	public double timeToKill(long now, double myDps)
+	public synchronized double timeToKill(long now, double myDps)
 	{
 		final Sample last = _targetHp.peekLast();
 		if ((last == null) || (myDps <= 0))
@@ -337,7 +355,7 @@ public class FightRead
 	 * @param now the current time
 	 * @return 0 to 1
 	 */
-	public double landChance(int enemyId, SkillFacts skill, ClassGroup group, long now)
+	public synchronized double landChance(int enemyId, SkillFacts skill, ClassGroup group, long now)
 	{
 		final boolean stun = STUN_TYPE.contains(skill.abnormalType()) || skill.effectTypes().contains("STUN") || skill.effectTypes().contains("PARALYZE");
 		if (stun && has(enemyId, EffectMeaning.CC_IMMUNE, now))

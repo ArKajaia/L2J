@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.ai;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +48,8 @@ import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
+import org.l2jmobius.gameserver.ai.fight.FightRead;
+import org.l2jmobius.gameserver.ai.fight.FightReadFeed;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.Reason;
@@ -251,6 +254,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long PREY_SCAN_INTERVAL = 2000;
 	/** A player chains the next skill a moment after the last one ends, not a whole AI tick later. */
 	private static final int SKILL_CHAIN_MIN_DELAY = 150;
+	/** How often its fight read is noted in the simulation log during a fight. */
+	private static final long FIGHT_READ_NOTE_INTERVAL = 2000;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
 	/** Skill ids of the stuns, roots, sleeps... which a disabled target doesn't need again. */
 	private static final Map<Integer, Boolean> HARD_DISABLES = new ConcurrentHashMap<>();
@@ -443,6 +448,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	/** The party brain of a party that isn't a simulation team's (see {@link #partyBrain}). */
 	private FakePartyBrainExperimental _ownPartyBrain;
 	private long _nextMarchTime;
+	/** Skill timing: what it sees of its fight (see ai/fight), {@code null} until its first PvP fight. */
+	private FightReadFeed _fightRead;
+	private long _nextFightReadNote;
 	
 	public FakePlayerPvpAIExperimental(Attackable creature)
 	{
@@ -476,6 +484,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		
 		// Fight over: the bow or polearm goes back in the bag.
+		closeFightRead();
 		_chaseTarget = null;
 		_progressTarget = null;
 		_focus = null;
@@ -929,6 +938,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		final boolean pvp = isPvpEnemy(target);
 		final boolean canMove = !npc.isMovementDisabled();
 		
+		// Skill timing: what it sees of the fight (casts, cooldowns, icons, HP).
+		updateFightRead(npc, profile, party, pvp ? target : null, now);
+		
 		// In a PvP spot it drinks CP potions all fight long, like players.
 		if (pvp && profile.isSpotFighter())
 		{
@@ -1343,6 +1355,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	@Override
 	protected void onActionDeath()
 	{
+		closeFightRead();
 		endPoke(getActiveChar());
 		_meetTarget = null;
 		endTalk();
@@ -6984,6 +6997,47 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	/**
 	 * Notes why it acted this think (see {@link FakeAiTrace}), unless it already did: the first reason noted in a think is the most precise one.
 	 */
+	/**
+	 * Brings its fight read up to date (see ai/fight), and notes what it holds in the simulation log every {@link #FIGHT_READ_NOTE_INTERVAL}.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param party its party, {@code null} for none
+	 * @param target the player it fights, {@code null} out of a PvP fight
+	 * @param now the current time
+	 */
+	private void updateFightRead(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, Creature target, long now)
+	{
+		if (target == null)
+		{
+			closeFightRead();
+			return;
+		}
+		if (_fightRead == null)
+		{
+			_fightRead = new FightReadFeed(npc, profile.getPersonality());
+		}
+		_fightRead.update(target, getFightEnemies(npc, party), now);
+		if (now >= _nextFightReadNote)
+		{
+			_nextFightReadNote = now + FIGHT_READ_NOTE_INTERVAL;
+			final FightRead read = _fightRead.read();
+			final double ttk = read.timeToKill(now, read.damageDealtPerSecond(now));
+			final double ttd = read.timeToDie(now, 0);
+			FakeAiTrace.note(npc, Reason.FIGHT_READ, target, "seen=" + read.seenCasts() + ";remembered=" + read.rememberedCount() + ";ttk=" + (Double.isInfinite(ttk) ? "inf" : String.format(Locale.ROOT, "%.1f", ttk)) + ";ttd=" + (Double.isInfinite(ttd) ? "inf" : String.format(Locale.ROOT, "%.1f", ttd)));
+		}
+	}
+	
+	/**
+	 * Stops listening to the enemies of its fight (the fight is over, or it died).
+	 */
+	private void closeFightRead()
+	{
+		if (_fightRead != null)
+		{
+			_fightRead.close();
+		}
+	}
+	
 	private void trace(Reason reason, Creature target)
 	{
 		trace(reason, target, null, null);

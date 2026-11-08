@@ -135,6 +135,10 @@ public enum Reason
 	/** Alone in a Team vs Team match: doesn't take on (or chase into) a group of enemies, waits in its corner or slips back to its team mates. */
 	LONE_AVOID,
 
+	// Skill timing (brain B, see ai/fight)
+	/** Not a decision: what its fight read holds (casts seen, cooldowns remembered, time to kill and to die), every 2 seconds of a fight. */
+	FIGHT_READ,
+
 	/** Nothing else to do this think. */
 	IDLE
 }

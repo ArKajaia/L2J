@@ -106,6 +106,15 @@ public class FightReadTest
 				Check.isTrue(!read.isRemembered(7, 1235), "cooldown forgotten");
 				Check.isTrue(read.currentCast(7, 2000) == null, "cast forgotten");
 			}, //
+			() -> // Counts for the log: casts seen in all, cooldowns remembered now.
+			{
+				final FightRead read = new FightRead(NOVICE, 1);
+				read.onEnemyCast(7, skill(1, 30000), 1, 1000, 1100);
+				read.onEnemyCast(7, skill(2, 30000), 1, 2000, 2100);
+				read.onEnemyCast(8, skill(3, 30000), 1, 3000, 3100);
+				Check.eq(read.seenCasts(), 3, "seen");
+				Check.eq(read.rememberedCount(), 2, "remembered");
+			}, //
 			() -> // Skill id 0 starts no cooldown memory.
 			{
 				final FightRead read = new FightRead(EXPERT, 1);

@@ -131,6 +131,42 @@ public class FakeAiTrace
 	 * @param skill with which skill, {@code null} for none
 	 * @param kind what kind of skill or action (ATTACK, DEBUFF, PEEL...), {@code null} for none
 	 */
+	/**
+	 * Writes a line to the decisions log of a simulated fake player without counting it as a decision: its last decision, the time spent on each and the recent lines stay as they were, so what reads them (routs, the monitor) is not affected.
+	 * @param npc the fake player
+	 * @param reason what the line is about
+	 * @param target on whom, {@code null} for none
+	 * @param kind the details
+	 */
+	public static void note(Npc npc, Reason reason, Creature target, String kind)
+	{
+		if (!isTraced(npc))
+		{
+			return;
+		}
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final SimulationRun run = (profile != null) && profile.isSimulant() ? FakeSimulationManager.getInstance().getRun(profile.getSimRunId()) : null;
+		if (run == null)
+		{
+			return;
+		}
+		final SimulationMember member = run.getMember(npc);
+		final JsonLine line = new JsonLine();
+		line.put("t", run.time());
+		line.put("id", npc.getObjectId());
+		line.put("name", npc.getName());
+		if (member != null)
+		{
+			line.put("team", member.getTeamId());
+			line.put("role", member.getRole());
+		}
+		line.put("build", profile.getBuild().getName());
+		line.put("reason", reason);
+		line.put("kind", kind);
+		line.put("targetId", target != null ? target.getObjectId() : null);
+		run.getLog().write(SimulationLog.DECISIONS, line);
+	}
+
 	public static void trace(Npc npc, Reason reason, Creature target, Skill skill, String kind)
 	{
 		if (!isTraced(npc))
