@@ -13329,23 +13329,40 @@ public class Player extends Playable
 		{
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_DONE_S3_POINTS_OF_DAMAGE_TO_C2);
 			sm.addPcName(this);
-			
-			// Localisation related.
-			String targetName = target.getName();
-			if (MultilingualSupportConfig.MULTILANG_ENABLE && target.isNpc())
-			{
-				final String[] localisation = NpcNameLocalisationData.getInstance().getLocalisation(_lang, target.getId());
-				if (localisation != null)
-				{
-					targetName = localisation[0];
-				}
-			}
-			
-			sm.addString(targetName);
+			sm.addString(localisedName(target));
 			sm.addInt(damage);
 			sm.setCombatInfo(CombatInfo.ofHit(this, target, skill, damage, mcrit, pcrit, false, false));
 			sendPacket(sm);
 		}
+	}
+
+	@Override
+	public void sendDotDamageMessage(Creature target, Skill skill, int damage)
+	{
+		final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_DONE_S3_POINTS_OF_DAMAGE_TO_C2);
+		sm.addPcName(this);
+		sm.addString(localisedName(target));
+		sm.addInt(damage);
+		sm.setCombatInfo(CombatInfo.of(this, target, skill, 0));
+		sendPacket(sm);
+	}
+
+	/**
+	 * @param target the creature
+	 * @return its name, in this player's language when it is an NPC with a translation
+	 */
+	private String localisedName(Creature target)
+	{
+		if (MultilingualSupportConfig.MULTILANG_ENABLE && target.isNpc())
+		{
+			final String[] localisation = NpcNameLocalisationData.getInstance().getLocalisation(_lang, target.getId());
+			if (localisation != null)
+			{
+				return localisation[0];
+			}
+		}
+
+		return target.getName();
 	}
 	
 	/**

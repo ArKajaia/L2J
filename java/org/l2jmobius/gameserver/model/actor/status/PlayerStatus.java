@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.model.actor.status;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.data.xml.NpcNameLocalisationData;
@@ -266,7 +267,8 @@ public class PlayerStatus extends PlayableStatus
 			// Passive tree Mind Over Matter: part of what is left for HP is taken from MP first.
 			amount = PassiveMechanics.absorbDamageWithMp(player, amount);
 			
-			if ((fullValue > 0) && !isDOT)
+			// A damage over time tick is told only to the custom client's combat log: without the combat block a stock client would see a new message.
+			if ((fullValue > 0) && (!isDOT || CombatLogConfig.PACKET_EXTENSION))
 			{
 				// Send a System Message to the Player
 				SystemMessage smsg = new SystemMessage(SystemMessageId.C1_HAS_RECEIVED_S3_DAMAGE_FROM_C2);
@@ -289,7 +291,7 @@ public class PlayerStatus extends PlayableStatus
 				smsg.setCombatInfo(info);
 				player.sendPacket(smsg);
 				
-				if ((tDmg > 0) && (attackerPlayer != null))
+				if (!isDOT && (tDmg > 0) && (attackerPlayer != null))
 				{
 					smsg = new SystemMessage(SystemMessageId.YOU_HAVE_DEALT_S1_DAMAGE_TO_YOUR_TARGET_AND_S2_DAMAGE_TO_THE_SERVITOR);
 					smsg.addInt(fullValue);

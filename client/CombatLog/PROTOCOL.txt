@@ -59,7 +59,13 @@ The combat block
                              4 counterattack (Vengeance-type skill counter;
                                               skillId is the skill that was
                                               countered)
-  byte  weaponType           0 unknown, else the attacker's attack type
+                             5 damage over time (skillId is the effect's
+                                              skill, 0 for the Bloodletter
+                                              bleed; the client shows these
+                                              lines in its combat log only
+                                              and does not pass them to the
+                                              native handler)
+  byte  weaponType          0 unknown, else the attacker's attack type
                              (Creature.getAttackType(): the weapon, the
                              transformation's or the NPC's base attack
                              type) + 1, see the table below
@@ -142,6 +148,15 @@ Where they are sent from:
   2262, 1130            model.actor.status.PlayerStatus.reduceHp
   2264                  model.actor.Creature.sendDamageMessage (any
                         attacker, also in Player's)
+
+Damage over time ticks (kind 5, only with CombatLogPacketExtension on, so
+a stock client gets no new messages):
+  2261                  model.actor.Creature.announceDotDamage, from
+                        reduceCurrentHpByDOT and the passive tree's
+                        bleedTick: to the player, or the owner of the
+                        summon, whose effect it is
+  2262                  model.actor.status.PlayerStatus.reduceHp (the player
+                        hit), Summon.onDotDamageReceived (the owner)
 
 No other message carries it: the crit lines (2266 "$c1 landed a critical
 hit!", 1280 "Magic Critical Hit!", 1017 and 1028 the pet's and servitor's
