@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.config.custom.BossAnnouncementsConfig;
 import org.l2jmobius.gameserver.config.custom.CaptchaConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
+import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.data.holders.AccessLevel;
@@ -7117,7 +7118,47 @@ public abstract class Creature extends WorldObject
 	
 	public void reduceCurrentHpByDOT(double amount, Creature attacker, Skill skill)
 	{
-		reduceCurrentHp(amount, attacker, !skill.isToggle(), true, skill);
+		try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_DOT, skill, 0))
+		{
+			reduceCurrentHp(amount, attacker, !skill.isToggle(), true, skill);
+			announceDotDamage(amount, attacker, skill);
+		}
+	}
+
+	/**
+	 * Tells the custom client's combat log about a damage over time tick on this creature: a "done damage" message to the attacker and, for a summon, a "received" one to its owner (a player's own comes from PlayerStatus.reduceHp).<br>
+	 * Call inside a {@link CombatInfo#KIND_DOT} scope. Nothing is sent without the combat block, so a stock client sees no new messages.
+	 * @param amount the tick's damage
+	 * @param attacker who deals it
+	 * @param skill the skill, {@code null} for none
+	 */
+	public void announceDotDamage(double amount, Creature attacker, Skill skill)
+	{
+		if (CombatLogConfig.PACKET_EXTENSION && (attacker != null) && (attacker != this) && (((int) amount) > 0))
+		{
+			attacker.sendDotDamageMessage(this, skill, (int) amount);
+			onDotDamageReceived((int) amount, attacker, skill);
+		}
+	}
+
+	/**
+	 * Sends the "done damage" message of a damage over time tick to whoever follows this attacker's damage. Unlike {@link #sendDamageMessage} it counts for nothing else (Olympiad damage, the PvP combat log).
+	 * @param target who takes it
+	 * @param skill the skill, {@code null} for none
+	 * @param damage the tick's damage
+	 */
+	public void sendDotDamageMessage(Creature target, Skill skill, int damage)
+	{
+	}
+
+	/**
+	 * Called for a damage over time tick on this creature, for what follows its damage taken.
+	 * @param damage the tick's damage
+	 * @param attacker who deals it
+	 * @param skill the skill, {@code null} for none
+	 */
+	protected void onDotDamageReceived(int damage, Creature attacker, Skill skill)
+	{
 	}
 	
 	public void reduceCurrentHp(double amount, Creature attacker, boolean awake, boolean isDOT, Skill skill)

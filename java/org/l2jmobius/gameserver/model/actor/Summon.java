@@ -889,6 +889,37 @@ public abstract class Summon extends Playable
 	}
 	
 	@Override
+	public void sendDotDamageMessage(Creature target, Skill skill, int damage)
+	{
+		// As with a hit: no message when the target is the owning player.
+		if ((_owner == null) || (target.getObjectId() == _owner.getObjectId()))
+		{
+			return;
+		}
+
+		final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_DONE_S3_POINTS_OF_DAMAGE_TO_C2);
+		sm.addNpcName(this);
+		sm.addString(target.getName());
+		sm.addInt(damage);
+		sm.setCombatInfo(CombatInfo.of(this, target, skill, 0));
+		sendPacket(sm);
+	}
+
+	@Override
+	protected void onDotDamageReceived(int damage, Creature attacker, Skill skill)
+	{
+		if (_owner != null)
+		{
+			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_RECEIVED_S3_DAMAGE_FROM_C2);
+			sm.addNpcName(this);
+			sm.addString(attacker.getName());
+			sm.addInt(damage);
+			sm.setCombatInfo(CombatInfo.of(attacker, this, skill, 0));
+			sendPacket(sm);
+		}
+	}
+
+	@Override
 	public void reduceCurrentHp(double damage, Creature attacker, Skill skill)
 	{
 		super.reduceCurrentHp(damage, attacker, skill);

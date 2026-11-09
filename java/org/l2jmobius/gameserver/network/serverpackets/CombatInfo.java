@@ -36,6 +36,7 @@ public class CombatInfo
 	public static final int KIND_SKILL = 2;
 	public static final int KIND_REFLECT = 3;
 	public static final int KIND_COUNTERATTACK = 4;
+	public static final int KIND_DOT = 5;
 
 	public static final int FLAG_CRIT = 1;
 	public static final int FLAG_MAGIC_CRIT = 2;

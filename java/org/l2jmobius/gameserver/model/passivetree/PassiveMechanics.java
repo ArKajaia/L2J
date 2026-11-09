@@ -1358,7 +1358,12 @@ public final class PassiveMechanics
 		
 		if (tick >= 1)
 		{
-			bleed.target.reduceCurrentHp(tick, bleed.attacker, true, true, null);
+			try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_DOT, null, 0))
+			{
+				bleed.target.reduceCurrentHp(tick, bleed.attacker, true, true, null);
+				bleed.target.announceDotDamage(tick, bleed.attacker, null);
+			}
+
 			bleed.target.notifyDamageReceived(tick, bleed.attacker, null, false, true);
 		}
 	}
