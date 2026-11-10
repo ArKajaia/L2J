@@ -4678,20 +4678,9 @@ public abstract class Creature extends WorldObject
 			delta = Math.sqrt(delta);
 		}
 		
-		// Target collision should be subtracted from current distance.
-		final double collision;
+		// The fraction of the remaining distance covered this tick. No collision radius is subtracted from the distance: the destination already stops short of a target (the offset in moveToLocation),
+		// and dividing by a shortened distance while moving along the full one made creatures cover each leg up to several times faster than their speed, then snap ahead of the client (a walking monster seemed to teleport).
 		final WorldObject target = _target;
-		if ((target != null) && target.isCreature() && hasAI() && (getAI().getIntention() == Intention.ATTACK))
-		{
-			collision = target.asCreature().getTemplate().getCollisionRadius();
-		}
-		else
-		{
-			collision = getTemplate().getCollisionRadius();
-		}
-		
-		delta = Math.max(0.00001, delta - collision);
-		
 		double distFraction = Double.MAX_VALUE;
 		if (delta > 1)
 		{
