@@ -364,7 +364,7 @@ public final class DynamicQuestHtml
 				continue;
 			}
 			final DifficultyContext context = DifficultyContext.of(player, members, tier, twist);
-			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), tier.getRewardMultiplier() * (twist != null ? twist.getRewardMultiplier() : 1) * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), 1, twist != null ? twist.getAdenaMultiplier() : 1, false);
+			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), RewardCalculator.getExpLevel(player.getLevel(), context.getQuestLevel(), tier), tier.getRewardMultiplier() * (twist != null ? twist.getRewardMultiplier() : 1) * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), 1, twist != null ? twist.getAdenaMultiplier() : 1, false);
 			sb.append("<tr><td width=70><font color=\"").append(tier.getColor()).append("\">").append(tier.getDisplayName()).append("</font></td>");
 			sb.append("<td><font color=\"").append(COLOR_TEXT).append("\">Lv. ").append(context.getQuestLevel()).append(" - ").append(String.format("%,d", preview._exp)).append(template.getReward().getDistanceScale() > 0 ? " EXP (by road length), " : " EXP, ").append(String.format("%,d", preview._adena)).append(" Adena</font></td></tr>");
 		}
@@ -726,7 +726,7 @@ public final class DynamicQuestHtml
 		{
 			final QuestTier tier = tiers.get(i);
 			final DifficultyContext context = DifficultyContext.of(player, members, tier, twist);
-			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), tier.getRewardMultiplier() * (twist != null ? twist.getRewardMultiplier() : 1) * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), 1, twist != null ? twist.getAdenaMultiplier() : 1, false);
+			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), RewardCalculator.getExpLevel(player.getLevel(), context.getQuestLevel(), tier), tier.getRewardMultiplier() * (twist != null ? twist.getRewardMultiplier() : 1) * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), 1, twist != null ? twist.getAdenaMultiplier() : 1, false);
 			final int inner = cardWidth - 16;
 			if (i > 0)
 			{

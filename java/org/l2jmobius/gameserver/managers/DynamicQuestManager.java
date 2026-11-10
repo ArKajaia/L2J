@@ -1584,7 +1584,8 @@ public class DynamicQuestManager
 				factor *= 0.5 + (0.5 * Math.min(1, quest.getContribution(player.getObjectId()) / fairShare));
 			}
 			factor *= QuestStanding.getRewardFactor(player, quest);
-			final Payout payout = RewardCalculator.compute(quest, factor, true);
+			// EXP is measured at the participant's own level, so a subclass switched to (or a low member carried) mid-quest earns its own level's share.
+			final Payout payout = RewardCalculator.compute(quest, factor, player.getLevel(), true);
 			if (player.getObjectId() == quest.getOwnerId())
 			{
 				payTreasuryShare(quest, payout);

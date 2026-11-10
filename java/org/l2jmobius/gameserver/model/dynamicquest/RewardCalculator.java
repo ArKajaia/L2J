@@ -114,9 +114,36 @@ public final class RewardCalculator
 	 */
 	public static Payout compute(QuestInstance quest, double factor, boolean roll)
 	{
+		return compute(quest, factor, quest.getDifficulty().getQuestLevel(), roll);
+	}
+
+	/**
+	 * @param quest the quest
+	 * @param factor the participant's own factor (repeats, level share, contribution)
+	 * @param memberLevel the participant's level now (its active class's level)
+	 * @param roll {@code true} to roll the item chances, {@code false} to list every item that could come (a preview)
+	 * @return the payout, its EXP and SP measured at {@link #getExpLevel}
+	 */
+	public static Payout compute(QuestInstance quest, double factor, int memberLevel, boolean roll)
+	{
 		final RewardDefinition reward = quest.getTemplate().getReward();
-		final QuestTwist twist = quest.getDifficulty().getTwist();
-		return compute(reward, quest.getDifficulty().getQuestLevel(), getQuestMultiplier(quest) * factor, getDistanceFactor(reward, quest.getContext("route", null)), twist != null ? twist.getAdenaMultiplier() : 1, roll);
+		final DifficultyContext difficulty = quest.getDifficulty();
+		final QuestTwist twist = difficulty.getTwist();
+		final int questLevel = difficulty.getQuestLevel();
+		return compute(reward, questLevel, getExpLevel(memberLevel, questLevel, difficulty.getTier()), getQuestMultiplier(quest) * factor, getDistanceFactor(reward, quest.getContext("route", null)), twist != null ? twist.getAdenaMultiplier() : 1, roll);
+	}
+
+	/**
+	 * The level whose EXP a participant's share is measured against. It is the quest's level, but never more than the participant's own level plus the tier's level bonus: a character below the quest's level (a low party member carried
+	 * along, or a subclass switched to after a high level character took the quest) earns the same share of its own level, not of the quest's, so a high level quest can't be used to level low characters or subclasses.
+	 * @param memberLevel the participant's level now
+	 * @param questLevel the quest's level
+	 * @param tier the quest's tier
+	 * @return the level the EXP and SP are measured at
+	 */
+	public static int getExpLevel(int memberLevel, int questLevel, QuestTier tier)
+	{
+		return Math.max(1, Math.min(questLevel, memberLevel + Math.max(0, tier.getLevelOffset())));
 	}
 
 	/** The least and the most a road's length changes the EXP of a reward that pays by distance. */
@@ -181,6 +208,21 @@ public final class RewardCalculator
 	 */
 	public static Payout compute(RewardDefinition reward, int level, double multiplier, double expFactor, double adenaFactor, boolean roll)
 	{
+		return compute(reward, level, level, multiplier, expFactor, adenaFactor, roll);
+	}
+
+	/**
+	 * @param reward the reward definition
+	 * @param level the quest's level (adena and items)
+	 * @param expLevel the level the EXP and SP are measured at (see {@link #getExpLevel})
+	 * @param multiplier everything multiplied together
+	 * @param expFactor what multiplies the EXP and SP only (the road's length of a courier)
+	 * @param adenaFactor what multiplies the adena only (a generous patron)
+	 * @param roll {@code true} to roll the item chances
+	 * @return the payout
+	 */
+	public static Payout compute(RewardDefinition reward, int level, int expLevel, double multiplier, double expFactor, double adenaFactor, boolean roll)
+	{
 		final Payout payout = new Payout();
 		payout._multiplier = multiplier;
 		if (multiplier <= 0)
@@ -189,7 +231,7 @@ public final class RewardCalculator
 		}
 
 		final ExperienceData experience = ExperienceData.getInstance();
-		final int safeLevel = Math.max(1, Math.min(experience.getMaxLevel() - 1, level));
+		final int safeLevel = Math.max(1, Math.min(experience.getMaxLevel() - 1, Math.min(level, expLevel)));
 		final long levelExp = Math.max(0, experience.getExpForLevel(safeLevel + 1) - experience.getExpForLevel(safeLevel));
 		final double exp = (levelExp * reward.getExpPercent() * multiplier * expFactor) / 100;
 		payout._exp = (long) (exp * DynamicQuestConfig.EXP_RATE);
