@@ -108,6 +108,21 @@ Then read the new report like the first one and go round again. Stop when the ki
 - `docs/class-balance-85.md` if you found a balance problem.
 - Commit (the code, the data and the case file together) and push.
 
+## Where a behaviour comes from in the code
+
+A decision in a timeline (`decides KITE_STEP OUTRUN`, `scores Aura Blast`) is a `trace(Reason..., kind)` call: search `FakePlayerPvpAI.java` for the reason and the kind to find the line that made it. Everything a fake player does in a fight starts in `thinkAttack`, which tries these in order and stops at the first that acts:
+
+1. Reflexes to what just happened (`runReflex`: an enemy cast, a gap closer, its HP crashing; this is where the `emergency` skills are cast in a PvP).
+2. Looking after itself: `castCleanse`, a quick heal, its `buff` list (`castOnSelf`), the `transform` skill.
+3. The enemy's defensive buffs (`getKnownDefenses`, `holdOff`).
+4. Keeping away: `outrun`, an archer's kite (`archerKiteStep`), the pressed block (`jumpAway`, then `pickPeel` over the `peel` list), the kite step (`kiteStep`).
+5. Closing in, for melee: the `move` and `rush` lists.
+6. Its combos (`playCombo`, `isComboReady`).
+7. A skill by value (`useScoredSkill` → `scoredOptions` → `addScoredOptions` with `estimateDamage` and `isWorthCasting`, scored by `ai/fight/SkillScorer`), or by chance for a fight without a fight read (`pickSkill`).
+8. Where a mage stands between casts, and the normal attack for everyone else.
+
+The build's lists are read through `profile.getSkills(SkillCategory...)`; the build attributes are in `FakePlayerPvpBuild` and parsed in `FakePlayerPvpData`. `FakePlayerPvpAIExperimental.java` (brain B) has the same methods with the same text in nearly all of these places: make the change in `FakePlayerPvpAI.java`, then make the identical change in the other file, and build. The clinic runs brain A only, so brain B's copy is compiled but not measured.
+
 ## What the report's numbers mean
 
 | Number | Meaning |
