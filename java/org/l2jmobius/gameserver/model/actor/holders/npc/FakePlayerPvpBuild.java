@@ -118,6 +118,10 @@ public class FakePlayerPvpBuild
 	private final String _weights;
 	private final Map<SkillCategory, List<int[]>> _skills;
 	private final List<FakePlayerPvpCombo> _combos;
+	/** How far a mage of this build stands from its target between casts, 0 for the usual distance. */
+	private int _mageRange;
+	/** A mage of this build runs from a slower melee it is losing to, and casts while the melee walks back. */
+	private boolean _outrun;
 	
 	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String casterKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights)
 	{
@@ -163,6 +167,8 @@ public class FakePlayerPvpBuild
 	{
 		final FakePlayerPvpBuild variant = new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, casterKit != null ? casterKit : _casterKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _keystones, _hybrid, _weights, _skills, _combos);
 		variant._variant = true;
+		variant._mageRange = _mageRange;
+		variant._outrun = _outrun;
 		return variant;
 	}
 	
@@ -289,6 +295,32 @@ public class FakePlayerPvpBuild
 	public int getWeight()
 	{
 		return _weight;
+	}
+	
+	/**
+	 * @return how far a mage of this build stands from its target between casts (the range attribute), 0 for the usual distance: for a build whose best quick nuke reaches less than the others (the Soul Hounds' Curse of Divinity)
+	 */
+	public int getMageRange()
+	{
+		return _mageRange;
+	}
+	
+	public void setMageRange(int mageRange)
+	{
+		_mageRange = mageRange;
+	}
+	
+	/**
+	 * @return {@code true} for a fast caster that doesn't stand and trade with a slower melee it is losing to (the outrun attribute): it runs out of reach, casts while the melee walks back, and runs again
+	 */
+	public boolean isOutrunner()
+	{
+		return _outrun;
+	}
+	
+	public void setOutrunner(boolean outrun)
+	{
+		_outrun = outrun;
 	}
 	
 	/**

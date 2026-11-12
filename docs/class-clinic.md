@@ -135,6 +135,13 @@ Faults of one class that other classes may share. Check for them first.
 - **Standing just outside a skill's reach.** A mage holds 600 from its target, which leaves it at about 660 to 675: its skills with a reach of 600 are "out of reach" and it falls back on whatever reaches. The build attribute `range` moves where it stands.
 - **A follow-up skill that only exists in a combo.** If it needs a debuff the first skill puts on (Soul Vortex Extinction), put it in the attack list too: its own condition keeps it off targets without the debuff.
 
+Lessons about the process, from the same case:
+
+- **A batch with no effect may never have run.** The first standing distance changed no win rate; the skill table showed the casts hadn't moved either, because the code that read it was never reached. Look at "Skill use" in `compare` before you judge an idea.
+- **Read a fight where the new behaviour happens.** Outrunning a slower melee looked right on paper and was flat against melee: one timeline showed a Titan's Rush every 4 seconds and the Hound running for a minute without a cast.
+- **A fix for one kind can cost another.** The first repair of the outrun rule (give up a run after 4.5 s) won back the melee fights and lost the tanks, who never catch it and against whom long runs were the point. Only the full run showed it.
+- **Put a new behaviour behind a build attribute** when it is a way of playing rather than a correction (`range`, `outrun` in `data/FakePlayerPvp.xml`). The next class can switch it on and test it in its own clinic, and no other build changes meanwhile.
+
 ## General findings (not yet done: they change every class)
 
 These came out of a class's clinic but reach beyond it. Each needs brain B and a mirror matrix, or a guard run.
@@ -143,7 +150,7 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 |---|---|---|
 | The land chance the scorer assumes is the skill's base rate (80% for Voice Bind), far from what lands (10%) | Soul Hound: Voice Bind 10%, Shadow Bind 10%, Death Mark 22%, Surrender to Dark 24% over thousands of tries | `FightRead.landChance`: start from the server's formula without the roll (level difference, the target's stat and resists), blurred by the fake player's knowledge |
 | The list floor (`LIST_RANK_FACTOR`) lifts plain damage skills whose estimate is exact | Abyssal Blaze (power 46) valued like a skill of power 90 | Apply the floor only to skills with effects the estimate can't see (damage over time, curses, prophecies) |
-| A mage faster than the melee on it doesn't use its speed | Soul Hound speed 250 against 170: an enemy within 200 of it 36% of the fight against melee, one kite step every 3 to 5 s | Kite in earnest when clearly faster or the enemy is slowed: run until out of reach, cast until it is nearly back |
+| A mage faster than the melee on it doesn't use its speed | Done for the Soul Hounds behind the build attribute `outrun` (tanks 82% → 94%, no change against melee, who have gap closers). Other fast casters and archers stand in the same way | Try `outrun="true"` on the build in its own clinic; an archer needs its own version (it shoots while it moves away) |
 | Painkiller-type invincibility that ends on any action is cast and broken by the next cast | Cast in 241 fights, 10% won; the enemy waited 1 to 2 s | After casting it: move out of reach (melee) or wait while the enemy's burst buffs run, instead of casting |
 | Buff steals do nothing against fake players | `StealAbnormal` only works on a player: Steal Divinity is never worth a cast in a simulation | Let it work on fake players, then value it by what it would take |
 
@@ -151,4 +158,4 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 
 | Build | Case file | Before | After | Date |
 |---|---|---|---|---|
-| Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | see the case file | 2026-11-12 |
+| Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | 64.6% (+14.0, 95% +10.1 to +18.0): tank 94, melee 67, dagger 92, archer 55, nuker 36, healer 53, buffer 78 | 2026-11-12 |
