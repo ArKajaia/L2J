@@ -41,7 +41,8 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
  * <p>
  * The ranks are reasoned, not measured: a passive's score is what its effects are worth to the class type in a Mayhem fight, in "notables": 1 is about what +3% P.Atk is to a fighter (+3% damage). The yardstick:
  * <ul>
- * <li>1% more damage is worth 1/3, 1% more effective HP 1/4 (a kill needs the damage; staying alive only keeps it fighting).</li>
+ * <li>1% more damage is worth 1/3, 1% more effective HP 1/4 (a kill needs the damage; staying alive only keeps it fighting). Effective HP is HP and CP: CP soaks a PvP hit first, so +1% max HP is only about +0.6% of it, while +1% P.Def or M.Def
+ * guards both.</li>
  * <li>Magic damage grows with the square root of M.Atk, so +3.6% M.Atk is +1.8% damage to a mage: 0.6.</li>
  * <li>MP hardly matters: skills cost {@link TeamVsTeamConfig#PDM_MP_COST} % of their MP in Mayhem. Monster-only stats (PVE_*) and servitor stats are worth nothing in it.</li>
  * <li>A stat of a notable counts as much as Mayhem makes notables count for the class type (MayhemMageNotables, MayhemTankNotables, MayhemArcherNotables, a hybrid's bonus); a keystone's in full.</li>
@@ -112,9 +113,9 @@ public final class MayhemPassiveRanking
 		STATS.put("MCRIT_RATE_ADD", new StatValue(25, 0, 0, 0, 0, 0.8, 0.55));
 		STATS.put("MCRIT_DMG_PCT", new StatValue(8, 0, 0, 0, 0, 0.4, 0.3));
 		STATS.put("LIFESTEAL_PCT", new StatValue(1, 0.3, 0.3, 0.3, 0.3, 0, 0.1));
-		// Life: 1% effective HP is 1/4. 100 HP is more of a mage's HP than of a tank's.
-		STATS.put("MAXHP_PCT", new StatValue(4, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0));
-		STATS.put("MAXHP", new StatValue(100, 0.4, 0.3, 0.45, 0.45, 0.55, 0.5));
+		// Life: 1% effective HP is 1/4, and max HP is about 60% of HP and CP together. 100 HP is more of a mage's HP than of a tank's.
+		STATS.put("MAXHP_PCT", new StatValue(4, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6));
+		STATS.put("MAXHP", new StatValue(100, 0.25, 0.2, 0.27, 0.27, 0.33, 0.3));
 		STATS.put("CON", new StatValue(1, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6));
 		STATS.put("HP_REGEN_PCT", new StatValue(6, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1)); // a respawn heals in full; regeneration barely counts in a fight
 		STATS.put("HEALING_RECEIVED_PCT", new StatValue(8, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1)); // every one for themselves: no healer
@@ -155,8 +156,8 @@ public final class MayhemPassiveRanking
 	static
 	{
 		// Survival.
-		MECHANICS.put("KS_MIND_OVER_MATTER", v(2.7, 2.2, 2.5, 2.7, 4.5, 4.0)); // 30% of the damage taken comes off MP, which skills hardly use here: a mage's HP goes about 40% further
-		MECHANICS.put("KS_BLOOD_MAGIC", v(2.2, 1.6, 2.2, 2.4, 5.0, 3.8)); // Martyr's Vow: +50% of max MP as max HP (a mage's MP is half its HP); the HP its cheap skills cost is little
+		MECHANICS.put("KS_MIND_OVER_MATTER", v(1.6, 1.3, 1.5, 1.6, 2.7, 2.4)); // 30% of the damage to HP comes off MP, which skills hardly use here: a mage's HP (not its CP) goes about 40% further
+		MECHANICS.put("KS_BLOOD_MAGIC", v(1.3, 1.0, 1.3, 1.4, 3.0, 2.3)); // Martyr's Vow: +50% of max MP as max HP (a mage's MP is half its HP; HP is 60% of HP and CP); the HP its cheap skills cost is little
 		MECHANICS.put("KS_STUN_IMMUNE", v(2.5, 2.5, 2.5, 2.5, 3.0, 2.8)); // a stun in a crowd is a death; it comes with -15% P.Def
 		MECHANICS.put("KS_PHOENIX", v(2.5, 2.5, 2.5, 2.5, 2.5, 2.5)); // about one death in four undone; it comes with -15% max HP
 		MECHANICS.put("KS_LAST_LIGHT", v(0.8, 0.5, 1.2, 1.6, 2.0, 1.4)); // big single hits land on the frail: blows, nukes
