@@ -202,6 +202,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long BEHIND_TIMEOUT = 2500;
 	/** A dagger runs behind a target still casting for at least this long (ms) before its blow: it lands before the target turns. */
 	private static final int FLANK_CAST_LEFT = 600;
+	/** A dagger runs behind a held target (stunned, asleep, paralyzed, by anyone) only while the hold has at least this long (ms) left: the run and the blow land before it can turn. */
+	private static final int FLANK_HOLD_LEFT = 1000;
+	/** It runs behind a held target from this far (behind a target that can't turn for another reason, only from up close). */
+	private static final int FLANK_HELD_REACH = 600;
+	/** Abnormal types that hold a target in place, facing where it faced. */
+	private static final Set<String> HOLD_TYPES = Set.of("STUN", "PARALYZE", "SLEEP", "TURN_STONE");
 	/** Dodge and Counterattack are cast with a fighter this close (or within its bow's range). */
 	private static final int MELEE_THREAT_GAP = 200;
 	
@@ -4547,9 +4553,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				return waitForStep(now);
 			}
 			
-			// Blows: get behind the target first (Backstab). Against a player who can't turn to face it (Bluff cancelled its target), every blow of the combo does: a player clicks its target again far slower than a fake player retargets,
-			// and from behind a blow lands twice as often.
-			if ((step.isBehind() || circlesPlayer(npc, target, skill)) && canMove && !npc.isBehind(target) && ((now - _comboStepStart) < BEHIND_TIMEOUT))
+			// Blows: get behind the target first (Backstab). Against a target that can't turn to face it, every blow of the combo does, as from behind a blow lands twice as often: one held by anyone (in a team fight, a tank's stun is a
+			// dagger's chance), or a player whose target Bluff cancelled (it clicks its target again far slower than a fake player retargets).
+			if ((step.isBehind() || circlesTarget(npc, target, skill)) && canMove && !npc.isBehind(target) && ((now - _comboStepStart) < BEHIND_TIMEOUT))
 			{
 				moveBehind(npc, target, collision);
 				return true;
@@ -4765,12 +4771,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	/**
 	 * @param npc a fake player
 	 * @param target its target
-	 * @return {@code true} if {@code target} won't turn to face it before a blow lands: it is stunned, asleep or paralyzed, deep in a long cast (Drain Health, a heal), or it isn't after {@code npc} (Bluff, Trick and Switch make it
+	 * @return {@code true} if {@code target} won't turn to face it before a blow lands: it is held for long enough (see {@link #isHeldForBlow}), deep in a long cast (Drain Health, a heal), or it isn't after {@code npc} (Bluff, Trick and Switch make it
 	 *         drop its target). A player turns to whoever it attacks or casts at, at the start of each attack or cast.
 	 */
 	private static boolean wontTurn(Attackable npc, Creature target)
 	{
-		if (target.isStunned() || target.isSleeping() || target.isParalyzed() || (target.getTarget() != npc))
+		if (isHeldForBlow(target) || (target.getTarget() != npc))
 		{
 			return true;
 		}
@@ -4781,11 +4787,37 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param npc a fake player
 	 * @param target its target
 	 * @param skill the skill it is about to use
-	 * @return {@code true} if it is a dagger about to use a blow on a real player who won't turn to face it (see {@link #wontTurn}): above all one whose target Bluff cancelled, who has to click it again by hand
+	 * @return {@code true} if it is a dagger about to use a blow on a target that won't turn to face it before the blow lands: one held by anyone (a tank's Shield Stun, a mage's sleep, its own Bluff), or a real player whose target Bluff
+	 *         cancelled, who has to click it again by hand (a fake player retargets at once)
 	 */
-	private static boolean circlesPlayer(Attackable npc, Creature target, Skill skill)
+	private static boolean circlesTarget(Attackable npc, Creature target, Skill skill)
 	{
-		return target.isPlayer() && isAssassin(npc) && isBlow(skill) && wontTurn(npc, target);
+		return isAssassin(npc) && isBlow(skill) && (isHeldForBlow(target) || (target.isPlayer() && wontTurn(npc, target)));
+	}
+	
+	/**
+	 * @param target a creature
+	 * @return {@code true} if it is stunned, asleep or paralyzed (by anyone) for at least {@link #FLANK_HOLD_LEFT} more, so it can't turn before a blow from behind lands
+	 */
+	private static boolean isHeldForBlow(Creature target)
+	{
+		if (!target.isStunned() && !target.isSleeping() && !target.isParalyzed())
+		{
+			return false;
+		}
+		final int ticks = GameTimeTaskManager.getInstance().getGameTicks();
+		boolean found = false;
+		long left = 0;
+		for (BuffInfo info : target.getEffectList().getDebuffs())
+		{
+			if (!info.isRemoved() && (info.getSkill() != null) && HOLD_TYPES.contains(info.getSkill().getAbnormalType().name()))
+			{
+				found = true;
+				left = Math.max(left, (info.getAbnormalTime() * 1000L) - ((long) (ticks - info.getPeriodStartTicks()) * GameTimeTaskManager.MILLIS_IN_TICK));
+			}
+		}
+		// Held by something without a known end (an effect of another kind): it is held now.
+		return !found || (left >= FLANK_HOLD_LEFT);
 	}
 	
 	/**
@@ -4795,7 +4827,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 */
 	private boolean flank(Attackable npc, Creature target, Skill skill, double distance, int collision, boolean canMove, long now)
 	{
-		if (!canMove || !isAssassin(npc) || !isBlow(skill) || npc.isBehind(target) || ((distance - collision) > 150) || !wontTurn(npc, target))
+		final boolean held = isHeldForBlow(target);
+		if (!canMove || !isAssassin(npc) || !isBlow(skill) || npc.isBehind(target) || ((distance - collision) > (held ? FLANK_HELD_REACH : 150)) || !wontTurn(npc, target))
 		{
 			_flankStart = 0;
 			return false;
@@ -4808,7 +4841,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		{
 			return false;
 		}
-		trace(Reason.COMBO_STEP, target, skill, "FLANK");
+		trace(Reason.COMBO_STEP, target, skill, held ? "FLANK_HELD" : "FLANK");
 		moveBehind(npc, target, collision);
 		return true;
 	}
