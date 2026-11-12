@@ -75,7 +75,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, or all at once (mode=ffa), the dead coming back (start: races, mode, power, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
  * place, the Cruma Marshlands field by default)</li>
  * <li>POST /api/simulation/weights/reload - reads config/Custom/FakeSkillWeights.ini again (tools/simulation/tune_weights.py)</li>
- * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
+ * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, focus, mirror, keep, seed, and x, y, z, heading for the place: the GM's own
  * place by default, else the simulation field by Cruma Marshlands)</li>
  * </ul>
  * Everything is read from the files the simulations leave (see {@link SimulationLog}), so past runs survive restarts until SimulationKeepRuns prunes them.
@@ -873,6 +873,8 @@ public class SimulationWeb
 		final int distance = Math.max(100, Math.min(3000, parseInt(params.get("distance"), 1000)));
 		final String brain = (params.get("brain") == null) || params.get("brain").trim().isEmpty() ? null : params.get("brain").trim();
 		final String builds = (params.get("builds") == null) || params.get("builds").trim().isEmpty() ? null : params.get("builds").trim();
+		// keep: how many finished battle folders stay on disk (default SimulationMatrixKeepLogs); a focused run read battle by battle keeps them all.
+		final int keep = Math.max(-1, Math.min(100000, parseInt(params.get("keep"), -1)));
 		long seed;
 		try
 		{
@@ -884,7 +886,7 @@ public class SimulationWeb
 			server.sendText(exchange, 400, "application/json", "{\"error\":\"the seed must be a whole number\"}");
 			return;
 		}
-		sendMatrixLines(exchange, FakeSimulationManager.getInstance().startMatrix(gm, x, y, z, heading, battles, parallel, level, time, distance, brain, "1".equals(params.get("mirror")) || "true".equals(params.get("mirror")), params.get("focus"), builds, seed));
+		sendMatrixLines(exchange, FakeSimulationManager.getInstance().startMatrix(gm, x, y, z, heading, battles, parallel, level, time, distance, brain, "1".equals(params.get("mirror")) || "true".equals(params.get("mirror")), params.get("focus"), builds, keep, seed));
 	}
 
 	private void handleMatrixResume(HttpExchange exchange) throws IOException
