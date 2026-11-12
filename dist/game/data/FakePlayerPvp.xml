@@ -967,7 +967,7 @@
 
 	<!-- Warriors -->
 	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" polearm="POLEARM" weight="2" skillFighter="true">
-		<attack>7,9,345,261,5,1,6,255,3</attack>
+		<attack>261,5,6,1,345,7,9</attack> <!-- Triple Sonic Slash, Double Sonic Slash, Sonic Blaster (reaches 600), Triple Slash, Sonic Rage (charges as it hits), then the area ones (Sonic Storm, Sonic Buster) -->
 		<debuff>775</debuff>
 		<buff>297,917,78,287</buff>
 		<heal>121</heal>

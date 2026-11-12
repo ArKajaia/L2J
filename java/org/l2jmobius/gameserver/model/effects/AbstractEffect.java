@@ -257,6 +257,15 @@ public abstract class AbstractEffect
 	{
 		return EffectFlag.NONE.getMask();
 	}
+
+	/**
+	 * For a damage effect that holds its own power instead of the skill's (EnergyDamage: the Duelist's sonic skills, the Grand Khavatari's force skills).
+	 * @return that power, 0 for the others
+	 */
+	public double getPower()
+	{
+		return 0;
+	}
 	
 	@Override
 	public String toString()

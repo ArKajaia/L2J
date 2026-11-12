@@ -58,6 +58,8 @@ public final class SkillFactsReader
 	private static SkillFacts read(Skill skill)
 	{
 		final Set<String> effectTypes = new HashSet<>();
+		// The skill's power, or that of a damage effect that holds its own (EnergyDamage: Triple Sonic Slash has no power of its own).
+		double power = skill.getPower();
 		for (EffectScope scope : SCOPES)
 		{
 			final List<AbstractEffect> effects = skill.getEffects(scope);
@@ -66,12 +68,16 @@ public final class SkillFactsReader
 				for (AbstractEffect effect : effects)
 				{
 					effectTypes.add(effect.getEffectType().name());
+					if (power <= 0)
+					{
+						power = effect.getPower();
+					}
 				}
 			}
 		}
 		final boolean bad = skill.isDebuff() || skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.MAGICAL_ATTACK, EffectType.PHYSICAL_ATTACK_HP_LINK, EffectType.DEATH_LINK, EffectType.HP_DRAIN, EffectType.STUN, EffectType.ROOT, EffectType.SLEEP, EffectType.PARALYZE, EffectType.MUTE, EffectType.FEAR, EffectType.DMG_OVER_TIME, EffectType.DMG_OVER_TIME_PERCENT, EffectType.DEBUFF);
 		final String abnormalType = skill.getAbnormalType() != null ? skill.getAbnormalType().name() : "NONE";
 		final String basic = skill.getBasicProperty() != null ? skill.getBasicProperty().name() : "NONE";
-		return new SkillFacts(skill.getId(), skill.getLevel(), bad, skill.getTargetType() == TargetType.SELF, skill.getCastRange(), skill.getHitTime(), skill.getCoolTime(), skill.getReuseDelay(), skill.getAbnormalTime(), abnormalType, Set.copyOf(effectTypes), skill.getFlyType() == FlyType.CHARGE, skill.getPower(), skill.getActivateRate(), skill.getMagicLevel(), basic);
+		return new SkillFacts(skill.getId(), skill.getLevel(), bad, skill.getTargetType() == TargetType.SELF, skill.getCastRange(), skill.getHitTime(), skill.getCoolTime(), skill.getReuseDelay(), skill.getAbnormalTime(), abnormalType, Set.copyOf(effectTypes), skill.getFlyType() == FlyType.CHARGE, power, skill.getActivateRate(), skill.getMagicLevel(), basic);
 	}
 }

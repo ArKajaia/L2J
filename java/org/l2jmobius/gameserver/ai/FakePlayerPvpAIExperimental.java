@@ -99,6 +99,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Totem;
 import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.Weapon;
+import org.l2jmobius.gameserver.model.item.enums.ShotType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
@@ -1262,10 +1263,19 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// Duelists and tyrants recharge their energy when they are running low (big energy skills need 2-4 charges).
-		if ((profile.getMaxCharges() > 0) && (profile.getCharges() < profile.getMaxCharges()) && ((profile.getCharges() < Math.min(4, profile.getMaxCharges())) || (Rnd.get(100) < 20)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, pvp))
+		if ((profile.getMaxCharges() > 0) && (profile.getCharges() < profile.getMaxCharges()) && ((profile.getCharges() < Math.min(4, profile.getMaxCharges())) || (Rnd.get(100) < 20)))
 		{
-			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "CHARGE");
-			return;
+			// In a fight, unless every charge comes at once (Maximum Focus Sonic), a skill that hits the enemy and charges as well (Sonic Rage) instead of the bare charge (Sonic Focus): the same cast, with damage on top.
+			if (pvp && !isFullChargeReady(npc, profile) && useChargingAttack(npc, profile, target, distance, collision))
+			{
+				trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "CHARGE_ATTACK");
+				return;
+			}
+			if (castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, pvp))
+			{
+				trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "CHARGE");
+				return;
+			}
 		}
 		
 		// A spoiler spoils the monster it fights first (Spoil, Spoil Crush), so it can be swept.
@@ -2644,6 +2654,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		if (npc.isMoving())
 		{
 			clientStopMoving(null);
+		}
+		
+		// A Duelist or Tyrant waits with its energy full, so it comes back with its burst ready instead of charging in front of the enemy.
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((profile != null) && (profile.getCharges() < profile.getMaxCharges()))
+		{
+			castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, true);
 		}
 		return true;
 	}
@@ -4508,6 +4525,37 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		npc.setTarget(target);
 		npc.doCast(skill);
 		return CastResult.CAST;
+	}
+	
+	/**
+	 * @return {@code true} if a charge skill that fills every charge at once (Maximum Focus Sonic) can be cast now
+	 */
+	private static boolean isFullChargeReady(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.CHARGE))
+		{
+			if (hasEffect(skill, "FocusMaxEnergy") && canCast(npc, skill, npc))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Hits the target with an attack skill that also charges it (Sonic Rage), if one reaches it from where it stands.
+	 * @return {@code true} if it cast one
+	 */
+	private boolean useChargingAttack(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.ATTACK))
+		{
+			if (hasEffect(skill, "FocusEnergy") && canCast(npc, skill, target) && ((distance - collision) <= getSkillReach(skill)) && (castOrApproach(npc, target, skill, distance, collision, false) == CastResult.CAST))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**
@@ -7695,7 +7743,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		if (skill.getPower() <= 0)
 		{
-			return 0;
+			final double energy = skill.isMagic() ? 0 : SkillFactsReader.of(skill).power();
+			return energy > 0 ? estimateEnergyDamage(npc, target, skill, energy) : 0;
 		}
 		if (skill.isMagic())
 		{
@@ -7709,6 +7758,21 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		// A blow deals its damage only when it lands, which depends on where it hits from (twice as often from behind).
 		return Formulas.calcBlowDamage(npc, target, skill, (byte) 0, true) * blowChance(npc, target, skill);
+	}
+	
+	/**
+	 * The EnergyDamage effect's formula without the critical hit (the Duelist's sonic skills, the Grand Khavatari's force skills): P. Atk. plus the effect's power, doubled by a soulshot, +20% for every
+	 * charge it holds past the first, against P. Def. Their power is the effect's, not the skill's, so without this they were worth nothing to the scorer and only their place in the list counted.
+	 * @param power the effect's power
+	 */
+	private static double estimateEnergyDamage(Attackable npc, Creature target, Skill skill, double power)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final int charges = profile != null ? profile.getCharges() : 1;
+		final double soulshot = skill.useSoulShot() && npc.isChargedShot(ShotType.SOULSHOTS) ? 2 : 1;
+		final double attack = (npc.getPAtk(target) + power) * soulshot * (((Math.max(1, charges) - 1) * 0.2) + 1) * 77;
+		final double damage = (attack / Math.max(1, target.getPDef(npc))) * Formulas.calcWeaponTraitBonus(npc, target) * Formulas.calcAttributeBonus(npc, target, skill) * Formulas.calcGeneralTraitBonus(npc, target, skill.getTraitType(), true);
+		return target.isPlayer() ? npc.calcStat(Stat.PHYSICAL_SKILL_POWER, damage, null, null) : damage;
 	}
 	
 	/**
