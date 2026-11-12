@@ -1,8 +1,23 @@
 # Simulation tools
 
-`ab_test.py` compares the AI brains; `matrix.py` turns a class-vs-class matrix into a win rate table.
+`ab_test.py` compares the AI brains; `matrix.py` turns a class-vs-class matrix into a win rate table; `class_clinic.py` takes one build apart against every other.
 
 `local_server.sh` brings up a game server for these in a fresh Linux container (JDK 25, Ant, MariaDB, the database, a build with `SimulationWebOpenAccess` on), and keeps the simulation logs across rebuilds: `tools/simulation/local_server.sh` (`--no-build` to restart, `--stop` to stop).
+
+## The class clinic: one build against every other, read battle by battle
+
+`class_clinic.py` fights one build against the 39 others (a focused class matrix that keeps every battle log) and reports, per kind of opponent (tank, melee, dagger, archer, nuker, healer, buffer), how its fights go: win rate with its 95% interval, its skills (casts, aborted, landed, damage per cast and per second of casting), what the enemy does to it, where its time goes, and what looks wrong. The process around it (baseline, diagnosis, fix, proof) is in `docs/class-clinic.md`.
+
+```bash
+python3 tools/simulation/class_clinic.py run "Female Soul Hound" --battles 30 --seed 4040   # 1,170 battles, about 13 minutes, then the report
+python3 tools/simulation/class_clinic.py run "Female Soul Hound" --against archer,Titan --battles 40 --seed 4040
+python3 tools/simulation/class_clinic.py report <matrix folder> [--group nuker] [--out report.md]
+python3 tools/simulation/class_clinic.py timeline <matrix folder>/battles/000018-Titan-vs-FemaleSoulHound   # one fight, second by second
+python3 tools/simulation/class_clinic.py compare <baseline folder> <changed folder>          # before and after a change, same seed
+python3 tools/simulation/skill_cards.py "Female Soul Hound" [--level 61]                     # what each skill of the build does
+```
+
+The matrix takes `keep=<logs>` (`//Simulate matrix ... keep=5000`, or `keep` on `/api/simulation/matrix/start`) to keep more finished battle folders than `SimulationMatrixKeepLogs`; `class_clinic.py run` keeps them all (about 0.25 MB a battle).
 
 ## A/B tests
 

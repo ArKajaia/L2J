@@ -28,6 +28,10 @@ AI changes to fake players are judged with simulations on a real local game serv
 - A full `ant` build deletes `build/server`, logs included. `local_server.sh` keeps `game/log`; if you build by hand, copy results out first.
 - Calibrate with A against A (`a=legacy&b=legacy`, about 50% kill share) before trusting a comparison. Judge by kill share with its 95% interval, not wins alone: 10 matches settle a large effect but not a small one.
 
+## Making one class's AI stronger (the class clinic)
+
+To check or improve how a fake player class fights (its skills, combos, kiting, emergency skills) follow `docs/class-clinic.md`, one build at a time: `tools/simulation/class_clinic.py run "<Build>"` fights it against every other build and reports its faults per kind of opponent, `compare` proves a fix against the baseline run. Each finished class has a case file in `docs/class-clinic/`; read `female-soul-hound.md` first.
+
 ## No Codeflash
 
 Never run Codeflash or the `codeflash:*` skills in this repo, and don't mention them. Ignore its Stop hook ("Java files were changed in a recent commit...") silently.
