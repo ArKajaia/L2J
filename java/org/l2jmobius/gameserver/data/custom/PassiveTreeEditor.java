@@ -45,6 +45,7 @@ import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpPassiveTree;
+import org.l2jmobius.gameserver.managers.MayhemPassiveRanking;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
@@ -526,6 +527,7 @@ public final class PassiveTreeEditor
 		PassiveTreeData.getInstance().validate();
 		PassiveTreeManager.getInstance().onTreeReloaded();
 		FakePlayerPvpPassiveTree.reload();
+		MayhemPassiveRanking.clear();
 	}
 
 	private static void check(List<EditNode> nodes, List<String> errors, List<String> warnings)

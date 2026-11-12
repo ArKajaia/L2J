@@ -123,8 +123,6 @@ public class TeamVsTeamConfig
 	public static Set<String> PDM_TANK_CLASSES;
 	/** A fighter's first offer and every this many after it holds one of its own event keystones (0: never). */
 	public static int PDM_KEYSTONE_EVERY;
-	/** Notables (names, as in the tree) a fake player always takes when offered one of use to it: the ones that raised kills most in the simulations. */
-	public static Set<String> PDM_PRIORITY_NOTABLES;
 	/** A fighter or tank fake player with this many kills or more uses its attack skills {@link #PDM_LATE_SKILL_CHANCE} % as often, auto attacking more (0: never). */
 	public static int PDM_LATE_KILLS;
 	public static int PDM_LATE_SKILL_CHANCE;
@@ -321,15 +319,6 @@ public class TeamVsTeamConfig
 		PDM_ARCHER_SPEED = config.getInt("MayhemArcherSpeed", 20);
 		PDM_TANK_CLASSES = parseNames(config.getString("MayhemTankClasses", "SPECTRAL_DANCER,JUDICATOR"));
 		PDM_KEYSTONE_EVERY = Math.max(0, config.getInt("MayhemKeystoneEvery", 4));
-		final Set<String> priority = new HashSet<>();
-		for (String name : config.getString("MayhemFakePriorityNotables", "Quickened Mind;Aegis of Dawn;Radiant Smite;Untouched;Starfire;Pillar of Grace;Devout Disciple;Archon's Insight;Spell Surge").split(";"))
-		{
-			if (!name.isBlank())
-			{
-				priority.add(name.trim());
-			}
-		}
-		PDM_PRIORITY_NOTABLES = Collections.unmodifiableSet(priority);
 		PDM_LATE_KILLS = Math.max(0, config.getInt("MayhemFakeAutoAttackKills", 10));
 		PDM_LATE_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("MayhemFakeAutoAttackSkillChance", 75)));
 		PDM_MAGE_NOTABLES = Math.max(0, config.getInt("MayhemMageNotables", 70));
