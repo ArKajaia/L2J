@@ -126,6 +126,7 @@ This batch was run for all three, which wasn't needed: a change to skills the th
 - `ai/FakePlayerPvpAI.java` and `ai/FakePlayerPvpAIExperimental.java` (the same in both): `Defense.COUNTER`; `isAnswerToPhysicalSkills` / `isPhysicalThreatNear` in `castOnSelf` (daggers); `blowChance` in `estimateDamage` and no list floor for blows (daggers); `flank` / `wontTurn` before a scored blow (daggers).
 - `dist/game/data/FakePlayerPvp.xml`, the three daggers: "Shadow Step backstab" combo; "Critical wound" in place of "Hex and blow" and "Entangle and blow"; Bluff's comment.
 - `managers/simulation/FakeSimulationManager.java`: Shadow Step (`TeleportToTarget`) not logged as an aborted cast.
+- After the clinic, for real players only (`circlesPlayer`): against a player who won't turn to face it (Bluff cancelled its target, or it is held), every blow of a combo gets behind it first, not only Backstab. A player clicks its target again by hand, far slower than a fake player retargets. The clinic can't measure it (its fights are fake against fake), and fights against fake players are unchanged.
 - Guard: only `Defense.COUNTER` reaches other builds (every fighter against a Ghost Hunter or a Doombringer): the Titan run above.
 
 ## 7. Next for this class

@@ -4547,8 +4547,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				return waitForStep(now);
 			}
 			
-			// Blows: get behind the target first.
-			if (step.isBehind() && canMove && !npc.isBehind(target) && ((now - _comboStepStart) < BEHIND_TIMEOUT))
+			// Blows: get behind the target first (Backstab). Against a player who can't turn to face it (Bluff cancelled its target), every blow of the combo does: a player clicks its target again far slower than a fake player retargets,
+			// and from behind a blow lands twice as often.
+			if ((step.isBehind() || circlesPlayer(npc, target, skill)) && canMove && !npc.isBehind(target) && ((now - _comboStepStart) < BEHIND_TIMEOUT))
 			{
 				moveBehind(npc, target, collision);
 				return true;
@@ -4774,6 +4775,17 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return true;
 		}
 		return target.isCastingNow() && (((target.getCastInterruptTime() - GameTimeTaskManager.getInstance().getGameTicks()) * GameTimeTaskManager.MILLIS_IN_TICK) >= FLANK_CAST_LEFT);
+	}
+	
+	/**
+	 * @param npc a fake player
+	 * @param target its target
+	 * @param skill the skill it is about to use
+	 * @return {@code true} if it is a dagger about to use a blow on a real player who won't turn to face it (see {@link #wontTurn}): above all one whose target Bluff cancelled, who has to click it again by hand
+	 */
+	private static boolean circlesPlayer(Attackable npc, Creature target, Skill skill)
+	{
+		return target.isPlayer() && isAssassin(npc) && isBlow(skill) && wontTurn(npc, target);
 	}
 	
 	/**
