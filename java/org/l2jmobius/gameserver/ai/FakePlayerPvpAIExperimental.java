@@ -1087,8 +1087,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 
-		// A Kamael goes into Final Form (once an hour) when a PvP gets serious: hurt, or against several players.
-		if (pvp && !profile.isTransformed() && ((hpRatio < 0.7) || (countPvpEnemies(npc) >= 2)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.TRANSFORM), true, true))
+		// A Kamael goes into Final Form (once an hour) when a PvP gets serious: hurt, or against several players. Not one that fights with its spells (the nuker Soul Hounds): the form is a melee one, its
+		// Nail Attack hit for a fifth of a soul nuke and it won 3% of the fights it transformed in (docs/class-clinic/female-soul-hound.md).
+		if (pvp && !profile.isTransformed() && (profile.getRole() != Role.MAGE) && ((hpRatio < 0.7) || (countPvpEnemies(npc) >= 2)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.TRANSFORM), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "TRANSFORM");
 			return;
@@ -2750,13 +2751,55 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			{
 				continue;
 			}
-			if ((gap <= getSkillReach(skill)) && !target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && canCast(npc, skill, target))
+			if ((gap <= getSkillReach(skill)) && !target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && !isWastedSilence(skill, target) && canCast(npc, skill, target))
 			{
 				return skill;
 			}
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @param target the player it would be cast on
+	 * @return {@code true} for a skill that only silences, on a player or fake player that doesn't fight with magic: nothing it does needs its voice. Not wasted: on one casting a spell right now (a warrior's self-heal), and on a tank that turtled up under
+	 *         Ultimate Defense or the like, which heals itself behind it
+	 */
+	private static boolean isWastedSilence(Skill skill, Creature target)
+	{
+		if (!isPvpEnemy(target) || castsMagic(target) || (skill.getPower() > 0))
+		{
+			return false;
+		}
+		final Skill casting = target.isCastingNow() ? target.getLastSkillCast() : null;
+		if ((casting != null) && casting.isMagic())
+		{
+			return false;
+		}
+		if (isTank(target))
+		{
+			for (BuffInfo info : target.getEffectList().getBuffs())
+			{
+				if (!info.isRemoved() && (Defense.of(info.getSkill()) != null))
+				{
+					return false;
+				}
+			}
+		}
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if ((effects == null) || effects.isEmpty())
+		{
+			return false;
+		}
+		for (AbstractEffect effect : effects)
+		{
+			if (!"Mute".equals(effect.getClass().getSimpleName()))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/**
@@ -4622,6 +4665,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		// A Prophecy of Doom that would start over, Spell Turning on a target that doesn't cast.
 		if (!FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill))
+		{
+			return false;
+		}
+		
+		// A silence on a player that doesn't fight with magic (Voice Bind on a warrior).
+		if (isWastedSilence(skill, target))
 		{
 			return false;
 		}
@@ -7368,7 +7417,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		if (skill.isMagic())
 		{
-			return ((91 * Math.sqrt(npc.getMAtk(target, skill) * 4)) / Math.max(1, target.getMDef(npc, skill))) * skill.getPower(npc, target, false, false);
+			final double damage = ((91 * Math.sqrt(npc.getMAtk(target, skill) * 4)) / Math.max(1, target.getMDef(npc, skill))) * skill.getPower(npc, target, false, false);
+			// Curse of Divinity: +30% for every buff on the target (see the MagicalDamageByAbnormal effect), so on a fully buffed player it is the Soul Hound's best quick nuke.
+			return hasEffect(skill, "MagicalDamageByAbnormal") ? damage * (((target.getBuffCount() * 0.3) + 1.3) / 4) : damage;
 		}
 		return dagger ? Formulas.calcBlowDamage(npc, target, skill, (byte) 0, true) : Formulas.calcPhysDam(npc, target, skill, (byte) 0, false, true);
 	}

@@ -489,6 +489,18 @@ def skill_rows(stats, kit, limit=30):
     return rows
 
 
+def used_in(stats, kit, minimum=15):
+    """Its self skills (buffs, transformations, emergency skills, heals...): the fights they were cast in against the ones they were not."""
+    rows = []
+    for category in ("TRANSFORM", "BUFF", "EMERGENCY", "HEAL", "CLEANSE", "PEEL", "RUSH", "MOVE", "SUMMON"):
+        for skill in kit.get(category, []):
+            cast = [b for b in stats.logged if b.casts[skill] > 0]
+            rest = [b for b in stats.logged if b.casts[skill] == 0]
+            if len(cast) >= minimum and len(rest) >= minimum:
+                rows.append((skill, category, Stats(cast), Stats(rest)))
+    return rows
+
+
 def unused_kit(stats, kit):
     casts = stats.total("casts")
     n = max(1, len(stats.logged))
@@ -527,8 +539,6 @@ def findings(build, battles, kit, stats_all):
             found.append((2, f"**Stands waiting {pct(stats.state_share['waiting'])} of the fight {label}** (no cast, attack or move, on a hold or wait decision). Decision time: {top}."))
         if stats.enemy_heal_share > 0.25:
             found.append((2, f"**The enemy heals back {pct(stats.enemy_heal_share)} of its damage {label}**. Silence or stun the heal, or save the burst for after it."))
-        if stats.out_of_mp > 0.10:
-            found.append((2, f"**Out of MP in {pct(stats.out_of_mp)} of battles {label}** (under 5% at some point)."))
         if stats.draws and len(stats.draws) / stats.n > 0.15:
             found.append((3, f"**{pct(len(stats.draws) / stats.n)} draws {label}**: it can't finish the fight in time."))
         casts = stats.total("casts")
@@ -542,6 +552,9 @@ def findings(build, battles, kit, stats_all):
             tried = landed[skill] + resisted[skill]
             if tried >= 10 and category_of(kit, skill) in ("DEBUFF", "PEEL") and landed[skill] / tried < 0.3 and tried / len(stats.logged) >= 0.5:
                 found.append((3, f"**{skill} lands {pct(landed[skill] / tried)} {label}** ({tried / len(stats.logged):.1f} tries a battle): time spent on a resist. Is there a better moment or a better skill against this kind?"))
+    for skill, category, cast, rest in used_in(stats_all, kit):
+        if category in ("TRANSFORM", "BUFF", "SUMMON") and cast.high < rest.low and cast.rate < 0.6 * rest.rate:
+            found.append((1, f"**It wins {pct(cast.rate)} of the {cast.n} fights it casts {skill} in, {pct(rest.rate)} of the {rest.n} others.** A {category.lower()} skill should help: read a few of those fights (when is it cast, and what does it do afterwards?)."))
     if stats_all.logged:
         unused = unused_kit(stats_all, kit)
         if unused:
@@ -617,6 +630,12 @@ def report(folder, build, only_group=None):
         unused = unused_kit(stats_all, kit)
         if unused:
             out.append("\nNever or almost never cast: " + ", ".join(unused) + ".")
+
+        rows = [[skill, category.lower(), cast.n, rate_cell(cast), rest.n, rate_cell(rest)] for skill, category, cast, rest in used_in(stats_all, kit)]
+        if rows:
+            out.append("\n### Self skills: the fights they are cast in\n")
+            out.append("An emergency skill or a heal is cast by the one that is losing, so a low win rate there says little. A buff or a transformation that goes with losing is worth reading fights for.\n")
+            out.append(table(["Skill", "List", "Cast in", "Win % there (95%)", "Not cast in", "Win % there (95%)"], rows))
 
         out.append("\n### Casts per battle by kind of opponent\n")
         groups = by_group(battles)

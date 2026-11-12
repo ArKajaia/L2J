@@ -1039,7 +1039,7 @@
 		<variant name="Doombringer Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" weight="2"> <!-- Kamael, male -->
-		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
+		<attack>1469,1554,1516,1512,1439,1436,1438,1433,1434,1431,939,505,504,478</attack> <!-- Leopold, Aura Blast, Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain, then the weak ones (Abyssal Blaze, Fallen Arrow: a quarter of a Soul of Pain at 85) -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
@@ -1054,15 +1054,15 @@
 			<step skill="1436" /> <!-- Soul of Pain -->
 		</combo>
 		<combo name="Voice bind" pvp="true" chance="50">
-			<step skill="1447" /> <!-- Voice Bind -->
+			<step skill="1447" mageTarget="true" /> <!-- Voice Bind: a silence is for a mage or healer -->
 			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="1439" optional="true" /> <!-- Curse of Divinity -->
 			<step skill="1436" /> <!-- Soul of Pain -->
-			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
 		<variant name="Male Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" weight="2"> <!-- Kamael, female -->
-		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
+		<attack>1469,1554,1516,1512,1439,1436,1438,1433,1434,1431,939,505,504,478</attack> <!-- Leopold, Aura Blast, Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain, then the weak ones (Abyssal Blaze, Fallen Arrow: a quarter of a Soul of Pain at 85) -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
@@ -1077,10 +1077,10 @@
 			<step skill="1436" /> <!-- Soul of Pain -->
 		</combo>
 		<combo name="Voice bind" pvp="true" chance="50">
-			<step skill="1447" /> <!-- Voice Bind -->
+			<step skill="1447" mageTarget="true" /> <!-- Voice Bind: a silence is for a mage or healer -->
 			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="1439" optional="true" /> <!-- Curse of Divinity -->
 			<step skill="1436" /> <!-- Soul of Pain -->
-			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
 		<variant name="Female Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
