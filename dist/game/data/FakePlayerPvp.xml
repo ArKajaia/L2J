@@ -774,9 +774,16 @@
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" optional="true" /> <!-- Deadly Blow -->
 		</combo>
+		<combo name="Shadow Step backstab" pvp="true">
+			<step skill="357|356" self="true" optional="true" /> <!-- Focus Power / Focus Chance (one Focus buff: they replace each other) -->
+			<step skill="821" /> <!-- Shadow Step: it lands behind the target, which drops its target -->
+			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
+		</combo>
 		<combo name="Bluff backstab" pvp="true">
 			<step skill="357|356" self="true" optional="true" /> <!-- Focus Power / Focus Chance (one Focus buff: they replace each other) -->
-			<step skill="358" /> <!-- Bluff: stuns and turns the target around -->
+			<step skill="358" /> <!-- Bluff: the target drops its target (3 times in 4 at 85, which is what makes it the opener) and may be stunned and turned around (1 in 12) -->
 			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="409" optional="true" /> <!-- Critical Blow -->
@@ -816,17 +823,24 @@
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" optional="true" /> <!-- Deadly Blow -->
 		</combo>
-		<combo name="Bluff backstab" pvp="true">
+		<combo name="Shadow Step backstab" pvp="true">
 			<step skill="355|356" self="true" optional="true" /> <!-- Focus Death / Focus Chance (one Focus buff: they replace each other) -->
 			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
-			<step skill="358" /> <!-- Bluff: stuns and turns the target around -->
+			<step skill="821" /> <!-- Shadow Step: it lands behind the target, which drops its target -->
 			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" optional="true" /> <!-- Deadly Blow -->
 		</combo>
-		<combo name="Entangle and blow" pvp="true">
-			<step skill="102" /> <!-- Entangle -->
-			<step skill="531" optional="true" /> <!-- Critical Wound -->
+		<combo name="Bluff backstab" pvp="true">
+			<step skill="355|356" self="true" optional="true" /> <!-- Focus Death / Focus Chance (one Focus buff: they replace each other) -->
+			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
+			<step skill="358" /> <!-- Bluff: the target drops its target (3 times in 4 at 85, which is what makes it the opener) and may be stunned and turned around (1 in 12) -->
+			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
+		</combo>
+		<combo name="Critical wound" pvp="true">
+			<step skill="531" /> <!-- Critical Wound: +30% critical damage taken, which blows are -->
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" /> <!-- Deadly Blow -->
 		</combo>
@@ -852,21 +866,26 @@
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" optional="true" /> <!-- Deadly Blow -->
 		</combo>
-		<combo name="Bluff backstab" pvp="true">
+		<combo name="Shadow Step backstab" pvp="true">
 			<step skill="355|357" self="true" optional="true" /> <!-- Focus Death / Focus Power (one Focus buff: they replace each other) -->
 			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
-			<step skill="358" /> <!-- Bluff: stuns and turns the target around -->
+			<step skill="821" /> <!-- Shadow Step: it lands behind the target, which drops its target -->
 			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" optional="true" /> <!-- Deadly Blow -->
 		</combo>
-		<combo name="Hex and blow" pvp="true">
-			<step skill="122" /> <!-- Hex -->
-			<step skill="115" optional="true" /> <!-- Power Break -->
-			<step skill="531" optional="true" /> <!-- Critical Wound -->
+		<combo name="Bluff backstab" pvp="true">
+			<step skill="355|357" self="true" optional="true" /> <!-- Focus Death / Focus Power (one Focus buff: they replace each other) -->
+			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
+			<step skill="358" /> <!-- Bluff: the target drops its target (3 times in 4 at 85, which is what makes it the opener) and may be stunned and turned around (1 in 12) -->
+			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
+		</combo>
+		<combo name="Critical wound" pvp="true">
+			<step skill="531" /> <!-- Critical Wound: +30% critical damage taken, which blows are -->
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" /> <!-- Deadly Blow -->
-			<step skill="223" optional="true" /> <!-- Sting -->
 		</combo>
 		<combo name="Blows">
 			<step skill="263" /> <!-- Deadly Blow -->

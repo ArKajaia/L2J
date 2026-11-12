@@ -3800,7 +3800,7 @@ public class FakeSimulationManager
 		}
 
 		final Skill skill = caster.getLastSkillCast();
-		// Blink's own effect ends its cast after it landed (the jump back), like the teleports above: not an interrupted cast.
+		// Blink's own effect ends its cast after it landed (the jump back), and so does Shadow Step's (the jump behind the target), like the teleports above: not an interrupted cast.
 		if ((skill != null) && jumpsBack(skill))
 		{
 			return;
@@ -3813,15 +3813,14 @@ public class FakeSimulationManager
 
 	/**
 	 * @param skill a skill
-	 * @return {@code true} if it moves its caster with a Blink effect, which calls abortCast on a cast that already landed
+	 * @return {@code true} if it moves its caster with a Blink or TeleportToTarget effect (Blink, Shadow Step), which calls abortCast on a cast that already landed
 	 */
 	private static boolean jumpsBack(Skill skill)
 	{
-		// Blink has it as a self effect, Warp (cast on itself) as its effect.
 		for (EffectScope scope : new EffectScope[]
 		{
-			EffectScope.SELF,
-			EffectScope.GENERAL
+			EffectScope.GENERAL,
+			EffectScope.SELF
 		})
 		{
 			final List<AbstractEffect> effects = skill.getEffects(scope);
@@ -3829,7 +3828,8 @@ public class FakeSimulationManager
 			{
 				for (AbstractEffect effect : effects)
 				{
-					if ("Blink".equals(effect.getClass().getSimpleName()))
+					final String name = effect.getClass().getSimpleName();
+					if ("Blink".equals(name) || "TeleportToTarget".equals(name))
 					{
 						return true;
 					}

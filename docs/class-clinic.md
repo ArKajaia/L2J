@@ -1,6 +1,6 @@
 # The class clinic: making one class's AI stronger against every kind of opponent
 
-A repeatable way to take one fake player build, fight it against every other build, find from the battle logs what its AI does wrong against each kind of opponent (tank, melee, dagger, archer, nuker, healer, buffer), fix it, and prove the fix. One build at a time. The first case is the Female Soul Hound: `docs/class-clinic/female-soul-hound.md`. Read it once before doing a class: it shows every step on real data.
+A repeatable way to take one fake player build, fight it against every other build, find from the battle logs what its AI does wrong against each kind of opponent (tank, melee, dagger, archer, nuker, healer, buffer), fix it, and prove the fix. One build at a time, or one family of builds that share an AI and most of a kit (the three daggers: `docs/class-clinic/daggers.md`). The first case is the Female Soul Hound: `docs/class-clinic/female-soul-hound.md`. Read it once before doing a class: it shows every step on real data.
 
 It is for the **micro of one class** in a duel: which skill, when, from where. Party tactics (focus, healers, formation) are tested with the arena and the TvT batches instead (`docs/fake-player-simulation-issues.md`, `docs/tvt-tactics.md`).
 
@@ -28,6 +28,8 @@ python3 tools/simulation/class_clinic.py run "<Build>" --battles 30 --seed 4040
 ```
 
 It fights the build against the 39 others at level 85, 30 battles each, every battle in its own instance, keeps every log, and writes `clinic.md` into the run's folder (printed at the end). **Keep the folder name: it is the "before" of every comparison.** Always use the same seed, so the same fighters (gear, personality) meet again in later runs.
+
+**Builds that share an AI and a kit** (the daggers, the Soul Hounds, the Templars...): take a baseline of each once, to see where they differ, then diagnose them together. A change to what they share (the role's code, skills all of them have) needs one run of one of them: the others give the same answer. Run each only for the changes to what is its own (its own skills, combos, buffs). In the daggers' case the shared part of a batch moved the Adventurer +2 and the parts of their own kit moved the other two +9 and +13.
 
 ### 3. Read the report, then the fights
 
@@ -152,11 +154,18 @@ Faults of one class that other classes may share. Check for them first.
 - **Skills the class has and the build doesn't list** (see step 1). Escapes and speed skills go in `move` (used when it flees, and by `outrun` and the jump away from a melee), stuns and slows around it in `peel`, toggles in `toggle`. Mind the order of the lists in a build: `xsd/FakePlayerPvp.xsd` fixes it, and a build that breaks it isn't loaded.
 - **A follow-up skill that only exists in a combo.** If it needs a debuff the first skill puts on (Soul Vortex Extinction), put it in the attack list too: its own condition keeps it off targets without the debuff.
 
-Lessons about the process, from the same case:
+- **Short buffs on a long reuse cast on the way in.** The buff list casts every buff that is off at once: a 10 s Dodge or Counterattack (75 s reuse) ran out as the fight started, cast 860 from the target. The report's skill table doesn't show it; the gap at cast does (see the daggers' case).
+- **Reflected damage doesn't show as damage.** Counterattack and Eye for Eye send melee skills back as P. Atk × 700 / P. Def; the report's "what the enemy does to it" has no line for it. Compare the HP it lost with the damage events against it, per opponent: 60% of what the Adventurer lost to a Doombringer was its own.
+- **A skill has more than its headline effect.** Bluff lands its stun 8% of the time at 85 and its TargetCancel 76%, which is what opens a Backstab. Read a skill's whole effect list before calling it wasted.
+- **Position.** A dagger's blow lands twice as often from behind and hits harder; a target turns at the start of each of its own attacks and casts. Chopping the blow casts by where the dagger stood (target's heading in `positions.jsonl`) found it.
+
+Lessons about the process, from the same cases:
 
 - **A batch with no effect may never have run.** The first standing distance changed no win rate; the skill table showed the casts hadn't moved either, because the code that read it was never reached. Look at "Skill use" in `compare` before you judge an idea.
 - **Read a fight where the new behaviour happens.** Outrunning a slower melee looked right on paper and was flat against melee: one timeline showed a Titan's Rush every 4 seconds and the Hound running for a minute without a cast.
 - **A fix for one kind can cost another.** The first repair of the outrun rule (give up a run after 4.5 s) won back the melee fights and lost the tanks, who never catch it and against whom long runs were the point. Only the full run showed it.
+- **A skill already used at its reuse rate can't be helped by promoting it.** The Adventurer's Critical Blow combo changed nothing: it was cast 1.2 times in a 25 s fight with a 30 s reuse. Check the casts against the reuse before an idea.
+- **A replacement can be worse than the thing it replaces.** Trick and Switch openers (to make the target drop its target) pushed Bluff out, which does the same thing twice as often. Measure the effect you count on (here: does the target drop its target?) before promoting a skill for it.
 - **Put a new behaviour behind a build attribute** when it is a way of playing rather than a correction (`range`, `outrun` in `data/FakePlayerPvp.xml`). The next class can switch it on and test it in its own clinic, and no other build changes meanwhile.
 
 ## General findings (not yet done: they change every class)
@@ -169,6 +178,8 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 | The list floor (`LIST_RANK_FACTOR`) lifts plain damage skills whose estimate is exact | Abyssal Blaze (power 46) valued like a skill of power 90 | Apply the floor only to skills with effects the estimate can't see (damage over time, curses, prophecies) |
 | A mage faster than the melee on it doesn't use its speed | Done for the Soul Hounds behind the build attribute `outrun` (tanks 82% → 94%; against melee, who have gap closers, it took the class's own escapes in the `move` list to gain). Other fast casters and archers stand in the same way | Try `outrun="true"` on the build in its own clinic; an archer needs its own version (it shoots while it moves away) |
 | Painkiller-type invincibility that ends on any action is cast and broken by the next cast | Cast in 241 fights, 10% won; the enemy waited 1 to 2 s | After casting it: move out of reach (melee) or wait while the enemy's burst buffs run, instead of casting |
+| Short self buffs on a long reuse are cast on the way in | Done for daggers (Dodge, Counterattack: cast with a fighter in reach, never against a mage). Doombringer's Eye for Eye is cast 1 s before contact; Enlightenment (20 s, 10 min) by every mage at the start | The same rule by abnormal type for every build (COUNTER_SKILL, AVOID_SKILL first), with a guard |
+| Ultimate Evasion and the like as an HP-crash reflex against a mage | 0.4 casts a battle against nukers; its evasion does nothing against spells | The reflex leaves an evasion buff aside against a target that fights with magic |
 | Buff steals do nothing against fake players | `StealAbnormal` only works on a player: Steal Divinity is never worth a cast in a simulation | Let it work on fake players, then value it by what it would take |
 
 ## Classes done

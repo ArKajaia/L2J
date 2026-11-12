@@ -108,10 +108,13 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Formulas;
+import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
+import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
 import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
@@ -197,6 +200,16 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long COMBO_TIMEOUT = 15000;
 	/** How long it tries to get behind its target before using the skill from where it is. */
 	private static final long BEHIND_TIMEOUT = 2500;
+	/** A dagger runs behind a target still casting for at least this long (ms) before its blow: it lands before the target turns. */
+	private static final int FLANK_CAST_LEFT = 600;
+	/** A dagger runs behind a held target (stunned, asleep, paralyzed, by anyone) only while the hold has at least this long (ms) left: the run and the blow land before it can turn. */
+	private static final int FLANK_HOLD_LEFT = 1000;
+	/** It runs behind a held target from this far (behind a target that can't turn for another reason, only from up close). */
+	private static final int FLANK_HELD_REACH = 600;
+	/** Abnormal types that hold a target in place, facing where it faced. */
+	private static final Set<String> HOLD_TYPES = Set.of("STUN", "PARALYZE", "SLEEP", "TURN_STONE");
+	/** Dodge and Counterattack are cast with a fighter this close (or within its bow's range). */
+	private static final int MELEE_THREAT_GAP = 200;
 	
 	/** How long it goes on with a monster it can't hit (no path, a ledge...) before giving it up. */
 	private static final long MONSTER_STUCK_TIMEOUT = 15000;
@@ -306,6 +319,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		ULTIMATE_DEFENSE(PHYSICAL_DAMAGE | MAGIC_DAMAGE, true, true, 110, 368),
 		/** Guts: P. Def. tripled at low HP, only physical hits notice it. */
 		GUTS(PHYSICAL_DAMAGE, true, false, 139),
+		/** Counterattack, Eye for Eye (10 seconds): 9 melee skills in 10 come back as P. Atk. x 700 / P. Def. (3,000 on a dagger), Eye for Eye sends back normal hits too. Only physical hits notice it. */
+		COUNTER(PHYSICAL_DAMAGE, true, false, 447, 948),
 		/** Zealot: resists debuffs, and hits hard and fast. */
 		ZEALOT(PHYSICAL_DEBUFFS | MAGIC_DEBUFFS | DANGEROUS, true, true, 420),
 		/** Angelic Icon: resists debuffs, P. Def. and M. Def. up by half, and hits hard and fast. */
@@ -458,6 +473,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private Creature _comboTarget = null;
 	private int _comboStep = 0;
 	private long _comboStepStart = 0;
+	// A dagger on its way behind a target that can't turn to face it (see flank), and since when.
+	private long _flankStart = 0;
 	private long _comboEnd = 0;
 	private long _nextComboTime = 0;
 	
@@ -1120,7 +1137,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 		
-		// A player under Ultimate Defense, Guts, Zealot, Angelic Icon or a magic mirror: once it noticed, it leaves aside what doesn't get through and keeps its distance while it can.
+		// A player under Ultimate Defense, Guts, Counterattack, Zealot, Angelic Icon or a magic mirror: once it noticed, it leaves aside what doesn't get through and keeps its distance while it can.
 		int defenses = pvp ? getKnownDefenses(target) : 0;
 		if (defenses != 0)
 		{
@@ -4581,8 +4598,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				return waitForStep(now);
 			}
 			
-			// Blows: get behind the target first.
-			if (step.isBehind() && canMove && !npc.isBehind(target) && ((now - _comboStepStart) < BEHIND_TIMEOUT))
+			// Blows: get behind the target first (Backstab). Against a target that can't turn to face it, every blow of the combo does, as from behind a blow lands twice as often: one held by anyone (in a team fight, a tank's stun is a
+			// dagger's chance), or a player whose target Bluff cancelled (it clicks its target again far slower than a fake player retargets).
+			if ((step.isBehind() || circlesTarget(npc, target, skill)) && canMove && !npc.isBehind(target) && ((now - _comboStepStart) < BEHIND_TIMEOUT))
 			{
 				moveBehind(npc, target, collision);
 				return true;
@@ -4796,6 +4814,118 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/**
+	 * @param npc a fake player
+	 * @param target its target
+	 * @return {@code true} if {@code target} won't turn to face it before a blow lands: it is held for long enough (see {@link #isHeldForBlow}), deep in a long cast (Drain Health, a heal), or it isn't after {@code npc} (Bluff, Trick and Switch make it
+	 *         drop its target). A player turns to whoever it attacks or casts at, at the start of each attack or cast.
+	 */
+	private static boolean wontTurn(Attackable npc, Creature target)
+	{
+		if (isHeldForBlow(target) || (target.getTarget() != npc))
+		{
+			return true;
+		}
+		return target.isCastingNow() && (((target.getCastInterruptTime() - GameTimeTaskManager.getInstance().getGameTicks()) * GameTimeTaskManager.MILLIS_IN_TICK) >= FLANK_CAST_LEFT);
+	}
+	
+	/**
+	 * @param npc a fake player
+	 * @param target its target
+	 * @param skill the skill it is about to use
+	 * @return {@code true} if it is a dagger about to use a blow on a target that won't turn to face it before the blow lands: one held by anyone (a tank's Shield Stun, a mage's sleep, its own Bluff), or a real player whose target Bluff
+	 *         cancelled, who has to click it again by hand (a fake player retargets at once)
+	 */
+	private static boolean circlesTarget(Attackable npc, Creature target, Skill skill)
+	{
+		return isAssassin(npc) && isBlow(skill) && (isHeldForBlow(target) || (target.isPlayer() && wontTurn(npc, target)));
+	}
+	
+	/**
+	 * @param target a creature
+	 * @return {@code true} if it is stunned, asleep or paralyzed (by anyone) for at least {@link #FLANK_HOLD_LEFT} more, so it can't turn before a blow from behind lands
+	 */
+	private static boolean isHeldForBlow(Creature target)
+	{
+		if (!target.isStunned() && !target.isSleeping() && !target.isParalyzed())
+		{
+			return false;
+		}
+		final int ticks = GameTimeTaskManager.getInstance().getGameTicks();
+		boolean found = false;
+		long left = 0;
+		for (BuffInfo info : target.getEffectList().getDebuffs())
+		{
+			if (!info.isRemoved() && (info.getSkill() != null) && HOLD_TYPES.contains(info.getSkill().getAbnormalType().name()))
+			{
+				found = true;
+				left = Math.max(left, (info.getAbnormalTime() * 1000L) - ((long) (ticks - info.getPeriodStartTicks()) * GameTimeTaskManager.MILLIS_IN_TICK));
+			}
+		}
+		// Held by something without a known end (an effect of another kind): it is held now.
+		return !found || (left >= FLANK_HOLD_LEFT);
+	}
+	
+	/**
+	 * A dagger about to use a blow on a target that can't turn to face it (see {@link #wontTurn}) runs behind it first, for at most {@link #BEHIND_TIMEOUT}: from behind a blow lands twice as often and deals 20% more (Formulas.calcBlowSuccess,
+	 * calcBlowDamage), more with the Focus buffs, and only there does Backstab work.
+	 * @return {@code true} if it is on its way behind the target
+	 */
+	private boolean flank(Attackable npc, Creature target, Skill skill, double distance, int collision, boolean canMove, long now)
+	{
+		final boolean held = isHeldForBlow(target);
+		if (!canMove || !isAssassin(npc) || !isBlow(skill) || npc.isBehind(target) || ((distance - collision) > (held ? FLANK_HELD_REACH : 150)) || !wontTurn(npc, target))
+		{
+			_flankStart = 0;
+			return false;
+		}
+		if (_flankStart == 0)
+		{
+			_flankStart = now;
+		}
+		else if ((now - _flankStart) > BEHIND_TIMEOUT)
+		{
+			return false;
+		}
+		trace(Reason.COMBO_STEP, target, skill, held ? "FLANK_HELD" : "FLANK");
+		moveBehind(npc, target, collision);
+		return true;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} for a short buff against physical skills: it evades them (Dodge) or sends their damage back (Counterattack)
+	 */
+	private static boolean isAnswerToPhysicalSkills(Skill skill)
+	{
+		final String type = skill.getAbnormalType().name();
+		return "AVOID_SKILL".equals(type) || "COUNTER_SKILL".equals(type);
+	}
+	
+	/**
+	 * @param npc a fake player
+	 * @param target the player it fights
+	 * @return {@code true} if {@code target} fights with physical skills (not a mage) and can hit it now: in melee reach, or within its bow's range
+	 */
+	private static boolean isPhysicalThreatNear(Attackable npc, Creature target)
+	{
+		if ((target == null) || (target == npc) || castsMagic(target))
+		{
+			return false;
+		}
+		final double gap = npc.calculateDistance2D(target) - npc.getTemplate().getCollisionRadius() - target.getTemplate().getCollisionRadius();
+		return gap <= Math.max(MELEE_THREAT_GAP, target.getPhysicalAttackRange() + 50);
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} for a dagger's blow (Deadly Blow, Lethal Blow, Backstab...), whose chance and damage depend on where it hits from
+	 */
+	private static boolean isBlow(Skill skill)
+	{
+		return hasEffect(skill, "FatalBlow") || isBackstab(skill);
+	}
+	
+	/**
 	 * Area skills are only worth it with at least two enemies in their area, except the big ones in PvP (Flame Hawk, Demolition Impact, Arrow Rain...), which players use as burst skills on a single target.
 	 * @return {@code true} if {@code skill} is a single target skill or would hit two or more enemies
 	 */
@@ -4885,6 +5015,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 			
 			if (!canCast(npc, skill, npc) || !FakePlayerPvpOraclesWarchiefs.isWorthSelfCast(npc, target, skill))
+			{
+				continue;
+			}
+			
+			// A dagger's short answer to physical skills (Dodge, Counterattack: 10 s on a 75 s reuse) waits for a fighter in reach: cast on the way in it runs out as the fight starts, and a mage's spells go through it.
+			if (isAnswerToPhysicalSkills(skill) && isAssassin(npc) && !isPhysicalThreatNear(npc, target))
 			{
 				continue;
 			}
@@ -7314,6 +7450,11 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 		final Skill skill = skills.get(best.option());
+		// A dagger's blow from behind lands twice as often and hits harder: on a target that can't turn to face it, it gets behind first.
+		if (flank(npc, target, skill, distance, collision, canMove, now))
+		{
+			return true;
+		}
 		final CastResult result = castOrApproach(npc, target, skill, distance, collision, canMove);
 		if (result == CastResult.FAILED)
 		{
@@ -7536,7 +7677,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			final int range = skill.getCastRange() > 0 ? skill.getCastRange() : skill.getAffectRange();
 			final SkillFacts facts = SkillFactsReader.of(skill);
 			double damage = SkillMeanings.classify(facts).contains(SkillMeaning.NUKE) ? estimateDamage(npc, target, skill, dagger) : 0;
-			if (!debuff)
+			// A dagger's blow is worth what the estimate says (its damage and the chance it lands are both known): the list's floor would lift Mortal Blow, a fifth of Lethal Blow, over its normal attack.
+			if (!debuff && !(dagger && isBlow(skill)))
 			{
 				damage = Math.max(damage, Math.pow(LIST_RANK_FACTOR, Math.max(0, ordered.indexOf(skill))) * top);
 			}
@@ -7561,7 +7703,22 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			// Curse of Divinity: +30% for every buff on the target (see the MagicalDamageByAbnormal effect), so on a fully buffed player it is the Soul Hound's best quick nuke.
 			return hasEffect(skill, "MagicalDamageByAbnormal") ? damage * (((target.getBuffCount() * 0.3) + 1.3) / 4) : damage;
 		}
-		return dagger ? Formulas.calcBlowDamage(npc, target, skill, (byte) 0, true) : Formulas.calcPhysDam(npc, target, skill, (byte) 0, false, true);
+		if (!dagger || !isBlow(skill))
+		{
+			return Formulas.calcPhysDam(npc, target, skill, (byte) 0, false, true);
+		}
+		// A blow deals its damage only when it lands, which depends on where it hits from (twice as often from behind).
+		return Formulas.calcBlowDamage(npc, target, skill, (byte) 0, true) * blowChance(npc, target, skill);
+	}
+	
+	/**
+	 * @return the chance a blow lands on the target from where it stands now, 0 to 1 (Formulas.calcBlowSuccess without the roll)
+	 */
+	private static double blowChance(Attackable npc, Creature target, Skill skill)
+	{
+		final double side = npc.isInFrontOf(target) ? 1 : npc.isBehind(target) ? 2 : 1.5;
+		final double rate = npc.calcStat(Stat.BLOW_RATE, skill.getBlowChance() * BaseStat.DEX.calcBonus(npc) * side, target, null);
+		return Math.max(0, Math.min(100, rate)) / 100.0;
 	}
 	
 	/**

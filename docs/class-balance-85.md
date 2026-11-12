@@ -171,13 +171,14 @@ The AI changes go into brain B first and need an A/B run before they are promote
 **Why:** its blows land **59%** of the time, against 87-90% for the other daggers. The Wind Rider and Ghost Hunter keep Mortal Strike up (skill 410), which the Treasure Hunter line doesn't learn (it is only in the Plainswalker and Abyss Walker trees, as in retail). Its buff list takes Focus Power (357) before Focus Chance (356). It is also hit by the Bluff problem (618 casts, 8% landed).
 - **Tree:** weight `BLOW_RATE_PCT` higher for this build. Builds can only set `keystones` and `hybrid` today, so this needs a small feature (e.g. `weights="BLOW_RATE_PCT:2"` on `<build>`).
 - **Build:** try `356|357` (Focus Chance first) and compare blow land rates.
-- **AI:** Bluff optional in its combos (shared dagger change).
+- **AI:** Bluff optional in its combos (shared dagger change). *Class clinic, 2026-11-12 (`docs/class-clinic/daggers.md`): not needed. Bluff's stun lands 8% but its TargetCancel 76%, which opens the Backstab. Focus Power takes 15% off a blow's critical damage from the front (half of its −30% in the blow formula), where 4 blows in 5 are cast; Focus Chance raises critical rate, which blows don't use. Whether `356|357` helps is still a build question.*
 
 ### Ghost Hunter (43.4%)
 
 **Why:** the best dagger, still 5% against tanks and 25% against melee. 17,500 HP with −1% tree P. Def. Hex and Power Break are aborted 50+ times each (cast before the blows).
 - **Tree:** the dagger keystones below.
 - **AI:** Hex and Power Break only when the target is disabled or already engaged; Bluff optional.
+  *Done in the class clinic (2026-11-12): the "Hex and blow" opener is now "Critical wound"; Counterattack waits for a fighter in reach. 40.9% → 54.4% in the clinic.*
 
 ### Shared dagger changes
 
