@@ -38,6 +38,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.gameserver.ai.FakeBrain;
+import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 
@@ -94,6 +95,8 @@ public class SimulationMatrix
 	private final boolean _mirror;
 	/** Only the pairs with one of these builds fight (empty for every pair): a build tried against every other one. */
 	private final List<String> _focus;
+	/** How many finished battle folders stay on disk, -1 for SimulationMatrixKeepLogs: a focused run that is read battle by battle keeps them all. */
+	private final int _keepLogs;
 	private final long _seed;
 	private final int _x;
 	private final int _y;
@@ -114,7 +117,7 @@ public class SimulationMatrix
 	/** Finished battle folders, oldest first: only the newest are kept. */
 	private final Deque<Path> _keptLogs = new ArrayDeque<>();
 
-	private SimulationMatrix(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, FakeBrain brainB, boolean mirror, List<String> focus, long seed, int x, int y, int z, int heading, int starterId)
+	private SimulationMatrix(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, FakeBrain brainB, boolean mirror, List<String> focus, int keepLogs, long seed, int x, int y, int z, int heading, int starterId)
 	{
 		_name = name;
 		_dir = dir;
@@ -128,6 +131,7 @@ public class SimulationMatrix
 		_brainB = brainB;
 		_mirror = mirror;
 		_focus = focus;
+		_keepLogs = keepLogs;
 		_seed = seed;
 		_x = x;
 		_y = y;
@@ -150,6 +154,7 @@ public class SimulationMatrix
 	 * @param brainB the AI of the second one (the same for a class matrix, the other one for an A/B test)
 	 * @param mirror {@code true} for an A/B test: every build only fights itself
 	 * @param focus only the pairs with one of these builds fight, empty for every pair
+	 * @param keepLogs how many finished battle folders stay on disk, -1 for SimulationMatrixKeepLogs
 	 * @param seed the seed
 	 * @param x the middle of the place
 	 * @param y the middle of the place
@@ -158,9 +163,9 @@ public class SimulationMatrix
 	 * @param starterId the admin that started it
 	 * @return the matrix, its settings saved
 	 */
-	public static SimulationMatrix create(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, FakeBrain brainB, boolean mirror, List<String> focus, long seed, int x, int y, int z, int heading, int starterId)
+	public static SimulationMatrix create(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, FakeBrain brainB, boolean mirror, List<String> focus, int keepLogs, long seed, int x, int y, int z, int heading, int starterId)
 	{
-		final SimulationMatrix matrix = new SimulationMatrix(name, dir, builds, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, focus, seed, x, y, z, heading, starterId);
+		final SimulationMatrix matrix = new SimulationMatrix(name, dir, builds, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, focus, keepLogs, seed, x, y, z, heading, starterId);
 		matrix.saveSettings();
 		matrix.fillQueue(Map.of());
 		return matrix;
@@ -182,7 +187,7 @@ public class SimulationMatrix
 			final List<String> builds = List.of(settings.getProperty("builds").split("\\|"));
 			final FakeBrain brain = FakeBrain.parse(settings.getProperty("brain", "A"));
 			final FakeBrain brainB = FakeBrain.parse(settings.getProperty("brainB", settings.getProperty("brain", "A")));
-			final SimulationMatrix matrix = new SimulationMatrix(dir.getFileName().toString(), dir, builds, Integer.parseInt(settings.getProperty("battles")), parallel > 0 ? parallel : Integer.parseInt(settings.getProperty("parallel")), Integer.parseInt(settings.getProperty("level")), Integer.parseInt(settings.getProperty("timeLimit")), Integer.parseInt(settings.getProperty("distance")), brain != null ? brain : FakeBrain.A, brainB != null ? brainB : FakeBrain.A, Boolean.parseBoolean(settings.getProperty("mirror", "false")), settings.getProperty("focus", "").isEmpty() ? List.of() : List.of(settings.getProperty("focus").split("\\|")), Long.parseLong(settings.getProperty("seed")), Integer.parseInt(settings.getProperty("x")), Integer.parseInt(settings.getProperty("y")), Integer.parseInt(settings.getProperty("z")), Integer.parseInt(settings.getProperty("heading")), starterId);
+			final SimulationMatrix matrix = new SimulationMatrix(dir.getFileName().toString(), dir, builds, Integer.parseInt(settings.getProperty("battles")), parallel > 0 ? parallel : Integer.parseInt(settings.getProperty("parallel")), Integer.parseInt(settings.getProperty("level")), Integer.parseInt(settings.getProperty("timeLimit")), Integer.parseInt(settings.getProperty("distance")), brain != null ? brain : FakeBrain.A, brainB != null ? brainB : FakeBrain.A, Boolean.parseBoolean(settings.getProperty("mirror", "false")), settings.getProperty("focus", "").isEmpty() ? List.of() : List.of(settings.getProperty("focus").split("\\|")), Integer.parseInt(settings.getProperty("keepLogs", "-1")), Long.parseLong(settings.getProperty("seed")), Integer.parseInt(settings.getProperty("x")), Integer.parseInt(settings.getProperty("y")), Integer.parseInt(settings.getProperty("z")), Integer.parseInt(settings.getProperty("heading")), starterId);
 			final Map<String, Integer> played = matrix.readResults();
 			matrix.fillQueue(played);
 			return matrix;
@@ -243,6 +248,7 @@ public class SimulationMatrix
 		settings.setProperty("brainB", _brainB.name());
 		settings.setProperty("mirror", String.valueOf(_mirror));
 		settings.setProperty("focus", String.join("|", _focus));
+		settings.setProperty("keepLogs", String.valueOf(_keepLogs));
 		settings.setProperty("seed", String.valueOf(_seed));
 		settings.setProperty("x", String.valueOf(_x));
 		settings.setProperty("y", String.valueOf(_y));
@@ -679,6 +685,14 @@ public class SimulationMatrix
 	public boolean isMirror()
 	{
 		return _mirror;
+	}
+
+	/**
+	 * @return how many finished battle folders stay on disk (the newest ones)
+	 */
+	public int getKeepLogs()
+	{
+		return _keepLogs >= 0 ? _keepLogs : FakeSimulationConfig.MATRIX_KEEP_LOGS;
 	}
 
 	/**

@@ -352,6 +352,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	
 	private long _kiteEndTime = 0;
 	private long _nextKiteTime = 0;
+	// Outrun: it is running from a slower melee until it is out of its reach again.
+	private boolean _outrunning;
+	private long _outrunStart;
+	private double _outrunBestGap;
+	private long _outrunBlockedUntil;
+	private int _outrunFails;
 	// #21: when it last shot (an arrow or a skill on an enemy), and whether it stepped aside since.
 	private long _lastShotTime = 0;
 	private boolean _shotStepped = true;
@@ -1087,8 +1093,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 
-		// A Kamael goes into Final Form (once an hour) when a PvP gets serious: hurt, or against several players.
-		if (pvp && !profile.isTransformed() && ((hpRatio < 0.7) || (countPvpEnemies(npc) >= 2)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.TRANSFORM), true, true))
+		// A Kamael goes into Final Form (once an hour) when a PvP gets serious: hurt, or against several players. Not one that fights with its spells (the nuker Soul Hounds): the form is a melee one, its
+		// Nail Attack hit for a fifth of a soul nuke and it won 3% of the fights it transformed in (docs/class-clinic/female-soul-hound.md).
+		if (pvp && !profile.isTransformed() && (profile.getRole() != Role.MAGE) && ((hpRatio < 0.7) || (countPvpEnemies(npc) >= 2)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.TRANSFORM), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "TRANSFORM");
 			return;
@@ -1135,6 +1142,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
+		// A fast caster (outrun in data/FakePlayerPvp.xml) that is losing to a slower melee on it stops trading: it runs out of reach, casts while the melee walks back, and runs again.
+		if (pvp && mage && canMove && profile.getBuild().isOutrunner() && !npc.isAttackingNow() && outrun(npc, target, distance - collision, now))
+		{
+			return;
+		}
+		
 		// An archer against a melee after it shoots while the melee can't reach it before the shot is off, and otherwise steps back as soon as the last shot is off (no pause between steps), at an
 		// angle where the way straight back is blocked. So it keeps the melee near the edge of its reach instead of letting it in.
 		final boolean archerKite = pvp && canMove && (role == Role.ARCHER) && !bowHeld && isMeleeThreat(target);
@@ -1300,15 +1313,17 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				}
 			}
 
-			if (canMove && (distance > (MAGE_RANGE + collision)))
+			// A build whose best quick nuke reaches less than its others stands where that one reaches (its range in data/FakePlayerPvp.xml), instead of falling back on what reaches from 600.
+			final int hold = profile.getBuild().getMageRange() > 0 ? profile.getBuild().getMageRange() : MAGE_RANGE;
+			if (canMove && (distance > (hold + collision)))
 			{
 				trace(Reason.MAGE_POSITION, target);
-				moveToPawn(target, MAGE_RANGE);
+				moveToPawn(target, hold);
 			}
 			else if (canMove && !GeoEngine.getInstance().canSeeTarget(npc, target))
 			{
 				trace(Reason.FIRING_POSITION, target, null, "MAGE");
-				moveToSee(npc, target, MAGE_RANGE);
+				moveToSee(npc, target, hold);
 			}
 			else
 			{
@@ -2750,13 +2765,134 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			{
 				continue;
 			}
-			if ((gap <= getSkillReach(skill)) && !target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && canCast(npc, skill, target))
+			if ((gap <= getSkillReach(skill)) && !target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && !isWastedSilence(skill, target) && canCast(npc, skill, target))
 			{
 				return skill;
 			}
 		}
 		
 		return null;
+	}
+	
+	/** Outrun: how much faster than the melee on it a caster has to be. */
+	private static final double OUTRUN_SPEED_RATIO = 1.2;
+	/** Outrun: it starts running with the melee this close, and runs until it is this far. */
+	private static final int OUTRUN_NEAR = 250;
+	private static final int OUTRUN_FAR = 520;
+	private static final int OUTRUN_STEP = 300;
+	/** Outrun: a run has failed when the melee is this much closer again than it was during the run (a gap closer: a Titan's Rush every 4 s) or it lasts this long; it then stands and fights OUTRUN_GIVE_UP times its failed runs before it tries again. */
+	private static final int OUTRUN_CAUGHT = 150;
+	private static final long OUTRUN_MAX_RUN = 8000;
+	private static final long OUTRUN_GIVE_UP = 12000;
+	private static final long OUTRUN_GIVE_UP_MAX = 60000;
+	
+	/**
+	 * A fast caster against a slower melee player on it: while it is behind (its HP is the lower share), it doesn't stand in the melee's reach. With the melee within {@link #OUTRUN_NEAR} it runs until the gap is {@link #OUTRUN_FAR}, then casts
+	 * until the melee is back. Ahead, it stands and trades: running costs it two casts in three. Against a melee that keeps catching up (Rush, Shadow Step) running only costs casts, so a run that fails is not repeated for a while.
+	 * @return {@code true} if it runs this tick
+	 */
+	private boolean outrun(Attackable npc, Creature target, double gap, long now)
+	{
+		final boolean wasRunning = _outrunning;
+		_outrunning = false;
+		if ((now < _outrunBlockedUntil) || (target.getTarget() != npc) || !isMeleeThreat(target) || isDisabled(target) || target.isMovementDisabled() || (getHealth(npc) >= getHealth(target)))
+		{
+			return false;
+		}
+		
+		if (npc.getMoveSpeed() < (target.getMoveSpeed() * OUTRUN_SPEED_RATIO))
+		{
+			return false;
+		}
+		
+		if (wasRunning)
+		{
+			// Out of reach: it turns and casts.
+			if (gap >= OUTRUN_FAR)
+			{
+				_outrunFails = 0;
+				return false;
+			}
+			// The melee jumped back onto it, or it isn't getting away: it stops running from this one for a while.
+			if ((gap < (_outrunBestGap - OUTRUN_CAUGHT)) || ((now - _outrunStart) > OUTRUN_MAX_RUN))
+			{
+				_outrunFails++;
+				_outrunBlockedUntil = now + Math.min(OUTRUN_GIVE_UP_MAX, OUTRUN_GIVE_UP * _outrunFails);
+				trace(Reason.KITE_CORNERED, target, null, "OUTRUN");
+				return false;
+			}
+		}
+		// It starts a run with the melee close.
+		else if (gap >= OUTRUN_NEAR)
+		{
+			return false;
+		}
+		
+		final Location point = pickRetreat(npc, target, OUTRUN_STEP, null, 0, null);
+		if (point == null)
+		{
+			return false;
+		}
+		
+		if (_combo != null)
+		{
+			endCombo(now);
+		}
+		if (!wasRunning)
+		{
+			_outrunStart = now;
+			_outrunBestGap = gap;
+		}
+		_outrunBestGap = Math.max(_outrunBestGap, gap);
+		_outrunning = true;
+		_progressTime = now;
+		trace(Reason.KITE_STEP, target, null, "OUTRUN");
+		npc.setRunning();
+		moveTo(point.getX(), point.getY(), point.getZ());
+		_kiteEndTime = now + Math.min(600, (long) ((OUTRUN_STEP * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+		return true;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @param target the player it would be cast on
+	 * @return {@code true} for a skill that only silences, on a player or fake player that doesn't fight with magic: nothing it does needs its voice. Not wasted: on one casting a spell right now (a warrior's self-heal), and on a tank that turtled up under
+	 *         Ultimate Defense or the like, which heals itself behind it
+	 */
+	private static boolean isWastedSilence(Skill skill, Creature target)
+	{
+		if (!isPvpEnemy(target) || castsMagic(target) || (skill.getPower() > 0))
+		{
+			return false;
+		}
+		final Skill casting = target.isCastingNow() ? target.getLastSkillCast() : null;
+		if ((casting != null) && casting.isMagic())
+		{
+			return false;
+		}
+		if (isTank(target))
+		{
+			for (BuffInfo info : target.getEffectList().getBuffs())
+			{
+				if (!info.isRemoved() && (Defense.of(info.getSkill()) != null))
+				{
+					return false;
+				}
+			}
+		}
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if ((effects == null) || effects.isEmpty())
+		{
+			return false;
+		}
+		for (AbstractEffect effect : effects)
+		{
+			if (!"Mute".equals(effect.getClass().getSimpleName()))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/**
@@ -4622,6 +4758,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		// A Prophecy of Doom that would start over, Spell Turning on a target that doesn't cast.
 		if (!FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill))
+		{
+			return false;
+		}
+		
+		// A silence on a player that doesn't fight with magic (Voice Bind on a warrior).
+		if (isWastedSilence(skill, target))
 		{
 			return false;
 		}
@@ -7153,10 +7295,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		final boolean dagger = profile.getRole() == Role.DAGGER;
 		addScoredOptions(npc, target, profile.getSkills(SkillCategory.DEBUFF), affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, reach, defenses, dagger, options, skills);
 		addScoredOptions(npc, target, profile.getSkills(SkillCategory.ATTACK), affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, reach, defenses, dagger, options, skills);
-		// An archer or mage uses what reaches its target from where it stands, and only walks in when nothing does (like pickSkill).
+		// An archer or mage uses what reaches its target from where it stands, and only walks in when nothing does (like pickSkill). A build with a range of its own (data/FakePlayerPvp.xml) also keeps what reaches from there: it steps in for its
+		// best quick nuke (the scorer counts the walk) instead of falling back on a weak one that reaches (the Soul Hounds cast Abyssal Blaze from 660 with Curse of Divinity, five times the damage, 60 short).
 		if (ranged && options.stream().anyMatch(SkillOption::inReach))
 		{
-			options.removeIf(option -> !option.inReach() && (skills.remove(option) != null));
+			final int stand = profile.getBuild().getMageRange();
+			options.removeIf(option -> !option.inReach() && ((stand <= 0) || (skills.get(option).getCastRange() < stand)) && (skills.remove(option) != null));
 		}
 		if (skills.isEmpty())
 		{
@@ -7368,7 +7512,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		if (skill.isMagic())
 		{
-			return ((91 * Math.sqrt(npc.getMAtk(target, skill) * 4)) / Math.max(1, target.getMDef(npc, skill))) * skill.getPower(npc, target, false, false);
+			final double damage = ((91 * Math.sqrt(npc.getMAtk(target, skill) * 4)) / Math.max(1, target.getMDef(npc, skill))) * skill.getPower(npc, target, false, false);
+			// Curse of Divinity: +30% for every buff on the target (see the MagicalDamageByAbnormal effect), so on a fully buffed player it is the Soul Hound's best quick nuke.
+			return hasEffect(skill, "MagicalDamageByAbnormal") ? damage * (((target.getBuffCount() * 0.3) + 1.3) / 4) : damage;
 		}
 		return dagger ? Formulas.calcBlowDamage(npc, target, skill, (byte) 0, true) : Formulas.calcPhysDam(npc, target, skill, (byte) 0, false, true);
 	}

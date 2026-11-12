@@ -74,6 +74,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
@@ -81,6 +82,7 @@ import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
@@ -1577,10 +1579,11 @@ public class FakeSimulationManager
 	 * @param mirror {@code true} for an A/B test: every build only fights itself
 	 * @param focus build names separated by commas: only the pairs with one of them fight ({@code null} for every pair)
 	 * @param builds build names separated by commas, {@code null} or "all" for one build per class
+	 * @param keepLogs how many finished battle folders stay on disk, -1 for SimulationMatrixKeepLogs (tools/simulation/class_clinic.py keeps them all)
 	 * @param seed the seed
 	 * @return the lines to tell the admin
 	 */
-	public synchronized List<String> startMatrix(Player admin, int x, int y, int z, int heading, int battles, int parallel, int level, int timeLimit, int distance, String brains, boolean mirror, String focus, String builds, long seed)
+	public synchronized List<String> startMatrix(Player admin, int x, int y, int z, int heading, int battles, int parallel, int level, int timeLimit, int distance, String brains, boolean mirror, String focus, String builds, int keepLogs, long seed)
 	{
 		final List<String> lines = new ArrayList<>();
 		final String refusal = getMatrixRefusal();
@@ -1630,7 +1633,7 @@ public class FakeSimulationManager
 
 		final String name = "matrix-" + LocalDateTime.now().format(FOLDER_TIME);
 		final Path dir = getMatrixRoot().resolve(name);
-		final SimulationMatrix matrix = SimulationMatrix.create(name, dir, list, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, focusList, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
+		final SimulationMatrix matrix = SimulationMatrix.create(name, dir, list, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, focusList, keepLogs, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
 		return launchMatrix(matrix, lines);
 	}
 
@@ -1827,7 +1830,7 @@ public class FakeSimulationManager
 			if (!startBattle(matrix, battle))
 			{
 				LOGGER.warning(getClass().getSimpleName() + ": Could not start matrix battle " + battle.number() + " (" + battle.a() + " vs " + battle.b() + "): skipped.");
-				if (matrix.onFreed(null, FakeSimulationConfig.MATRIX_KEEP_LOGS))
+				if (matrix.onFreed(null, matrix.getKeepLogs()))
 				{
 					finishMatrix(matrix);
 					return;
@@ -2000,7 +2003,7 @@ public class FakeSimulationManager
 		{
 			return;
 		}
-		if (matrix.onFreed(run.getLog().getDir(), FakeSimulationConfig.MATRIX_KEEP_LOGS))
+		if (matrix.onFreed(run.getLog().getDir(), matrix.getKeepLogs()))
 		{
 			finishMatrix(matrix);
 			return;
@@ -3797,10 +3800,35 @@ public class FakeSimulationManager
 		}
 
 		final Skill skill = caster.getLastSkillCast();
+		// Blink's own effect ends its cast after it landed (the jump back), like the teleports above: not an interrupted cast.
+		if ((skill != null) && jumpsBack(skill))
+		{
+			return;
+		}
 		final JsonLine line = event(run, "cast_abort");
 		who(line, "caster", caster, member);
 		line.put("skill", skill != null ? skill.getName() + " (" + skill.getId() + ")" : null);
 		run.getLog().write(SimulationLog.EVENTS, line);
+	}
+
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if it moves its caster with a Blink effect, which calls abortCast on a cast that already landed
+	 */
+	private static boolean jumpsBack(Skill skill)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.SELF);
+		if (effects != null)
+		{
+			for (AbstractEffect effect : effects)
+			{
+				if ("Blink".equals(effect.getClass().getSimpleName()))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

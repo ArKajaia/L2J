@@ -417,7 +417,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		return true;
 	}
 
-	private static final String MATRIX_USAGE = "Usage: //Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A|B|A:B] [mirror] [builds=all,Adventurer_Heavy...] [focus=Adventurer_Heavy,...] [seed=<n>], or //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>] | resume [name] [parallel=<n>] | status | stop | watch | leave | builds";
+	private static final String MATRIX_USAGE = "Usage: //Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A|B|A:B] [mirror] [builds=all,Adventurer_Heavy...] [focus=Adventurer_Heavy,...] [keep=<logs>] [seed=<n>], or //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>] | resume [name] [parallel=<n>] | status | stop | watch | leave | builds";
 
 	private boolean matrix(Player activeChar, StringTokenizer st, FakeSimulationManager manager)
 	{
@@ -435,6 +435,7 @@ public class AdminSimulation implements IAdminCommandHandler
 				boolean mirror = false;
 				String focus = null;
 				String builds = null;
+				int keep = -1;
 				long seed = Rnd.get(1, Integer.MAX_VALUE);
 				try
 				{
@@ -442,7 +443,12 @@ public class AdminSimulation implements IAdminCommandHandler
 					{
 						final String token = st.nextToken();
 						final String lower = token.toLowerCase(Locale.ROOT);
-						if (lower.startsWith("battles="))
+						if (lower.startsWith("keep="))
+						{
+							// How many finished battle folders stay on disk (default SimulationMatrixKeepLogs).
+							keep = Math.max(0, Math.min(100000, Integer.parseInt(token.substring(5))));
+						}
+						else if (lower.startsWith("battles="))
 						{
 							battles = Math.max(1, Math.min(1000, Integer.parseInt(token.substring(8))));
 						}
@@ -501,7 +507,7 @@ public class AdminSimulation implements IAdminCommandHandler
 					activeChar.sendSysMessage(MATRIX_USAGE);
 					return false;
 				}
-				send(activeChar, manager.startMatrix(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), battles, parallel, level, time, distance, brain, mirror, focus, builds, seed));
+				send(activeChar, manager.startMatrix(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), battles, parallel, level, time, distance, brain, mirror, focus, builds, keep, seed));
 				break;
 			}
 			case "resume":
