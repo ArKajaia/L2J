@@ -199,6 +199,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long COMBO_STEP_TIMEOUT = 3000;
 	/** How long a combo may take in total. */
 	private static final long COMBO_TIMEOUT = 15000;
+	/** How long it walks toward a combo step's target before the combo gives up, and how long before it starts a combo again. */
+	private static final long COMBO_APPROACH_TIMEOUT = 3000;
+	private static final long COMBO_APPROACH_PAUSE = 4000;
 	/** How long it tries to get behind its target before using the skill from where it is. */
 	private static final long BEHIND_TIMEOUT = 2500;
 	/** A dagger runs behind a target still casting for at least this long (ms) before its blow: it lands before the target turns. */
@@ -2638,7 +2641,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return canMove && (now >= _nextKiteTime) && kiteStep(npc, target, now, Math.max(personality.getKiteStep(), (int) (reach - gap) + 50));
 		}
 
-		final int keep = personality.getDefenseKeepDistance();
+		// One that can't move (Ultimate Defense) still casts: a melee waits out of its reach too, not at its usual distance. A Duelist holding off 300 from a Hell Knight under Ultimate Defense took Drain Health and Shackle
+		// for 20 s and lost a third of its HP before the fight went on.
+		final int keep = target.isMovementDisabled() ? Math.max(personality.getDefenseKeepDistance(), getThreatReach(target) + IMMOBILE_REACH_MARGIN) : personality.getDefenseKeepDistance();
 		if (gap < keep)
 		{
 			// Too close: step away when it can, otherwise fight back meanwhile.
@@ -4673,6 +4678,14 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				}
 				case MOVING:
 				{
+					// A target it has walked after for a while without reaching it (an archer kiting it, a mage with a speed buff): the combo waits, and what reaches from here (Sonic Blaster, Sonic Rage) and its
+					// gap closers take over. Before, a Duelist walked behind a Moonlight Sentinel for up to the whole combo (15 s) without a cast.
+					if (pvp && ((now - _comboStepStart) > COMBO_APPROACH_TIMEOUT))
+					{
+						endCombo(now);
+						_nextComboTime = Math.max(_nextComboTime, now + COMBO_APPROACH_PAUSE);
+						return false;
+					}
 					return true;
 				}
 				default:

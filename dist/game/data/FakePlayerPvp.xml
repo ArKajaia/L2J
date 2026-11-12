@@ -970,7 +970,7 @@
 		<attack>261,5,6,1,345,7,9</attack> <!-- Triple Sonic Slash, Double Sonic Slash, Sonic Blaster (reaches 600), Triple Slash, Sonic Rage (charges as it hits), then the area ones (Sonic Storm, Sonic Buster) -->
 		<debuff>775</debuff>
 		<buff>297,917,78,287</buff>
-		<heal>121</heal>
+		<heal>121,440</heal> <!-- Battle Roar, Braveheart (1,000 CP) -->
 		<emergency>442</emergency>
 		<toggle>312,424</toggle>
 		<charge>919,8</charge>
