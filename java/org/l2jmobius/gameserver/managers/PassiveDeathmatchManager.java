@@ -73,8 +73,7 @@ import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
  * <li>Each kill rolls an offer that waits in the player's queue until it picks: closing the window, dying, or killing again before choosing loses nothing. No window opens in the middle of a fight: a kill blinks the tutorial question mark
  * ({@link #QUESTION_MARK_ID}), which opens it when clicked. The window opens by itself when the player dies with picks waiting, and again after each pick while one is left. The question mark comes back on respawn, and {@code .dmpick} opens the window
  * any time.</li>
- * <li>A fake player takes one of its offer's passives at once, chosen by the weights its class grows its own tree with ({@link FakePlayerPvpPassiveTree#weigh}), each fake player with a style and jitter of its own, and a little more jitter on each pick; by
- * chance if none of the offer is of use to it.</li>
+ * <li>A fake player takes one of its offer's passives at once: the best ranked for its class type (fighter, tank, dagger, archer, mage, Soul Hound) in its own gear, see {@link MayhemPassiveRanking}.</li>
  * </ul>
  */
 public class PassiveDeathmatchManager
@@ -93,11 +92,6 @@ public class PassiveDeathmatchManager
 	private static final Object MATK_OWNER = new Object();
 	/** Order of that Func: after every other one (the passive tree's highest is 0x52), so it scales the whole M.Atk. */
 	private static final int MATK_ORDER = 0x60;
-
-	/** How far a fake player's want of each offered passive strays at random on each pick. */
-	private static final double FAKE_PICK_JITTER = 0.15;
-	/** How often a fake player takes a passive by weighted chance instead of the one worth most to it. */
-	private static final double FAKE_PICK_EXPLORE = 0.15;
 
 	/** A pick waiting for its player: its number, and the nodes it offers. */
 	private static class Offer
@@ -158,54 +152,29 @@ public class PassiveDeathmatchManager
 
 		/**
 		 * @param node a node it may take
-		 * @return how much it wants it, 0 for of no use: an event-only node by its fakeWeight, a tree node by the weights its role grows its tree with
-		 */
-		double weigh(PassiveNode node)
-		{
-			if (_altTaste == null)
-			{
-				return weighWith(node, false);
-			}
-			return (_mainShare * weighWith(node, false)) + ((1 - _mainShare) * weighWith(node, true));
-		}
-
-		/**
-		 * @param node a node it may take
 		 * @param alt {@code true} for a hybrid's fighter side, {@code false} for its main one
-		 * @return how much that side wants it
+		 * @return how much that side wants it, 0 for of no use (what its offers are made of, see {@link #roll}): an event-only node by its fakeWeight, a tree node by the weights its role grows its tree with
 		 */
 		double weighWith(PassiveNode node, boolean alt)
-		{
-			return weighWith(node, alt, null, 1);
-		}
-
-		/**
-		 * @param node a node it may take
-		 * @param alt {@code true} for a hybrid's fighter side
-		 * @param have the summed effects of what it has, {@code null} for nothing
-		 * @param survival how much more HP and defence count
-		 * @return how much it wants it, given what it has
-		 */
-		double weighWith(PassiveNode node, boolean alt, PassiveStatBonusCache have, double survival)
 		{
 			if (node.isEventOnly())
 			{
 				return mayTake(node) ? node.getEventWeight() : 0;
 			}
 			final FakePlayerPvpPassiveTree.NodeTaste taste = alt && (_altTaste != null) ? _altTaste : _taste;
-			return taste == null ? 1 : FakePlayerPvpPassiveTree.getInstance().weigh(taste, node, have, survival);
+			return taste == null ? 1 : FakePlayerPvpPassiveTree.getInstance().weigh(taste, node);
 		}
 
 		/**
-		 * @return how much it wants a node, given what it has
+		 * @return its class type for the passive ranking: a hybrid's own, else its role's
 		 */
-		double weigh(PassiveNode node, PassiveStatBonusCache have, double survival)
+		MayhemPassiveRanking.ClassType classType()
 		{
-			if (_altTaste == null)
+			if (_hybrid)
 			{
-				return weighWith(node, false, have, survival);
+				return MayhemPassiveRanking.ClassType.HYBRID;
 			}
-			return (_mainShare * weighWith(node, false, have, survival)) + ((1 - _mainShare) * weighWith(node, true, have, survival));
+			return _role == null ? MayhemPassiveRanking.ClassType.FIGHTER : MayhemPassiveRanking.ClassType.valueOf(_role.name());
 		}
 
 		/**
@@ -317,9 +286,8 @@ public class PassiveDeathmatchManager
 		private final List<Integer> _nodes = new ArrayList<>();
 		private final double _hpShare;
 		private final Profile _profile;
-		/** Its kills and deaths in the match, for what it picks (see {@link #pickForFake}). */
-		private int _kills;
-		private int _deaths;
+		/** The rank of every passive Mayhem may offer it, by node id: it takes the best ranked one of an offer (see {@link MayhemPassiveRanking}). */
+		private Map<Integer, Integer> _ranks = Map.of();
 
 		FakePicks(double hpShare, Profile profile)
 		{
@@ -752,14 +720,6 @@ public class PassiveDeathmatchManager
 	 */
 	public void onFighterDeath(Creature victim, Creature killer)
 	{
-		final FakePicks dead = _fakes.get(victim.getObjectId());
-		if (dead != null)
-		{
-			synchronized (dead)
-			{
-				dead._deaths++;
-			}
-		}
 		final Deque<Hit> hits = _hits.remove(victim.getObjectId());
 		if ((hits == null) || (TeamVsTeamConfig.PDM_ASSIST_SHARE <= 0))
 		{
@@ -1105,6 +1065,8 @@ public class PassiveDeathmatchManager
 		who.makeHybrid(profile.getArmorMask(), profile.getWornMask(), true);
 		who.initNotableScale();
 		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, who);
+		// Its class type's ranking in its own gear.
+		picks._ranks = MayhemPassiveRanking.getRanks(who.classType(), profile.getArmorMask(), profile.getWornMask(), who._notableScale, PassiveDeathmatchManager::isOffered);
 		_fakes.put(fake.getObjectId(), picks);
 		applyFake(fake, profile, picks);
 		applyModifiers(fake, who);
@@ -1125,112 +1087,65 @@ public class PassiveDeathmatchManager
 		}
 		synchronized (picks)
 		{
-			if (!assist)
-			{
-				picks._kills++;
-			}
 			final Set<Integer> owned = new HashSet<>(picks._nodes);
 			final List<Integer> options = roll(owned, owned, TeamVsTeamConfig.PDM_CHOICES, picks._profile, isKeystoneTurn(picks._nodes.size()));
 			if (options.isEmpty())
 			{
 				return;
 			}
-			final int picked = pickForFake(picks, fake.getTemplate().getFakePlayerPvpProfile().getPassives(), options);
+			final int picked = pickForFake(picks, options);
 			picks._nodes.add(picked);
 			applyFake(fake, profile, picks);
 			if (picks._profile._log)
 			{
+				final List<String> others = new ArrayList<>();
+				for (int id : options)
+				{
+					final PassiveNode node = PassiveTreeData.getInstance().getNode(id);
+					if ((node != null) && (id != picked))
+					{
+						others.add(node.getName() + " #" + picks._ranks.getOrDefault(id, 0));
+					}
+				}
 				final PassiveNode node = PassiveTreeData.getInstance().getNode(picked);
-				LOGGER.info(getClass().getSimpleName() + ": Mayhem pick: " + picks._profile._name + " took " + node.getName() + (node.isEventOnly() ? " [event]" : "") + " (" + node.getType() + (assist ? ", assist" : ", kill") + "), " + picks._nodes.size() + " passives.");
+				LOGGER.info(getClass().getSimpleName() + ": Mayhem pick: " + picks._profile._name + " took " + node.getName() + (node.isEventOnly() ? " [event]" : "") + " #" + picks._ranks.getOrDefault(picked, 0) + " (" + node.getType() + (assist ? ", assist" : ", kill") + ") over " + String.join(", ", others) + ", " + picks._nodes.size() + " passives.");
 			}
 		}
 		fake.broadcastStatusUpdate();
 	}
 
 	/**
-	 * What a fake player takes of an offer:
-	 * <ul>
-	 * <li>one of its own event keystones, while it has none;</li>
-	 * <li>else one of the notables that raised kills most ({@link TeamVsTeamConfig#PDM_PRIORITY_NOTABLES}), if it is of use to it;</li>
-	 * <li>else the one worth most to it ({@link Profile#weigh(PassiveNode, PassiveStatBonusCache, double)}: its class's weights, what is past a cap worth nothing, a stat it has a lot of worth less, HP and defence worth more while it dies more than it kills), with a
-	 * little jitter, and now and then ({@link #FAKE_PICK_EXPLORE}) one by chance weighted by worth, so fake players of one class don't all end up alike;</li>
-	 * <li>by plain chance if none is worth anything to it.</li>
-	 * </ul>
+	 * What a fake player takes of an offer: the best ranked passive for its class type in its gear (see {@link MayhemPassiveRanking}); a passive it has no rank for comes last.
 	 * @param picks the fake player's picks
-	 * @param current its passives now, {@code null} for none
 	 * @param options the passives offered, at least one
 	 * @return the one it takes
 	 */
-	private static int pickForFake(FakePicks picks, FakePlayerPvpPassives current, List<Integer> options)
+	private static int pickForFake(FakePicks picks, List<Integer> options)
 	{
-		final Profile profile = picks._profile;
-		final boolean hasEventKeystone = picks._nodes.stream().map(PassiveTreeData.getInstance()::getNode).anyMatch((n) -> (n != null) && n.isEventOnly());
-		if (!hasEventKeystone)
+		int best = options.get(0);
+		int bestRank = Integer.MAX_VALUE;
+		for (int id : options)
 		{
-			for (int id : options)
+			final int rank = picks._ranks.getOrDefault(id, Integer.MAX_VALUE);
+			if (rank < bestRank)
 			{
-				final PassiveNode node = PassiveTreeData.getInstance().getNode(id);
-				if ((node != null) && node.isEventOnly() && profile.mayTake(node))
-				{
-					return id;
-				}
+				best = id;
+				bestRank = rank;
 			}
 		}
+		return best;
+	}
 
-		final PassiveStatBonusCache have = current != null ? current.getBonus() : null;
-		final double survival = picks._deaths > picks._kills ? 1 + Math.min(1, (picks._deaths - picks._kills) / 5.0) : 1;
-
-		// The notables that raised kills most in the simulations (MayhemFakePriorityNotables): always taken when one of use to it is offered (the most useful one, if several).
-		int priority = -1;
-		double priorityWorth = 0;
-		for (int i = 0; i < options.size(); i++)
-		{
-			final PassiveNode node = PassiveTreeData.getInstance().getNode(options.get(i));
-			if ((node != null) && (node.getType() == PassiveNode.NodeType.NOTABLE) && TeamVsTeamConfig.PDM_PRIORITY_NOTABLES.contains(node.getName()))
-			{
-				final double worth = profile.weigh(node, have, survival);
-				if (worth > priorityWorth)
-				{
-					priority = i;
-					priorityWorth = worth;
-				}
-			}
-		}
-		if (priority >= 0)
-		{
-			return options.get(priority);
-		}
-		final double[] weights = new double[options.size()];
-		double total = 0;
-		int best = -1;
-		for (int i = 0; i < weights.length; i++)
-		{
-			final PassiveNode node = PassiveTreeData.getInstance().getNode(options.get(i));
-			weights[i] = node == null ? 0 : profile.weigh(node, have, survival) * (1 + (((Rnd.nextDouble() * 2) - 1) * FAKE_PICK_JITTER));
-			total += weights[i];
-			if ((weights[i] > 0) && ((best < 0) || (weights[i] > weights[best])))
-			{
-				best = i;
-			}
-		}
-		if (total <= 0)
-		{
-			return options.get(Rnd.get(options.size()));
-		}
-		if (Rnd.nextDouble() >= FAKE_PICK_EXPLORE)
-		{
-			return options.get(best);
-		}
-		double roll = Rnd.nextDouble() * total;
-		for (int i = 0; i < weights.length; i++)
-		{
-			roll -= weights[i];
-			if ((roll < 0) && (weights[i] > 0))
-			{
-				return options.get(i);
-			}
-		}
-		return options.get(best);
+	/**
+	 * The passive ranking fake players of a class type pick by, to read (the web API's /api/tvt/mayhem/ranks).
+	 * @param type the class type
+	 * @param gear its gear tokens (HEAVY, LIGHT, ROBE, SHIELD, BOW, DAGGER, SWORD...), empty for the gear its classes usually wear
+	 * @param top how many to show, 0 for all
+	 * @return the lines
+	 */
+	public List<String> describeRanking(MayhemPassiveRanking.ClassType type, List<String> gear, int top)
+	{
+		return MayhemPassiveRanking.describe(type, gear, top, PassiveDeathmatchManager::isOffered);
 	}
 
 	/**
@@ -1479,7 +1394,7 @@ public class PassiveDeathmatchManager
 	 * @param node a node of the tree
 	 * @return {@code true} if a Mayhem match offers it at all: one of {@link TeamVsTeamConfig#PDM_NODE_TYPES}, with effects, none of them one of {@link TeamVsTeamConfig#PDM_EXCLUDED_EFFECTS}, granting no skill
 	 */
-	private static boolean isOffered(PassiveNode node)
+	static boolean isOffered(PassiveNode node)
 	{
 		if (!TeamVsTeamConfig.PDM_NODE_TYPES.contains(node.getType().name()) || node.grantsSkill() || node.getEffects().isEmpty())
 		{

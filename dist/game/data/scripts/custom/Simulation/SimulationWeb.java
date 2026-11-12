@@ -33,6 +33,8 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.config.custom.FakeSkillWeightsConfig;
+import org.l2jmobius.gameserver.managers.MayhemPassiveRanking;
+import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamBatch;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
@@ -192,6 +194,7 @@ public class SimulationWeb
 		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
 		server.addRoute("/api/tvt/batch", "POST", true, this::handleTvtBatch);
 		server.addRoute("/api/tvt/batches", "GET", false, this::handleTvtBatches);
+		server.addRoute("/api/tvt/mayhem/ranks", "GET", false, this::handleMayhemRanks);
 		server.addRoute("/api/tvt/open", "POST", true, this::handleTvtOpen);
 		server.addRoute("/api/tvt/close", "POST", true, this::handleTvtClose);
 		server.addRoute("/api/racewars/status", "GET", false, this::handleRaceWarsStatus);
@@ -1411,8 +1414,11 @@ public class SimulationWeb
 
 		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
 		final int level = parseInt(params.get("level"), gm != null ? gm.getLevel() : DEFAULT_LEVEL);
+		// mode: tvt (the default), dm (a Deathmatch) or mayhem (Deathmatch: Mayhem, its fake players' picks logged).
+		final String mode = params.getOrDefault("mode", "tvt").toLowerCase();
+		final TeamVsTeamManager.Mode simulated = mode.equals("mayhem") || mode.equals("pdm") ? TeamVsTeamManager.Mode.PASSIVE_DEATHMATCH : mode.equals("dm") || mode.equals("deathmatch") ? TeamVsTeamManager.Mode.DEATHMATCH : TeamVsTeamManager.Mode.TVT;
 		final List<String> lines = new ArrayList<>();
-		lines.add(TeamVsTeamManager.getInstance().simulate(level));
+		lines.add(TeamVsTeamManager.getInstance().simulate(simulated, level, null));
 		sendTvtLines(exchange, lines);
 	}
 
@@ -1430,6 +1436,43 @@ public class SimulationWeb
 		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
 		final List<String> lines = new ArrayList<>();
 		lines.add(TeamVsTeamManager.getInstance().simulateBatch(params, gm != null ? gm.getLevel() : DEFAULT_LEVEL));
+		sendTvtLines(exchange, lines);
+	}
+
+	/**
+	 * The ranking Deathmatch: Mayhem fake players pick their passives by: type (FIGHTER, TANK, DAGGER, ARCHER, MAGE, HYBRID, or all), gear (HEAVY,SHIELD,... blank for the type's usual gear), top (0 for every passive).
+	 */
+	private void handleMayhemRanks(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		final String type = params.getOrDefault("type", "all").trim().toUpperCase();
+		final List<String> gear = new ArrayList<>();
+		for (String token : params.getOrDefault("gear", "").split(","))
+		{
+			if (!token.isBlank())
+			{
+				gear.add(token.trim().toUpperCase());
+			}
+		}
+		final int top = parseInt(params.get("top"), 0);
+		final List<String> lines = new ArrayList<>();
+		for (MayhemPassiveRanking.ClassType classType : MayhemPassiveRanking.ClassType.values())
+		{
+			if (type.equals("ALL") || type.equals(classType.name()))
+			{
+				lines.addAll(PassiveDeathmatchManager.getInstance().describeRanking(classType, gear, top));
+				lines.add("");
+			}
+		}
+		if (lines.isEmpty())
+		{
+			lines.add("Unknown type " + type + ": FIGHTER, TANK, DAGGER, ARCHER, MAGE, HYBRID or all.");
+		}
 		sendTvtLines(exchange, lines);
 	}
 
