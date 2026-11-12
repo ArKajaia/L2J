@@ -1200,6 +1200,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			{
 				endCombo(now);
 			}
+			// A mage with a jump among its move skills (a Warder's Warp) and the melee on it turns and jumps away, and casts again from there: it costs a third of a second, and its other peels stay for the next time.
+			if (mage && ((distance - collision) < JUMP_AWAY_GAP) && jumpAway(npc, profile, target))
+			{
+				return;
+			}
 			if (useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision, safeCast, mage), distance, collision, false))
 			{
 				return;
@@ -3092,6 +3097,32 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		return null;
 	}
 	
+	/** With a melee this close a mage uses a jump of its move skills. */
+	private static final int JUMP_AWAY_GAP = 120;
+	
+	/**
+	 * Jumps away from {@code target} with a move skill that has a Blink effect (Warp: 500 the way it faces, so it turns its back first).
+	 * @return {@code true} if it jumped
+	 */
+	private boolean jumpAway(Attackable npc, FakePlayerPvpProfile profile, Creature target)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.MOVE))
+		{
+			if (hasEffect(skill, "Blink") && canCast(npc, skill, npc))
+			{
+				clientStopMoving(null);
+				npc.setHeading(LocationUtil.calculateHeadingFrom(target, npc));
+				npc.setTarget(npc);
+				npc.doCast(skill);
+				npc.setTarget(target);
+				_progressTime = System.currentTimeMillis();
+				trace(Reason.SPRINT, target, skill, "JUMP");
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	/** Outrun: how much faster than the melee on it a caster has to be. */
 	private static final double OUTRUN_SPEED_RATIO = 1.2;
 	/** Outrun: it starts running with the melee this close, and runs until it is this far. */
@@ -3163,6 +3194,20 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		_outrunBestGap = Math.max(_outrunBestGap, gap);
 		_outrunning = true;
+		
+		// Its move skills get it away at once: a jump ahead (a Warder's Warp goes the way it faces, so it turns its back on the melee first), then a speed buff (Ultimate Escape).
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((profile != null) && !profile.getSkills(SkillCategory.MOVE).isEmpty())
+		{
+			npc.setHeading(LocationUtil.calculateHeadingFrom(target, npc));
+			if (castOnSelf(npc, target, profile.getSkills(SkillCategory.MOVE), false, true))
+			{
+				_progressTime = now;
+				trace(Reason.SPRINT, target, npc.getLastSkillCast(), "OUTRUN");
+				return true;
+			}
+		}
+		
 		_progressTime = now;
 		trace(Reason.KITE_STEP, target, null, "OUTRUN");
 		npc.setRunning();

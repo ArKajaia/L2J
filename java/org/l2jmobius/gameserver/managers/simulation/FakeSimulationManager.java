@@ -3817,14 +3817,22 @@ public class FakeSimulationManager
 	 */
 	private static boolean jumpsBack(Skill skill)
 	{
-		final List<AbstractEffect> effects = skill.getEffects(EffectScope.SELF);
-		if (effects != null)
+		// Blink has it as a self effect, Warp (cast on itself) as its effect.
+		for (EffectScope scope : new EffectScope[]
 		{
-			for (AbstractEffect effect : effects)
+			EffectScope.SELF,
+			EffectScope.GENERAL
+		})
+		{
+			final List<AbstractEffect> effects = skill.getEffects(scope);
+			if (effects != null)
 			{
-				if ("Blink".equals(effect.getClass().getSimpleName()))
+				for (AbstractEffect effect : effects)
 				{
-					return true;
+					if ("Blink".equals(effect.getClass().getSimpleName()))
+					{
+						return true;
+					}
 				}
 			}
 		}

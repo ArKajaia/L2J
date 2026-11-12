@@ -17,6 +17,7 @@ It is for the **micro of one class** in a duel: which skill, when, from where. P
 ### 1. Know the class
 
 - `python3 tools/simulation/skill_cards.py "<Build>"`: every skill of the build with its cast time, reuse, range, power, land rate and effects, its combos, and notes on weak or overlapping skills. Read the effects: they hold what the name doesn't say (Curse of Divinity does +30% damage per buff on the target; Final Form is a melee form; Painkiller ends on any action).
+- **Its last section, "LEARNED BUT NOT IN THE BUILD", lists the active skills the class has and the build never uses. Go through every one.** The Soul Hound's build was missing its second blink (Warp), a speed buff, a speed toggle and an area slow that paralyzes (Lightning Shock); adding them was worth 10 points against melee. The report can't show a skill the build doesn't know about.
 - How good players play it in retail High Five: search as `CLAUDE.md` says ("Research before changing game content") and write down five to ten lines: what it opens with, what it does against a fighter, an archer, a mage, a healer, and which skills define it. This is the yardstick the logs are held against.
 - The build itself: its `<build>` in `dist/game/data/FakePlayerPvp.xml` (skill lists in order of preference, combos, peel, emergency, role, gear kit, buff list).
 
@@ -76,7 +77,7 @@ python3 tools/simulation/class_clinic.py compare <baseline folder> <new folder>
 `compare` gives the change per kind of opponent with its 95% interval, per opponent, and how the skill use moved. Rules:
 
 - A kind is **better** only when the interval of its difference is above zero, **worse** when it is below. Anything else is "no clear change", however good the number looks.
-- A batch is kept when the overall difference is clearly better and no kind is clearly worse. A batch that changes nothing is taken out again, not left in "because it can't hurt".
+- A batch is kept when the overall difference is clearly better and no kind is clearly worse. A batch that changes nothing is taken out again, not left in "because it can't hurt". The one exception: a change whose own measure moved as meant (the skill is cast, the damage taken fell) and no kind clearly worse may stay, with that written in the case file.
 - Check in "Skill use" that the change did what you meant (the skill you promoted is cast more, the one you removed is gone). A win rate that moved for another reason is luck.
 - How small a change a run can show, at 30 battles per opponent (a 95% interval of about plus or minus this many points):
 
@@ -132,7 +133,8 @@ Faults of one class that other classes may share. Check for them first.
 - **The order of the attack list.** A skill is worth at least its place in the list allows (`LIST_RANK_FACTOR`), so a weak skill listed early is cast a lot. Order the list by "Per cast second" from the report, not by habit.
 - **Damage the estimate doesn't see.** `estimateDamage` knows power, M. Atk and P. Atk. A skill whose effect multiplies its damage (by the target's buffs, by its HP, by souls) is undervalued until the estimate learns its effect.
 - **Debuffs that don't fit the target.** A silence on a warrior, a root on an archer. Combos take `mageTarget="true"` and `disabledTarget="true"` on a step; `isWastedSilence` covers pure silences (kept for a tank under a defensive stance and anyone casting a spell).
-- **Standing just outside a skill's reach.** A mage holds 600 from its target, which leaves it at about 660 to 675: its skills with a reach of 600 are "out of reach" and it falls back on whatever reaches. The build attribute `range` moves where it stands.
+- **Standing just outside a skill's reach.** A mage holds 600 from its target, which leaves it at about 660 to 675: its skills with a reach of 600 are "out of reach" and it falls back on whatever reaches. With the build attribute `range` it keeps the skills that reach from that distance and steps in for them.
+- **Skills the class has and the build doesn't list** (see step 1). Escapes and speed skills go in `move` (used when it flees, and by `outrun` and the jump away from a melee), stuns and slows around it in `peel`, toggles in `toggle`. Mind the order of the lists in a build: `xsd/FakePlayerPvp.xsd` fixes it, and a build that breaks it isn't loaded.
 - **A follow-up skill that only exists in a combo.** If it needs a debuff the first skill puts on (Soul Vortex Extinction), put it in the attack list too: its own condition keeps it off targets without the debuff.
 
 Lessons about the process, from the same case:
@@ -150,7 +152,7 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 |---|---|---|
 | The land chance the scorer assumes is the skill's base rate (80% for Voice Bind), far from what lands (10%) | Soul Hound: Voice Bind 10%, Shadow Bind 10%, Death Mark 22%, Surrender to Dark 24% over thousands of tries | `FightRead.landChance`: start from the server's formula without the roll (level difference, the target's stat and resists), blurred by the fake player's knowledge |
 | The list floor (`LIST_RANK_FACTOR`) lifts plain damage skills whose estimate is exact | Abyssal Blaze (power 46) valued like a skill of power 90 | Apply the floor only to skills with effects the estimate can't see (damage over time, curses, prophecies) |
-| A mage faster than the melee on it doesn't use its speed | Done for the Soul Hounds behind the build attribute `outrun` (tanks 82% → 94%, no change against melee, who have gap closers). Other fast casters and archers stand in the same way | Try `outrun="true"` on the build in its own clinic; an archer needs its own version (it shoots while it moves away) |
+| A mage faster than the melee on it doesn't use its speed | Done for the Soul Hounds behind the build attribute `outrun` (tanks 82% → 94%; against melee, who have gap closers, it took the class's own escapes in the `move` list to gain). Other fast casters and archers stand in the same way | Try `outrun="true"` on the build in its own clinic; an archer needs its own version (it shoots while it moves away) |
 | Painkiller-type invincibility that ends on any action is cast and broken by the next cast | Cast in 241 fights, 10% won; the enemy waited 1 to 2 s | After casting it: move out of reach (melee) or wait while the enemy's burst buffs run, instead of casting |
 | Buff steals do nothing against fake players | `StealAbnormal` only works on a player: Steal Divinity is never worth a cast in a simulation | Let it work on fake players, then value it by what it would take |
 
@@ -158,4 +160,4 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 
 | Build | Case file | Before | After | Date |
 |---|---|---|---|---|
-| Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | 64.6% (+14.0, 95% +10.1 to +18.0): tank 94, melee 67, dagger 92, archer 55, nuker 36, healer 53, buffer 78 | 2026-11-12 |
+| Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | 70.1% (+19.5, 95% +15.6 to +23.4): tank 98, melee 80, dagger 94, archer 57, nuker 40, healer 51, buffer 80 | 2026-11-12 |
