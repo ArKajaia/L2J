@@ -486,6 +486,30 @@ def print_build(db, trees, build, level, note=None):
             if unlearned:
                 print("      not learned at %d: %s" % (level, ", ".join(unlearned)))
 
+    # What the class learns and the build never uses: often a missed tool (a second blink, a speed buff, an area slow).
+    used = set(skill_id for _, skill_id, _, _ in shown)
+    for _, groups in build["categories"]:
+        for group in groups:
+            used.update(group)
+    for _, steps in build["combos"]:
+        for step in steps:
+            used.update(int(x) for x in step.get("skill", "0").split("|"))
+    own = set()
+    for cid in class_chain(trees, class_id):
+        own.update(skill_id for skill_id, skill_level, _ in trees[cid][1] if skill_level < 100)
+    unused = []
+    for skill_id in sorted(own - used):
+        have = learned.get(skill_id, (0, 999))[0]
+        skill = db.get(skill_id)
+        if have and skill and (skill.get("operateType", have, "") or "").upper()[:1] in ("A", "T"):
+            unused.append((skill_id, have))
+    if unused:
+        print()
+        print("LEARNED BUT NOT IN THE BUILD (active skills and toggles of the class at this level that no list or combo uses)")
+        for skill_id, have in unused:
+            for line in card(db, skill_id, have, 2):
+                print(line)
+
     notes = build_notes(db, shown, level)
     if notes:
         print()

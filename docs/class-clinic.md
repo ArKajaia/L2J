@@ -17,6 +17,7 @@ It is for the **micro of one class** in a duel: which skill, when, from where. P
 ### 1. Know the class
 
 - `python3 tools/simulation/skill_cards.py "<Build>"`: every skill of the build with its cast time, reuse, range, power, land rate and effects, its combos, and notes on weak or overlapping skills. Read the effects: they hold what the name doesn't say (Curse of Divinity does +30% damage per buff on the target; Final Form is a melee form; Painkiller ends on any action).
+- **Its last section, "LEARNED BUT NOT IN THE BUILD", lists the active skills the class has and the build never uses. Go through every one.** The Soul Hound's build was missing its second blink (Warp), a speed buff, a speed toggle and an area slow that paralyzes (Lightning Shock); adding them was worth 10 points against melee. The report can't show a skill the build doesn't know about.
 - How good players play it in retail High Five: search as `CLAUDE.md` says ("Research before changing game content") and write down five to ten lines: what it opens with, what it does against a fighter, an archer, a mage, a healer, and which skills define it. This is the yardstick the logs are held against.
 - The build itself: its `<build>` in `dist/game/data/FakePlayerPvp.xml` (skill lists in order of preference, combos, peel, emergency, role, gear kit, buff list).
 
@@ -78,7 +79,7 @@ python3 tools/simulation/class_clinic.py compare <baseline folder> <new folder>
 `compare` gives the change per kind of opponent with its 95% interval, per opponent, and how the skill use moved. Rules:
 
 - A kind is **better** only when the interval of its difference is above zero, **worse** when it is below. Anything else is "no clear change", however good the number looks.
-- A batch is kept when the overall difference is clearly better and no kind is clearly worse. A batch that changes nothing is taken out again, not left in "because it can't hurt".
+- A batch is kept when the overall difference is clearly better and no kind is clearly worse. A batch that changes nothing is taken out again, not left in "because it can't hurt". The one exception: a change whose own measure moved as meant (the skill is cast, the damage taken fell) and no kind clearly worse may stay, with that written in the case file.
 - Check in "Skill use" that the change did what you meant (the skill you promoted is cast more, the one you removed is gone). A win rate that moved for another reason is luck.
 - How small a change a run can show, at 30 battles per opponent (a 95% interval of about plus or minus this many points):
 
@@ -109,6 +110,21 @@ Then read the new report like the first one and go round again. Stop when the ki
 - `docs/class-balance-85.md` if you found a balance problem.
 - Commit (the code, the data and the case file together) and push.
 
+## Where a behaviour comes from in the code
+
+A decision in a timeline (`decides KITE_STEP OUTRUN`, `scores Aura Blast`) is a `trace(Reason..., kind)` call: search `FakePlayerPvpAI.java` for the reason and the kind to find the line that made it. Everything a fake player does in a fight starts in `thinkAttack`, which tries these in order and stops at the first that acts:
+
+1. Reflexes to what just happened (`runReflex`: an enemy cast, a gap closer, its HP crashing; this is where the `emergency` skills are cast in a PvP).
+2. Looking after itself: `castCleanse`, a quick heal, its `buff` list (`castOnSelf`), the `transform` skill.
+3. The enemy's defensive buffs (`getKnownDefenses`, `holdOff`).
+4. Keeping away: `outrun`, an archer's kite (`archerKiteStep`), the pressed block (`jumpAway`, then `pickPeel` over the `peel` list), the kite step (`kiteStep`).
+5. Closing in, for melee: the `move` and `rush` lists.
+6. Its combos (`playCombo`, `isComboReady`).
+7. A skill by value (`useScoredSkill` → `scoredOptions` → `addScoredOptions` with `estimateDamage` and `isWorthCasting`, scored by `ai/fight/SkillScorer`), or by chance for a fight without a fight read (`pickSkill`).
+8. Where a mage stands between casts, and the normal attack for everyone else.
+
+The build's lists are read through `profile.getSkills(SkillCategory...)`; the build attributes are in `FakePlayerPvpBuild` and parsed in `FakePlayerPvpData`. `FakePlayerPvpAIExperimental.java` (brain B) has the same methods with the same text in nearly all of these places: make the change in `FakePlayerPvpAI.java`, then make the identical change in the other file, and build. The clinic runs brain A only, so brain B's copy is compiled but not measured.
+
 ## What the report's numbers mean
 
 | Number | Meaning |
@@ -134,7 +150,8 @@ Faults of one class that other classes may share. Check for them first.
 - **The order of the attack list.** A skill is worth at least its place in the list allows (`LIST_RANK_FACTOR`), so a weak skill listed early is cast a lot. Order the list by "Per cast second" from the report, not by habit.
 - **Damage the estimate doesn't see.** `estimateDamage` knows power, M. Atk and P. Atk. A skill whose effect multiplies its damage (by the target's buffs, by its HP, by souls) is undervalued until the estimate learns its effect.
 - **Debuffs that don't fit the target.** A silence on a warrior, a root on an archer. Combos take `mageTarget="true"` and `disabledTarget="true"` on a step; `isWastedSilence` covers pure silences (kept for a tank under a defensive stance and anyone casting a spell).
-- **Standing just outside a skill's reach.** A mage holds 600 from its target, which leaves it at about 660 to 675: its skills with a reach of 600 are "out of reach" and it falls back on whatever reaches. The build attribute `range` moves where it stands.
+- **Standing just outside a skill's reach.** A mage holds 600 from its target, which leaves it at about 660 to 675: its skills with a reach of 600 are "out of reach" and it falls back on whatever reaches. With the build attribute `range` it keeps the skills that reach from that distance and steps in for them.
+- **Skills the class has and the build doesn't list** (see step 1). Escapes and speed skills go in `move` (used when it flees, and by `outrun` and the jump away from a melee), stuns and slows around it in `peel`, toggles in `toggle`. Mind the order of the lists in a build: `xsd/FakePlayerPvp.xsd` fixes it, and a build that breaks it isn't loaded.
 - **A follow-up skill that only exists in a combo.** If it needs a debuff the first skill puts on (Soul Vortex Extinction), put it in the attack list too: its own condition keeps it off targets without the debuff.
 
 - **Short buffs on a long reuse cast on the way in.** The buff list casts every buff that is off at once: a 10 s Dodge or Counterattack (75 s reuse) ran out as the fight started, cast 860 from the target. The report's skill table doesn't show it; the gap at cast does (see the daggers' case).
@@ -159,7 +176,7 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 |---|---|---|
 | The land chance the scorer assumes is the skill's base rate (80% for Voice Bind), far from what lands (10%) | Soul Hound: Voice Bind 10%, Shadow Bind 10%, Death Mark 22%, Surrender to Dark 24% over thousands of tries | `FightRead.landChance`: start from the server's formula without the roll (level difference, the target's stat and resists), blurred by the fake player's knowledge |
 | The list floor (`LIST_RANK_FACTOR`) lifts plain damage skills whose estimate is exact | Abyssal Blaze (power 46) valued like a skill of power 90 | Apply the floor only to skills with effects the estimate can't see (damage over time, curses, prophecies) |
-| A mage faster than the melee on it doesn't use its speed | Done for the Soul Hounds behind the build attribute `outrun` (tanks 82% → 94%, no change against melee, who have gap closers). Other fast casters and archers stand in the same way | Try `outrun="true"` on the build in its own clinic; an archer needs its own version (it shoots while it moves away) |
+| A mage faster than the melee on it doesn't use its speed | Done for the Soul Hounds behind the build attribute `outrun` (tanks 82% → 94%; against melee, who have gap closers, it took the class's own escapes in the `move` list to gain). Other fast casters and archers stand in the same way | Try `outrun="true"` on the build in its own clinic; an archer needs its own version (it shoots while it moves away) |
 | Painkiller-type invincibility that ends on any action is cast and broken by the next cast | Cast in 241 fights, 10% won; the enemy waited 1 to 2 s | After casting it: move out of reach (melee) or wait while the enemy's burst buffs run, instead of casting |
 | Short self buffs on a long reuse are cast on the way in | Done for daggers (Dodge, Counterattack: cast with a fighter in reach, never against a mage). Doombringer's Eye for Eye is cast 1 s before contact; Enlightenment (20 s, 10 min) by every mage at the start | The same rule by abnormal type for every build (COUNTER_SKILL, AVOID_SKILL first), with a guard |
 | Ultimate Evasion and the like as an HP-crash reflex against a mage | 0.4 casts a battle against nukers; its evasion does nothing against spells | The reflex leaves an evasion buff aside against a target that fights with magic |
@@ -169,5 +186,4 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 
 | Build | Case file | Before | After | Date |
 |---|---|---|---|---|
-| Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | 64.6% (+14.0, 95% +10.1 to +18.0): tank 94, melee 67, dagger 92, archer 55, nuker 36, healer 53, buffer 78 | 2026-11-12 |
-| Wind Rider, Ghost Hunter, Adventurer | `docs/class-clinic/daggers.md` | 37.9%, 40.9%, 40.8% | 46.8% (+8.9, 95% +4.9 to +12.9), 54.4% (+13.4, +9.4 to +17.4), 43.1% (+2.3, −1.7 to +6.3, no clear change) | 2026-11-12 |
+| Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | 70.1% (+19.5, 95% +15.6 to +23.4): tank 98, melee 80, dagger 94, archer 57, nuker 40, healer 51, buffer 80 | 2026-11-12 |

@@ -1065,12 +1065,12 @@
 		<variant name="Doombringer Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" range="500" outrun="true" weight="2"> <!-- Kamael, male -->
-		<attack>1469,1513,1554,1516,1512,1439,1436,1438,1433,1434,1431,939,505,504,478</attack> <!-- Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain, then the weak ones (Abyssal Blaze, Fallen Arrow: a quarter of a Soul of Pain at 85) -->
+		<attack>1469,1513,1554,1555,1516,1512,1439,1436,1438,1433,1434,1431,939,505,504,478</attack> <!-- Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain, then the weak ones (Abyssal Blaze, Fallen Arrow: a quarter of a Soul of Pain at 85) -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
-		<toggle>481,480</toggle>
-		<peel>1448,1446,1447</peel> <!-- Blink stuns around it and jumps back -->
+		<toggle>481,480,479</toggle> <!-- Dark Armor, Dark Blade, Hard March (+20 Speed) -->
+		<peel>1448,791,1446,1447</peel> <!-- Blink stuns around it and jumps back; Lightning Shock halves the Speed of those around it, then paralyzes them -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
 		<combo name="Soul vortex" pvp="true">
@@ -1088,12 +1088,13 @@
 		<variant name="Male Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" range="500" outrun="true" weight="2"> <!-- Kamael, female -->
-		<attack>1469,1513,1554,1516,1512,1439,1436,1438,1433,1434,1431,939,505,504,478</attack> <!-- Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain, then the weak ones (Abyssal Blaze, Fallen Arrow: a quarter of a Soul of Pain at 85) -->
+		<attack>1469,1513,1554,1555,1516,1512,1439,1436,1438,1433,1434,1431,939,505,504,478</attack> <!-- Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain, then the weak ones (Abyssal Blaze, Fallen Arrow: a quarter of a Soul of Pain at 85) -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
-		<toggle>481,480</toggle>
-		<peel>1448,1446,1447</peel> <!-- Blink stuns around it and jumps back -->
+		<toggle>481,480,479</toggle> <!-- Dark Armor, Dark Blade, Hard March (+20 Speed) -->
+		<move>628,622</move> <!-- Warp (a jump of 500 the way it faces, every 10 s) and Ultimate Escape (+66 Speed for 20 s): to get away from a melee it runs from (outrun) or flees -->
+		<peel>1448,791,1446,1447</peel> <!-- Blink stuns around it and jumps back; Lightning Shock halves the Speed of those around it, then paralyzes them -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
 		<combo name="Soul vortex" pvp="true">
