@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
@@ -361,12 +362,33 @@ final class FakePlayerPvpOraclesWarchiefs
 			return false;
 		}
 		
+		// Nor up to one that comes to it anyway (a melee: the totem goes down where it stands when the melee arrives) or that runs from it (an archer). Against those it walked into a dagger's reach and chased archers for a
+		// fifth of the fight (docs/class-clinic/flame-warchief.md); a caster standing at range is still worth the walk.
+		if (FakePlayerPvpManager.isPvpEnemy(target) && !standsAndCasts(target))
+		{
+			return false;
+		}
+		
 		if (!hasRoomFor(npc, Kind.FLAME))
 		{
 			return false;
 		}
 		
 		return !isBurning(npc, target);
+	}
+	
+	/**
+	 * @param target a player or roaming fake player
+	 * @return {@code true} for one that fights from range with its spells (a mage, healer or buffer): a fake player of role MAGE, a player of a mystic class
+	 */
+	private static boolean standsAndCasts(Creature target)
+	{
+		final FakePlayerPvpProfile profile = target.isNpc() ? target.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		if (profile != null)
+		{
+			return profile.getRole() == Role.MAGE;
+		}
+		return target.isPlayer() && target.asPlayer().isMageClass();
 	}
 	
 	/**
