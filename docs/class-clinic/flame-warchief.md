@@ -76,7 +76,7 @@ Asked for: the Totem of Flames has more in it than the AI got out of it. Measure
 
 What they show: the fire was there (Flames damage 5,692 → 7,715 a battle in batch 9, burns against melee 12 → 22 a battle), but every way of staying in it gave the melee more time on the Warchief than the fire paid back: a melee does about 800 a second to a Warchief that doesn't move away, the fire about 200 (two stacked, 300). Kiting away from the totem was worth more than the burns it cost. Spirit Trance from the buff list also went off at low HP against archers and nukers, paralyzed (disabled 10% → 19% of an archer fight).
 
-The trade depends on tuning, not on the AI: `dist/game/config/Custom/OraclesWarchiefs.ini` documents defaults of FlameTotemRange 400 and FlameTotemPulse 1667 (a burn 20% more often) and runs 350 and 2000. With those, or a stronger burn, holding the fire (the code of batch 9 is in this file's history) may pay; a balance question for `docs/class-balance-85.md`.
+The trade depends on tuning, not on the AI: `dist/game/config/Custom/OraclesWarchiefs.ini` documents defaults of FlameTotemRange 400 and FlameTotemPulse 1667 (a burn 20% more often) and runs 350 and 2000. With those, or a stronger burn, holding the fire may pay; a balance question for `docs/class-balance-85.md`. The code of batches 7 to 9 was not committed: `getHeldFire` (a Totem of Flames within FlameTotemRange - 50 of the Warchief, not about to fall, against a melee that isn't an archer or caster), a `kiteStep` that arcs 200 round that totem instead, stacking Flames while it holds one, and Spirit Trance in the fire below 75% HP.
 
 ## 5. Not fixed here, and next
 
