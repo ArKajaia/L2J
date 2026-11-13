@@ -1,6 +1,6 @@
 # Class clinic: the archers (Ghost Sentinel, Moonlight Sentinel)
 
-Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds (1,170 a run). The four archers (Sagittarius, Moonlight Sentinel, Ghost Sentinel, Trickster) share their AI (role ARCHER). The two weakest of the old matrix, the Ghost Sentinel and the Moonlight Sentinel, were run for every batch; the changes are in the role's code, so the Sagittarius and Trickster get them too, unmeasured.
+Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds (1,170 a run). The four archers (Sagittarius, Moonlight Sentinel, Ghost Sentinel, Trickster) share their AI (role ARCHER). The two weakest of the old matrix, the Ghost Sentinel and the Moonlight Sentinel, were run for every batch; the changes are in the role's code, so the Sagittarius and Trickster get them too; the Sagittarius was run afterwards with Snipe (section 4), the Trickster not.
 
 The question asked: archers should play differently by their range keystone (Far Shot: more damage from far, so stand far; Point Blank: the reverse), and should use few skills, their normal attack being worth more.
 
@@ -95,15 +95,28 @@ Hamstring Shot 0.02 → 0.93 and 0.04 → 1.04 casts a battle, 0 to 4% aborted. 
 
 The Ghost Sentinels that took Point Blank won 47.5% (219 fights), Far Shot 54.4%. Point Blank's step in didn't get it close: against nukers its arrows still flew from a median 688 (factor 0.86), against archers from 844 (0.76); a mage keeps its distance, and nobody fights an archer at 250 but a melee, against whom the arrows already came from about 200 (factor 1.11). It also took the place of other keystones in the tree: Unwavering Stance went from 852 fights to 427. The Point Blank step stays in the code: it does nothing until an archer has the keystone, a player's tree included if a fake player ever copies one.
 
+### Sagittarius (Hawkeye line): Snipe
+
+The Sagittarius got batches 1 and 2 like the others. Run on that code as its baseline (`matrix-20261113-214100`): **63.9%** (tank 78, melee 44, dagger 17, archer 70, nuker 70, healer 99, buffer 92), the best of the archers.
+
+Snipe (+199 P. Atk with a bow, critical rate ×1.2, +200 reach, no moving for 2 min, 75 s reuse) was learned and in no build. Now at the end of its `buff` list (its reuse makes it PvP-only, so it is never cast before the fight). `FakePlayerPvpAI.castOnSelf` casts an immobilizing buff (`ImmobileBuff`) only against an archer or mage by class (`isRangedClass`) within the bow's reach with no melee coming at it within 900; `dropImmobileBuff` takes it off (as a player clicks a buff away) when a melee comes at it or its target leaves its reach.
+
+| Run | tank | melee | dagger | archer | nuker | healer | buffer | all |
+|---|---|---|---|---|---|---|---|---|
+| First version `matrix-20261113-215040` | **−20.4 (−32.0 to −8.8)** | −1.4 | +6.7 | −2.2 | +6.7 | +0.6 | +3.3 | −0.2 (−4.1 to +3.7) |
+| Kept `matrix-20261113-220051` | −4.2 | +3.9 | +3.3 | +4.4 | +1.5 | +0.6 | 0 | +1.8 (−2.1 to +5.6) |
+
+The first version tested the target's weapon (`isMeleeThreat`): a tank with its spare bow out counts as ranged, so Snipe was cast 2.9 times a battle against tanks, which then took their sword and charged (463 forced drops in the run). By class, it is cast 0.44 times a battle, never against a tank or melee. **Not proven:** no kind clearly better. It stays under the clinic's exception (its own measure moved: damage per second against nukers 1,781 → 1,911, against healers 1,823 → 2,021; no kind clearly worse), but it also takes more from nukers (875 → 958 a second): it stands still. Take 313 out of the build if a later run disagrees.
+
 ## 5. Not fixed here
 
 - **Daggers** (7 to 13%) and close melee: a dagger is on the archer 55 to 61% of the fight and kills it in about 22 s. Out of the range keystone's reach.
 - **Elemental Heal** (Moonlight Sentinel): aborted most of the time, but cast by the side that is losing; not tested.
-- **Snipe** (+200 reach, +199 P. Atk, +20% critical rate for 2 min, no moving) is in no build. With a 1,000 reach, Far Shot is already full at 900; Snipe's damage would only pay against a target that can't reach it.
-- **Sagittarius and Trickster** were not run. Both get the role's changes; the Trickster's crossbow counts for the range keystones too (`PassiveMechanics.bowDamageMultiplier`), and its `debuff` list has no slow (Real Target, Death Mark, Betrayal Mark, Surrender to Dark, Soul Shock), so batch 2 doesn't reach it.
+- **Trickster** was not run. It gets the role's changes; the Trickster's crossbow counts for the range keystones too (`PassiveMechanics.bowDamageMultiplier`), and its `debuff` list has no slow (Real Target, Death Mark, Betrayal Mark, Surrender to Dark, Soul Shock), so batch 2 doesn't reach it.
 
 ## 6. Files and runs
 
-- `java/org/l2jmobius/gameserver/ai/FakePlayerPvpAI.java` and `FakePlayerPvpAIExperimental.java`: `rangeStep`, `shortensReach`, `useSlowOpener`, `isSlow`.
+- `java/org/l2jmobius/gameserver/ai/FakePlayerPvpAI.java` and `FakePlayerPvpAIExperimental.java`: `rangeStep`, `shortensReach`, `useSlowOpener`, `isSlow`, `dropImmobileBuff`, `isMeleeOnMe`, `isRangedClass`.
+- `dist/game/data/FakePlayerPvp.xml`: Snipe (313) in the Sagittarius `buff` list.
 - `tools/simulation/archer_range.py`: where the arrows are shot from, by kind of opponent and range keystone.
 - Runs in `../build/server/game/log/simulation-matrix/`: listed in each batch.

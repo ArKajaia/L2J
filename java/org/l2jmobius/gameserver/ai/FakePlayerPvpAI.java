@@ -107,6 +107,7 @@ import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
@@ -199,6 +200,10 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	/** The longest and shortest step an archer takes for its range keystone between two shots. */
 	private static final int RANGE_STEP_MAX = 250;
 	private static final int RANGE_STEP_MIN = 60;
+	/** An archer keeps an immobilizing buff (Snipe) only while no melee within this distance is after it. */
+	private static final int IMMOBILE_BUFF_THREAT = 900;
+	/** It casts an immobilizing buff only with its target within its bow's reach plus this (centre to centre). */
+	private static final int IMMOBILE_BUFF_REACH_SLACK = 30;
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
 	
@@ -1209,6 +1214,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		
 		// An archer against a melee after it shoots while the melee can't reach it before the shot is off, and otherwise steps back as soon as the last shot is off (no pause between steps), at an
 		// angle where the way straight back is blocked. So it keeps the melee near the edge of its reach instead of letting it in.
+		// An archer standing in an immobilizing buff (Snipe) takes it off (a player clicks it away) when a melee comes at it or its target leaves its reach: it has to move again.
+		if (pvp && (role == Role.ARCHER) && !bowHeld && dropImmobileBuff(npc, profile, target, distance, collision))
+		{
+			return;
+		}
+		
 		final boolean archerKite = pvp && canMove && (role == Role.ARCHER) && !bowHeld && isMeleeThreat(target);
 		if (archerKite && !npc.isAttackingNow() && ((distance - collision) < ARCHER_KITE_DISTANCE) && (safeCast < (getShotTime(npc) + CAST_MARGIN)))
 		{
@@ -5465,6 +5476,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				continue;
 			}
 			
+			// An immobilizing buff (Snipe) only against an archer or a mage (by its class, not the weapon it holds now: a tank with its spare bow out charges in a moment later), within the bow's reach, with no melee coming at it.
+			if (hasEffect(skill, "ImmobileBuff") && ((target == null) || (target == npc) || !isRangedClass(target) || (npc.calculateDistance2D(target) > (npc.getPhysicalAttackRange() + IMMOBILE_BUFF_REACH_SLACK)) || isMeleeOnMe(npc, IMMOBILE_BUFF_THREAT)))
+			{
+				continue;
+			}
+			
 			// Far Shot pays from 900: against a target that fights from range, a buff that shortens the bow's reach (Rapid Fire halves it) costs more than it gives. A melee is shot from close in anyway.
 			if (shortensReach(skill) && (PassiveMechanics.value(npc, PassiveMechanics.FAR_SHOT) > 0) && ((target == null) || (target == npc) || !isMeleeThreat(target)))
 			{
@@ -5935,6 +5952,61 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				{
 					return true;
 				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Takes off the immobilizing buff of its {@code buff} list it stands in (Snipe), when a melee is coming at it or its target is out of its reach.
+	 * @return {@code true} if it took one off
+	 */
+	private boolean dropImmobileBuff(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.BUFF))
+		{
+			if (!npc.isAffectedBySkill(skill.getId()) || !hasEffect(skill, "ImmobileBuff"))
+			{
+				continue;
+			}
+			final boolean meleeComing = isMeleeOnMe(npc, IMMOBILE_BUFF_THREAT) || (isMeleeThreat(target) && !isDisabled(target) && !target.isMovementDisabled());
+			if (!meleeComing && (distance <= (npc.getPhysicalAttackRange() + collision)) && GeoEngine.getInstance().canSeeTarget(npc, target))
+			{
+				return false;
+			}
+			npc.stopSkillEffects(SkillFinishType.REMOVED, skill.getId());
+			trace(Reason.SELF_SKILL, target, skill, meleeComing ? "DROP_IMMOBILE_MELEE" : "DROP_IMMOBILE_REACH");
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * @param target a creature
+	 * @return {@code true} for an archer or mage by class: a player of a mage class or with a bow, a fake player whose build is an archer or mage (not transformed)
+	 */
+	private static boolean isRangedClass(Creature target)
+	{
+		if (target.isPlayer())
+		{
+			return target.asPlayer().isMageClass() || (target.getPhysicalAttackRange() > 300);
+		}
+		final FakePlayerPvpProfile profile = target.isNpc() ? target.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && profile.getRole().isRanged() && !profile.isTransformed();
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param range how far it looks
+	 * @return {@code true} if an enemy that fights in melee, free to move, is after it within {@code range}
+	 */
+	private static boolean isMeleeOnMe(Attackable npc, int range)
+	{
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, range))
+		{
+			if ((enemy.getTarget() == npc) && isPvpEnemy(enemy) && !enemy.isAlikeDead() && isMeleeThreat(enemy) && !isDisabled(enemy) && !enemy.isMovementDisabled() && isValidTarget(npc, enemy))
+			{
+				return true;
 			}
 		}
 		return false;

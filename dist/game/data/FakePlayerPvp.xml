@@ -903,7 +903,7 @@
 	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,24,990,771,343,19,56</attack>
 		<debuff>354,101</debuff>
-		<buff>99,131,415,416,303</buff>
+		<buff>99,131,415,416,303,313</buff> <!-- Snipe (313): cast in a fight against a target that does not fight in melee, taken off when a melee comes (FakePlayerPvpAI.dropImmobileBuff) -->
 		<emergency>111</emergency>
 		<toggle>312,256</toggle>
 		<move>4</move>
