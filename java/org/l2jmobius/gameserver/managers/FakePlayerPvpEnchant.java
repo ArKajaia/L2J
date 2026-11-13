@@ -109,6 +109,22 @@ public class FakePlayerPvpEnchant
 	}
 	
 	/**
+	 * @return {@code true} for one of the strong fake players of the PvP spots
+	 */
+	public boolean isElite()
+	{
+		return _elite;
+	}
+	
+	/**
+	 * @return the fake player's level
+	 */
+	public int getLevel()
+	{
+		return _level;
+	}
+	
+	/**
 	 * @param item a piece of gear, {@code null} for none
 	 * @param kind what it is
 	 * @return its enchant level

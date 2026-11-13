@@ -541,7 +541,12 @@
 	<epicJewel id="16025" roles="MAGE" chance="25" minLevel="82" /> <!-- Necklace of Freya: magic reuse -5%, MP regeneration, resistances -->
 	<epicJewel id="16026" roles="MAGE" chance="8" minLevel="82" /> <!-- Blessed Necklace of Freya: the same, stronger, magic MP cost -5% -->
 
-	<!-- Buffs -->
+	<!-- Buffs: only what a player can put in a Community Board buff template (config/Custom/CommunityBoard.ini): the
+	     buffs a Champion Medal teaches (config/Custom/CustomBuffSystem.ini) that are in Player.ini SkillDurationList, at
+	     the level a medal teaches (the highest). Buffs only a class learns (Improved Magic, Dance of Berserker, Song of
+	     Wind Storm...) go in that class's own <buff> list. Player.ini allows 32 buffs and 18 songs/dances: the fighter
+	     lists hold 21-22 buffs and 14-15 songs/dances, which leaves room for the class's own buffs, and for a party with a
+	     Sword Muse and a Spectral Dancer (their partyBuff lists add Wind Storm, Purification and Berserker). -->
 	<buffs name="FIGHTER">
 		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2;1087,3</tier> <!-- Might, Shield, Wind Walk, Haste, Bless the Body/Soul, Mental Shield, Magic Barrier, Agility -->
 		<tier minLevel="20">1077,3;1242,3;1364,1;1268,4;1062,2;1397,3;1284,3;271,1;275,1;274,1;310,1;272,1;264,1;267,1;268,1;269,1;304,1;364,1;349,1;305,1</tier> <!-- Focus, Death Whisper, Eye of Pa'agrio (accuracy, fewer crits taken), Vampiric Rage, Berserker Spirit, Clarity, Chant of Revenge, Dance of the Warrior/Fury/Fire/Vampire/Inspiration, Song of Earth/Warding/Wind/Hunter/Vitality/Champion/Renewal/Vengeance -->
@@ -952,7 +957,7 @@
 	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,24,990,771,343,19,56</attack>
 		<debuff>354,101</debuff>
-		<buff>99,131,415,416,303</buff>
+		<buff>99,131,415,416,303,313</buff> <!-- Snipe (313): cast in a fight against a target that does not fight in melee, taken off when a melee comes (FakePlayerPvpAI.dropImmobileBuff) -->
 		<emergency>111</emergency>
 		<toggle>312,256</toggle>
 		<move>4</move>
@@ -1379,21 +1384,18 @@
 
 	<!-- Performers who hunt on their own (the Sword Muse and Spectral Dancer below are their party buffers): a performance
 	     and a stance always on, the finale saved for players (see config/Custom/Performers.ini). -->
-	<build name="Battle Bard" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Swordsinger line -->
-		<attack>98,3</attack> <!-- Sword Symphony, Power Strike -->
-		<debuff>102,402,437</debuff> <!-- Entangle, Arrest, Song of Silence -->
-		<buff>112,123,764</buff> <!-- Deflect Arrow, Spirit Barrier, Song of Wind Storm (its own song) -->
-		<heal>58</heal> <!-- Elemental Heal -->
-		<emergency>27508,110</emergency> <!-- Sanctuary Chorus, Ultimate Defense -->
+	<build name="Battle Bard" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Swordsinger line. docs/class-clinic/battle-bard.md -->
+		<attack>986,98</attack> <!-- Deadly Strike (power 4,640, its strongest hit), Sword Symphony. No Power Strike: 654 damage per cast second, less than its normal attack -->
+		<buff>988,913,112,305,349,266,764</buff> <!-- Battle Whisper (P. Atk +15%, crit damage +10%, Atk. Spd +10%), Deflect Magic, Deflect Arrow, Songs of Vengeance (reflect +20%), Renewal (reuse -20%), Water (evasion +3), Wind Storm (its own song) --> <!-- enchant: Arrest, the one skill of the old enchant list (102:1,402:2,437:1,110:1|110:2,58:1) still in the build -->
+		<emergency>27508</emergency> <!-- Sanctuary Chorus. No Ultimate Defense: the burst reflex cast it at full HP, then it stood rooted for 30 s -->
 		<toggle>27506</toggle> <!-- Battle Hymn: its attacks may heal it and its party -->
 		<perform>27504|27502|27500,27500</perform> <!-- Hunting: Anthem of Valor / Hymn of Renewal / Ballad of the Bulwark. PvP: Ballad of the Bulwark -->
 		<peel>402</peel> <!-- Arrest -->
 		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
-		<enchant>102:1,402:2,437:1,110:1|110:2,58:1</enchant>
-		<combo name="Song of Silence" pvp="true" chance="50">
-			<step skill="437" /> <!-- Song of Silence -->
-			<step skill="98" optional="true" /> <!-- Sword Symphony -->
-			<step skill="3" /> <!-- Power Strike -->
+		<enchant>402:2</enchant>
+		<combo name="Sword burst" pvp="true">
+			<step skill="98" /> <!-- Sword Symphony -->
+			<step skill="986" /> <!-- Deadly Strike -->
 		</combo>
 		<variant name="Battle Bard Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>

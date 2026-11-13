@@ -706,6 +706,7 @@ public class FakePlayerPvpFactory
 		profile.setElite(elite);
 		profile.setWealth(enchanter.getWealth());
 		profile.setSkillEnchants(enchanted);
+		profile.setRefine(refine);
 		profile.setEpicJewels(epicJewels.stream().map(ItemTemplate::getId).toList());
 		
 		// The top of its HP pool is its CP, which CP potions refill (see FakePlayerPvpManager#tryCpPotion).

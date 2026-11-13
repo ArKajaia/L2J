@@ -105,6 +105,7 @@ import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
@@ -112,6 +113,7 @@ import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
@@ -192,6 +194,21 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final int RELOAD_STEP_THREAT = 600;
 	private static final int RELOAD_STEP = 150;
 	private static final long SHOT_STEP_WINDOW = 1500;
+	/** An archer with Far Shot shoots from this far (from its target's centre: +30% from 900), and steps back after a shot when its target is closer than this less the slack. */
+	private static final int FAR_SHOT_HOLD = 940;
+	private static final int FAR_SHOT_SLACK = 60;
+	/** Below this reach (Rapid Fire halves it) a Far Shot archer doesn't play for range. */
+	private static final int FAR_SHOT_MIN_REACH = 750;
+	/** An archer with Point Blank shoots from this close (+22%), and steps in after a shot when its target is farther than this plus the slack. */
+	private static final int POINT_BLANK_HOLD = 250;
+	private static final int POINT_BLANK_SLACK = 100;
+	/** The longest and shortest step an archer takes for its range keystone between two shots. */
+	private static final int RANGE_STEP_MAX = 250;
+	private static final int RANGE_STEP_MIN = 60;
+	/** An archer keeps an immobilizing buff (Snipe) only while no melee within this distance is after it. */
+	private static final int IMMOBILE_BUFF_THREAT = 900;
+	/** It casts an immobilizing buff only with its target within its bow's reach plus this (centre to centre). */
+	private static final int IMMOBILE_BUFF_REACH_SLACK = 30;
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
 	
@@ -380,6 +397,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	// #21: when it last shot (an arrow or a skill on an enemy), and whether it stepped aside since.
 	private long _lastShotTime = 0;
 	private boolean _shotStepped = true;
+	/** An archer's step for its range keystone (Far Shot, Point Blank) is taken once a shot. */
+	private boolean _rangeStepped = false;
 	// #25: the enemy it holds for its tank on, and since when.
 	private Creature _holdTarget;
 	private long _holdSince;
@@ -1171,6 +1190,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		
 		// An archer against a melee after it shoots while the melee can't reach it before the shot is off, and otherwise steps back as soon as the last shot is off (no pause between steps), at an
 		// angle where the way straight back is blocked. So it keeps the melee near the edge of its reach instead of letting it in.
+		// An archer standing in an immobilizing buff (Snipe) takes it off (a player clicks it away) when a melee comes at it or its target leaves its reach: it has to move again.
+		if (pvp && (role == Role.ARCHER) && !bowHeld && dropImmobileBuff(npc, profile, target, distance, collision))
+		{
+			return;
+		}
+		
 		final boolean archerKite = pvp && canMove && (role == Role.ARCHER) && !bowHeld && isMeleeThreat(target);
 		if (archerKite && !npc.isAttackingNow() && ((distance - collision) < ARCHER_KITE_DISTANCE) && (safeCast < (getShotTime(npc) + CAST_MARGIN)))
 		{
@@ -1287,6 +1312,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 		
+		// An archer opens on a melee walking at it with a slow (Hamstring Shot) while the melee is still too far to stop the cast: slowed, it can be kept at the edge of the bow's reach.
+		if (pvp && (role == Role.ARCHER) && !bowHeld && (_combo == null) && useSlowOpener(npc, profile, target, distance, collision, safeCast))
+		{
+			trace(Reason.CAST, target, npc.getLastSkillCast(), "SLOW_OPENER");
+			return;
+		}
+		
 		// #29: an archer in a PvP shoots plain arrows while they land, buffed archers deal most of their damage that way; its skills are for a target its arrows miss (peeling with Stun Shot is above, in the step back).
 		final boolean arrowsFirst = pvp && (role == Role.ARCHER) && (getHitChance(npc, target) >= ARCHER_ARROW_HIT_CHANCE);
 
@@ -1384,6 +1416,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 					moveToPawn(target, range);
 				}
 			}
+			return;
+		}
+
+		// An archer with a range keystone shoots from where it pays (Far Shot from afar, Point Blank from close in): a step after a shot, in the bow's reuse.
+		if (pvp && canMove && ((role == Role.ARCHER) || bowHeld) && (_combo == null) && !npc.isAttackingNow() && !_rangeStepped && rangeStep(npc, target, collision, range, now))
+		{
 			return;
 		}
 
@@ -5114,6 +5152,18 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				continue;
 			}
 			
+			// An immobilizing buff (Snipe) only against an archer or a mage (by its class, not the weapon it holds now: a tank with its spare bow out charges in a moment later), within the bow's reach, with no melee coming at it.
+			if (hasEffect(skill, "ImmobileBuff") && ((target == null) || (target == npc) || !isRangedClass(target) || (npc.calculateDistance2D(target) > (npc.getPhysicalAttackRange() + IMMOBILE_BUFF_REACH_SLACK)) || isMeleeOnMe(npc, IMMOBILE_BUFF_THREAT)))
+			{
+				continue;
+			}
+			
+			// Far Shot pays from 900: against a target that fights from range, a buff that shortens the bow's reach (Rapid Fire halves it) costs more than it gives. A melee is shot from close in anyway.
+			if (shortensReach(skill) && (PassiveMechanics.value(npc, PassiveMechanics.FAR_SHOT) > 0) && ((target == null) || (target == npc) || !isMeleeThreat(target)))
+			{
+				continue;
+			}
+
 			// A dagger's short answer to physical skills (Dodge, Counterattack: 10 s on a 75 s reuse) waits for a fighter in reach: cast on the way in it runs out as the fight starts, and a mage's spells go through it.
 			if (isAnswerToPhysicalSkills(skill) && isAssassin(npc) && !isPhysicalThreatNear(npc, target))
 			{
@@ -5443,12 +5493,245 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 
 	/**
+	 * An archer with Far Shot or Point Blank (passive tree) steps to where its arrows deal the most, once after each shot: Far Shot back to {@link #FAR_SHOT_HOLD} from a target that isn't a melee coming at
+	 * it (against those the kite rules decide), Point Blank in to {@link #POINT_BLANK_HOLD} of one that doesn't fight in melee. The bonus runs from -30% to +30% between 150 and 900
+	 * ({@link PassiveMechanics#bowDamageMultiplier}).
+	 * @param npc the archer
+	 * @param target its target, within its bow's reach
+	 * @param collision both collision radii
+	 * @param range its bow's reach
+	 * @param now the current time
+	 * @return {@code true} if it started a step
+	 */
+	private boolean rangeStep(Attackable npc, Creature target, double collision, int range, long now)
+	{
+		final boolean farShot = PassiveMechanics.value(npc, PassiveMechanics.FAR_SHOT) > 0;
+		final boolean pointBlank = !farShot && (PassiveMechanics.value(npc, PassiveMechanics.POINT_BLANK) > 0);
+		if (!farShot && !pointBlank)
+		{
+			return false;
+		}
+
+		final boolean melee = isMeleeThreat(target);
+		final boolean meleeFree = melee && !isDisabled(target) && !target.isMovementDisabled();
+		final double distance = npc.calculateDistance3D(target);
+		final int reach = (int) (range + collision);
+		// Only as far as it walks before the bow is ready again: a step that costs a shot gives back less than the range wins.
+		final long ready = (_lastShotTime + npc.calculateTimeBetweenAttacks() + npc.calculateReuseTime(npc.getActiveWeaponItem())) - now;
+		final double freeWalk = (npc.getMoveSpeed() * ready) / 1000.0;
+		Location point;
+		if (farShot)
+		{
+			final int hold = Math.min(FAR_SHOT_HOLD, reach - 40);
+			if (meleeFree || (reach < FAR_SHOT_MIN_REACH) || (distance >= (hold - FAR_SHOT_SLACK)))
+			{
+				return false;
+			}
+			_rangeStepped = true;
+			final int step = (int) Math.min(Math.min(RANGE_STEP_MAX, hold - distance), freeWalk);
+			if (step < RANGE_STEP_MIN)
+			{
+				return false;
+			}
+			point = pickRetreat(npc, target, step, target, reach - 40, null);
+			if (point == null)
+			{
+				return false;
+			}
+			trace(Reason.KITE_STEP, target, null, "FAR_SHOT");
+		}
+		else
+		{
+			// Point Blank: in towards a target that doesn't fight in melee (a melee comes on its own, and the kite rules keep it about there).
+			if (melee || (distance <= (POINT_BLANK_HOLD + POINT_BLANK_SLACK)))
+			{
+				return false;
+			}
+			_rangeStepped = true;
+			final double step = Math.min(Math.min(RANGE_STEP_MAX, distance - POINT_BLANK_HOLD), freeWalk);
+			if (step < RANGE_STEP_MIN)
+			{
+				return false;
+			}
+			final double ratio = step / Math.max(1, npc.calculateDistance2D(target));
+			final int x = npc.getX() + (int) ((target.getX() - npc.getX()) * ratio);
+			final int y = npc.getY() + (int) ((target.getY() - npc.getY()) * ratio);
+			point = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());
+			if ((npc.calculateDistance2D(point) < (RANGE_STEP_MIN / 2)) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), point.getX(), point.getY(), point.getZ(), npc.getInstanceId()))
+			{
+				return false;
+			}
+			trace(Reason.KITE_STEP, target, null, "POINT_BLANK");
+		}
+
+		npc.setRunning();
+		moveTo(point.getX(), point.getY(), point.getZ());
+		_kiteEndTime = now + Math.min(1000, (long) ((npc.calculateDistance2D(point) * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+		return true;
+	}
+
+	/**
+	 * An archer's slow on a melee coming at it, cast from beyond {@link #ARCHER_KITE_DISTANCE} while the melee can't reach it before the cast is off.
+	 * @param npc the archer
+	 * @param profile its profile
+	 * @param target its target
+	 * @param distance the distance to it
+	 * @param collision both collision radii
+	 * @param safeCast how long it may cast before the melee reaches it
+	 * @return {@code true} if it cast one
+	 */
+	private boolean useSlowOpener(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision, long safeCast)
+	{
+		if ((target.getTarget() != npc) || !isMeleeThreat(target) || isDisabled(target) || target.isMovementDisabled() || ((distance - collision) < ARCHER_KITE_DISTANCE))
+		{
+			return false;
+		}
+		for (SkillCategory category : new SkillCategory[]
+		{
+			SkillCategory.DEBUFF,
+			SkillCategory.PEEL
+		})
+		{
+			for (Skill skill : profile.getSkills(category))
+			{
+				if (!isSlow(skill) || target.isAffectedBySkill(skill.getId()) || ((getCastTime(npc, skill) + CAST_MARGIN) >= safeCast) || ((skill.getCastRange() + collision) < distance) || !canCast(npc, skill, target))
+				{
+					continue;
+				}
+				return useSkill(npc, target, skill, distance, collision, false);
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if it multiplies its target's speed by less than 1 (Hamstring Shot, Entangle)
+	 */
+	private static boolean isSlow(Skill skill)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects == null)
+		{
+			return false;
+		}
+		for (AbstractEffect effect : effects)
+		{
+			final List<FuncTemplate> funcs = effect.getFuncTemplates();
+			if (funcs == null)
+			{
+				continue;
+			}
+			for (FuncTemplate func : funcs)
+			{
+				if ((func.getStat() == Stat.MOVE_SPEED) && func.isMultiplier() && (func.getValue() < 1))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Takes off the immobilizing buff of its {@code buff} list it stands in (Snipe), when a melee is coming at it or its target is out of its reach.
+	 * @return {@code true} if it took one off
+	 */
+	private boolean dropImmobileBuff(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.BUFF))
+		{
+			if (!npc.isAffectedBySkill(skill.getId()) || !hasEffect(skill, "ImmobileBuff"))
+			{
+				continue;
+			}
+			final boolean meleeComing = isMeleeOnMe(npc, IMMOBILE_BUFF_THREAT) || (isMeleeThreat(target) && !isDisabled(target) && !target.isMovementDisabled());
+			if (!meleeComing && (distance <= (npc.getPhysicalAttackRange() + collision)) && GeoEngine.getInstance().canSeeTarget(npc, target))
+			{
+				return false;
+			}
+			npc.stopSkillEffects(SkillFinishType.REMOVED, skill.getId());
+			trace(Reason.SELF_SKILL, target, skill, meleeComing ? "DROP_IMMOBILE_MELEE" : "DROP_IMMOBILE_REACH");
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * @param target a creature
+	 * @return {@code true} for an archer or mage by class: a player of a mage class or with a bow, a fake player whose build is an archer or mage (not transformed)
+	 */
+	private static boolean isRangedClass(Creature target)
+	{
+		if (target.isPlayer())
+		{
+			return target.asPlayer().isMageClass() || (target.getPhysicalAttackRange() > 300);
+		}
+		final FakePlayerPvpProfile profile = target.isNpc() ? target.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && profile.getRole().isRanged() && !profile.isTransformed();
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param range how far it looks
+	 * @return {@code true} if an enemy that fights in melee, free to move, is after it within {@code range}
+	 */
+	private static boolean isMeleeOnMe(Attackable npc, int range)
+	{
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, range))
+		{
+			if ((enemy.getTarget() == npc) && isPvpEnemy(enemy) && !enemy.isAlikeDead() && isMeleeThreat(enemy) && !isDisabled(enemy) && !enemy.isMovementDisabled() && isValidTarget(npc, enemy))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if it multiplies its user's attack range by less than 1 (Rapid Fire halves it)
+	 */
+	private static boolean shortensReach(Skill skill)
+	{
+		for (EffectScope scope : new EffectScope[]
+		{
+			EffectScope.GENERAL,
+			EffectScope.SELF
+		})
+		{
+			final List<AbstractEffect> effects = skill.getEffects(scope);
+			if (effects == null)
+			{
+				continue;
+			}
+			for (AbstractEffect effect : effects)
+			{
+				final List<FuncTemplate> funcs = effect.getFuncTemplates();
+				if (funcs == null)
+				{
+					continue;
+				}
+				for (FuncTemplate func : funcs)
+				{
+					if ((func.getStat() == Stat.POWER_ATTACK_RANGE) && func.isMultiplier() && (func.getValue() < 1))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * #21: it just shot; it may step aside once before the next shot.
 	 */
 	private void markShot()
 	{
 		_lastShotTime = System.currentTimeMillis();
 		_shotStepped = false;
+		_rangeStepped = false;
 	}
 
 	/**
