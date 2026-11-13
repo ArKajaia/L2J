@@ -192,3 +192,4 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 | Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | 70.1% (+19.5, 95% +15.6 to +23.4): tank 98, melee 80, dagger 94, archer 57, nuker 40, healer 51, buffer 80 | 2026-11-12 |
 | Duelist (Gladiator line) | `docs/class-clinic/duelist.md` | 48.7% | 69.2% (+20.6, 95% +16.7 to +24.5): tank 71, melee 52, dagger 67, archer 91, nuker 60, healer 100, buffer 89 | 2026-11-12 |
 | Grand Khavatari (Tyrant line) | `docs/class-clinic/grand-khavatari.md` | 71.1% (60.3% before the Duelist's shared fixes) | 72.7% (+1.6, 95% -2.0 to +5.3, no clear change): tank 65, melee 59, dagger 86, archer 76, nuker 70, healer 99, buffer 89 | 2026-11-13 |
+| Flame Warchief (Warcryer line) | `docs/class-clinic/flame-warchief.md` | 35.5% | 38.5% (+3.1, 95% -0.8 to +7.0): tank 93, melee 23, dagger 23, archer 21, nuker 17, healer 97, buffer 56 | 2026-11-13 |
