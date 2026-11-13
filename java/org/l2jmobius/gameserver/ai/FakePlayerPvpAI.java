@@ -114,6 +114,7 @@ import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
@@ -187,6 +188,17 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static final int RELOAD_STEP_THREAT = 600;
 	private static final int RELOAD_STEP = 150;
 	private static final long SHOT_STEP_WINDOW = 1500;
+	/** An archer with Far Shot shoots from this far (from its target's centre: +30% from 900), and steps back after a shot when its target is closer than this less the slack. */
+	private static final int FAR_SHOT_HOLD = 940;
+	private static final int FAR_SHOT_SLACK = 60;
+	/** Below this reach (Rapid Fire halves it) a Far Shot archer doesn't play for range. */
+	private static final int FAR_SHOT_MIN_REACH = 750;
+	/** An archer with Point Blank shoots from this close (+22%), and steps in after a shot when its target is farther than this plus the slack. */
+	private static final int POINT_BLANK_HOLD = 250;
+	private static final int POINT_BLANK_SLACK = 100;
+	/** The longest and shortest step an archer takes for its range keystone between two shots. */
+	private static final int RANGE_STEP_MAX = 250;
+	private static final int RANGE_STEP_MIN = 60;
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
 	
@@ -375,6 +387,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	// #21: when it last shot (an arrow or a skill on an enemy), and whether it stepped aside since.
 	private long _lastShotTime = 0;
 	private boolean _shotStepped = true;
+	/** An archer's step for its range keystone (Far Shot, Point Blank) is taken once a shot. */
+	private boolean _rangeStepped = false;
 	// #25: the enemy it holds for its tank on, and since when.
 	private Creature _holdTarget;
 	private long _holdSince;
@@ -1425,6 +1439,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 					moveToPawn(target, range);
 				}
 			}
+			return;
+		}
+
+		// An archer with a range keystone shoots from where it pays (Far Shot from afar, Point Blank from close in): a step after a shot, in the bow's reuse.
+		if (pvp && canMove && ((role == Role.ARCHER) || bowHeld) && (_combo == null) && !npc.isAttackingNow() && !_rangeStepped && rangeStep(npc, target, collision, range, now))
+		{
 			return;
 		}
 
@@ -5438,6 +5458,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				continue;
 			}
 			
+			// Far Shot pays from 900: against a target that fights from range, a buff that shortens the bow's reach (Rapid Fire halves it) costs more than it gives. A melee is shot from close in anyway.
+			if (shortensReach(skill) && (PassiveMechanics.value(npc, PassiveMechanics.FAR_SHOT) > 0) && ((target == null) || (target == npc) || !isMeleeThreat(target)))
+			{
+				continue;
+			}
+
 			// A dagger's short answer to physical skills (Dodge, Counterattack: 10 s on a 75 s reuse) waits for a fighter in reach: cast on the way in it runs out as the fight starts, and a mage's spells go through it.
 			if (isAnswerToPhysicalSkills(skill) && isAssassin(npc) && !isPhysicalThreatNear(npc, target))
 			{
@@ -5767,12 +5793,127 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	}
 
 	/**
+	 * An archer with Far Shot or Point Blank (passive tree) steps to where its arrows deal the most, once after each shot: Far Shot back to {@link #FAR_SHOT_HOLD} from a target that isn't a melee coming at
+	 * it (against those the kite rules decide), Point Blank in to {@link #POINT_BLANK_HOLD} of one that doesn't fight in melee. The bonus runs from -30% to +30% between 150 and 900
+	 * ({@link PassiveMechanics#bowDamageMultiplier}).
+	 * @param npc the archer
+	 * @param target its target, within its bow's reach
+	 * @param collision both collision radii
+	 * @param range its bow's reach
+	 * @param now the current time
+	 * @return {@code true} if it started a step
+	 */
+	private boolean rangeStep(Attackable npc, Creature target, double collision, int range, long now)
+	{
+		final boolean farShot = PassiveMechanics.value(npc, PassiveMechanics.FAR_SHOT) > 0;
+		final boolean pointBlank = !farShot && (PassiveMechanics.value(npc, PassiveMechanics.POINT_BLANK) > 0);
+		if (!farShot && !pointBlank)
+		{
+			return false;
+		}
+
+		final boolean melee = isMeleeThreat(target);
+		final boolean meleeFree = melee && !isDisabled(target) && !target.isMovementDisabled();
+		final double distance = npc.calculateDistance3D(target);
+		final int reach = (int) (range + collision);
+		// Only as far as it walks before the bow is ready again: a step that costs a shot gives back less than the range wins.
+		final long ready = (_lastShotTime + npc.calculateTimeBetweenAttacks() + npc.calculateReuseTime(npc.getActiveWeaponItem())) - now;
+		final double freeWalk = (npc.getMoveSpeed() * ready) / 1000.0;
+		Location point;
+		if (farShot)
+		{
+			final int hold = Math.min(FAR_SHOT_HOLD, reach - 40);
+			if (meleeFree || (reach < FAR_SHOT_MIN_REACH) || (distance >= (hold - FAR_SHOT_SLACK)))
+			{
+				return false;
+			}
+			_rangeStepped = true;
+			final int step = (int) Math.min(Math.min(RANGE_STEP_MAX, hold - distance), freeWalk);
+			if (step < RANGE_STEP_MIN)
+			{
+				return false;
+			}
+			point = pickRetreat(npc, target, step, target, reach - 40, null);
+			if (point == null)
+			{
+				return false;
+			}
+			trace(Reason.KITE_STEP, target, null, "FAR_SHOT");
+		}
+		else
+		{
+			// Point Blank: in towards a target that doesn't fight in melee (a melee comes on its own, and the kite rules keep it about there).
+			if (melee || (distance <= (POINT_BLANK_HOLD + POINT_BLANK_SLACK)))
+			{
+				return false;
+			}
+			_rangeStepped = true;
+			final double step = Math.min(Math.min(RANGE_STEP_MAX, distance - POINT_BLANK_HOLD), freeWalk);
+			if (step < RANGE_STEP_MIN)
+			{
+				return false;
+			}
+			final double ratio = step / Math.max(1, npc.calculateDistance2D(target));
+			final int x = npc.getX() + (int) ((target.getX() - npc.getX()) * ratio);
+			final int y = npc.getY() + (int) ((target.getY() - npc.getY()) * ratio);
+			point = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());
+			if ((npc.calculateDistance2D(point) < (RANGE_STEP_MIN / 2)) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), point.getX(), point.getY(), point.getZ(), npc.getInstanceId()))
+			{
+				return false;
+			}
+			trace(Reason.KITE_STEP, target, null, "POINT_BLANK");
+		}
+
+		npc.setRunning();
+		moveTo(point.getX(), point.getY(), point.getZ());
+		_kiteEndTime = now + Math.min(1000, (long) ((npc.calculateDistance2D(point) * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+		return true;
+	}
+
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if it multiplies its user's attack range by less than 1 (Rapid Fire halves it)
+	 */
+	private static boolean shortensReach(Skill skill)
+	{
+		for (EffectScope scope : new EffectScope[]
+		{
+			EffectScope.GENERAL,
+			EffectScope.SELF
+		})
+		{
+			final List<AbstractEffect> effects = skill.getEffects(scope);
+			if (effects == null)
+			{
+				continue;
+			}
+			for (AbstractEffect effect : effects)
+			{
+				final List<FuncTemplate> funcs = effect.getFuncTemplates();
+				if (funcs == null)
+				{
+					continue;
+				}
+				for (FuncTemplate func : funcs)
+				{
+					if ((func.getStat() == Stat.POWER_ATTACK_RANGE) && func.isMultiplier() && (func.getValue() < 1))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * #21: it just shot; it may step aside once before the next shot.
 	 */
 	private void markShot()
 	{
 		_lastShotTime = System.currentTimeMillis();
 		_shotStepped = false;
+		_rangeStepped = false;
 	}
 
 	/**
