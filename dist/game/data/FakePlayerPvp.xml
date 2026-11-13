@@ -1387,7 +1387,7 @@
 		<emergency>27508,110</emergency> <!-- Sanctuary Chorus, Ultimate Defense -->
 		<toggle>27506</toggle> <!-- Battle Hymn: its attacks may heal it and its party -->
 		<perform>27504|27502|27500,27500</perform> <!-- Hunting: Anthem of Valor / Hymn of Renewal / Ballad of the Bulwark. PvP: Ballad of the Bulwark -->
-		<peel>102,402</peel>
+		<peel>402</peel> <!-- Arrest -->
 		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
 		<enchant>102:1,402:2,437:1,110:1|110:2,58:1</enchant>
 		<combo name="Song of Silence" pvp="true" chance="50">
