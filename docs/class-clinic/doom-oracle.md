@@ -1,6 +1,6 @@
 # Class clinic: Doom Oracle (the Prophet line)
 
-Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 1,170 battles a run.
+Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 1,170 battles a run (about 11 minutes). **Result: 59.4% → 73.2% (+13.9, 95% +10.1 to +17.7).** Clearly better against melee (55% → 68%), daggers (67% → 88%), archers (19% → 48%), nukers (50% → 63%) and healers (65% → 83%); no kind worse. Almost all of it is batch 1: Salvation kept up, Unwritten no longer wiping it, the prophecies' damage made visible to the scorer, and Mana Burn out.
 
 A custom class: its prophecies (275xx, `dist/game/config/Custom/OraclesWarchiefs.ini`) have no retail counterpart, so there was no retail play to hold the logs against; the yardstick is the prophecies' own rules, played the way a player who knows them would.
 
@@ -12,7 +12,7 @@ From `skill_cards.py "Doom Oracle"` and `Prophecies.java`. A prophecy does nothi
 - **Prophecy of Salvation** (1 s, reuse 6 s, 6 s): heals back all the damage taken while it was on (`SalvationReturn = 1`). Cast again while one is on, the old one fizzles.
 - **Prophecy of Ruin** (15 s reuse): a 3 s stun if the target cast a skill meanwhile, a silence if not. **Prophecy of Reckoning** (15 s reuse): 40% of the damage the target deals in 5 s comes back to it (at most a quarter of its max HP).
 - **Fulfilment** (5 Foresight, 20 s reuse): every prophecy of the Oracle comes true now, x1.5. **Unwritten** (5 min): a Doom on every enemy within 600 and a Salvation on every party member, itself included. **Glimpse** (toggle): a hit of 20% of its HP or more makes it step back 300.
-- Learned and not in the build: Turn to Stone (8 s of stone, invulnerable, 10 min), Mystic Immunity, Enlightenment, Spell Turning, Arcane Wisdom (−10% cast speed: no use to a fake player, which casts for free), Sleep (10 s cast), Mana Burn's cousins.
+- Learned and not in the build: Turn to Stone (8 s of stone, invulnerable, 10 min; batch 3), Enlightenment (batch 5), Mystic Immunity (party members only: the self-cast path can't use it), Spell Turning, Arcane Wisdom (−10% cast speed, −30% MP: no use to a fake player, which casts for free), Sleep (10 s cast), Vampiric Touch and the old Prophet buffs. Every cast took 0.55 s at its cast speed, so a cast speed buff adds nothing.
 
 How a player who knows it plays it (the "difficult learning curve"): keep Salvation up all fight long, so every hit comes back 6 s later; stack Doom on its 2 s reuse and fill the gaps with Ruin, Reckoning and Salvation, which also bring the Foresight for Fulfilment; Fulfil right after a Doom stack lands (the target can't have moved: x1.5 for staying put on every stack) or when a big Salvation would come too late; Reckoning on whoever is hitting it hard.
 
@@ -67,3 +67,45 @@ The idea: 8 s of stone (invulnerable) below 30% HP while a Salvation that heals 
 ### Batch 4: no step back while a Doom is about to come true (`matrix-20261113-095406`): taken out
 
 Measured first, with a script over the battle logs (the target's position when the last Doom stack landed against when Doom Strike hit, in `matrix-20261113-093018`): **81.5% of Doom Strikes got the x1.5 for a target that stayed put; 57-70% against melee, tanks and daggers**, 93-99% against archers, nukers and healers (who don't chase it). The Oracle kites (16-26% of a melee or tank fight on KITE_MOVING) and the chaser follows it out of the 300. The batch: `kiteStep` does nothing for an Oracle whose Doom on its target comes true within 1.5 s while the target still stands where the Doom found it (logged DOOM_HOLD, 2,631 times). 73.2% → 72.1% (−1.2, 95% −4.8 to +2.5), no clear change; daggers −8.9, tanks −4.2. The still share moved 81.5% → 82.5% only: a melee chasing it has already walked the 300 by the time the Doom is 1.5 s from coming true; holding longer means standing in its reach.
+
+### Batch 5: Enlightenment (`matrix-20261113-100524`): taken out
+
+Cast once a battle, at the start (+10% M. Atk. and x1.5 magic critical rate for 20 s; the cast speed part is wasted, its casts are already at the 0.55 s floor). 73.2% → 71.8% (−1.5, 95% −5.1 to +2.1), no clear change. Three batches in a row without a clear change: the clinic stops here.
+
+### Baseline to the end (`matrix-20261113-085230` → `matrix-20261113-093018`)
+
+| Against | tank | melee | dagger | archer | nuker | healer | buffer | **all** |
+|---|---|---|---|---|---|---|---|---|
+| Before | 90.8 | 55.3 | 66.7 | 19.2 | 50.0 | 65.0 | 83.3 | **59.4** |
+| After | 95.8 | 67.8 | 87.8 | 47.5 | 62.9 | 83.3 | 90.7 | **73.2** |
+| Difference (95%) | +5.0 | **+12.5** (+5.5 to +19.5) | **+21.1** (+9.3 to +33.0) | **+28.3** (+17.0 to +39.7) | **+12.9** (+4.1 to +21.7) | **+18.3** (+5.8 to +30.8) | +7.3 | **+13.9** (+10.1 to +17.7) |
+
+## 5. What was changed, where
+
+- `dist/game/data/FakePlayerPvp.xml`, the Doom Oracle: Mana Burn out of `attack`; Dryad Root out of `debuff` and the "Rooted doom" combo, kept first in `peel`; Salvation before Unwritten in `emergency`.
+- `FakePlayerPvpOraclesWarchiefs` (Oracle and Warchief skills only): Salvation kept up against a player that targets it; Unwritten never over its own Salvation (also as a reflex: `isWorthReflex`, called from the reflex options in both brains); Fulfilment on a big Salvation when low and on a 3-4 stack Doom only while the target is still in place; `estimateDamage` for Doom and Reckoning, used by `addScoredOptions` in both brains.
+- `Prophecies`: `isDoomStill` and `getSalvationDamage`, for the above.
+
+The skills it changed are also the Battle Oracle's and the Hierophant's (Salvation, Unwritten, Fulfilment, Doom, Reckoning): see the guard below.
+
+## 6. Not fixed here, and next
+
+- **Archers (48%)** are out-statted: a Sagittarius with 11,400 P. Atk. crits it for 6,000 on 13,800 HP from 1,100 away (`battles/000013-Sagittarius-vs-DoomOracle` in the batch 1 run: dead in 3 shots, 3 s after the first). Salvation is up by the second hit; there is nothing left for it to survive with. A balance question (`docs/class-balance-85.md`).
+- **Soultaker (17%) and Storm Screamer (30%)**: out-damaged at range (it takes 941-1,517 a second from them and deals about 400). One general fault seen there: the reflex STEP_BACK on ENEMY_CAST_AT_ME walks a mage out of its own reach against another mage (`battles/000083-Soultaker-vs-DoomOracle` in the batch 1 run: 574 → 862 → 1,185, then APPROACH back), and stepping back doesn't dodge a spell. General AI: under "General findings" in `docs/class-clinic.md`.
+- **Doom's x1.5 against a chaser** (57-70% of Doom Strikes still against melee, tanks and daggers): batch 4 showed the last 1.5 s don't decide it. What would: not kiting at all against a melee while Salvation heals everything back. The Flame Warchief's "fight in the fire" batches lost that trade; untried here.
+- **Grand Khavatari (33%), Titan (43%)**: 36,000 HP against its 14,000-19,000 and 5,000 P. Atk.; the fights are close (it wins on time when its Fulfilment lands on a big Doom).
+- **Turn to Stone** (batch 3) might pay if it went up earlier (below 45% HP, with its 0.8 s cast); with 0.13 casts a battle it can't move a win rate the clinic can measure.
+
+## 7. Runs
+
+| Run | Folder |
+|---|---|
+| Baseline | `matrix-20261113-085230` |
+| Batch 1 | `matrix-20261113-090629` |
+| Batch 2 (no root) | `matrix-20261113-091903` |
+| Batch 2b (root as peel), the final code | `matrix-20261113-093018` |
+| Batch 3 (Turn to Stone) | `matrix-20261113-094143` |
+| Batch 4 (Doom hold) | `matrix-20261113-095406` |
+| Batch 5 (Enlightenment) | `matrix-20261113-100524` |
+
+The script that measured Doom's x1.5 (batch 4): for each Doom Strike, the target's position (nearest sample in `positions.jsonl`) when the Oracle's last Prophecy of Doom landed on it against when the strike hit, still if under 300.
