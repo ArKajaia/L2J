@@ -2,7 +2,7 @@
 
 Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds (1,170 a run). The Trickster (classId 134) is the Kamael crossbow archer; it shares the archers' AI (role ARCHER, `docs/class-clinic/archers.md`), whose batches it already had at baseline.
 
-**Result: 54.4% → 66.2% overall after batch 1 (+11.8, 95% +7.9 to +15.8).** Batches follow below.
+**Result: 54.4% → 70.1% overall after batch 2 (batch 1 +11.8, 95% +7.9 to +15.8; batch 2 +3.8, +0.1 to +7.6).** Batches follow below.
 
 ## 1. The class
 
@@ -39,6 +39,10 @@ Casts per battle: Soul Barrier 1.7, Soul Shock 1.2 (lands 11%), Furious Soul 1.2
 | 1 | It never puts Real Target on (×1.4 on every bolt) | 1 cast in 1,170 battles; bolts are 98% of its damage | Arrows first (#29) skips combos and the debuff list while its bolts land, and the "Real target" combo was the only place that cast it | Class AI (role ARCHER, by effect) | `useWeaponWeakness`: an archer keeps on its target the debuff of its `debuff` list that lowers the target's defence against its own weapon, when it reaches and is off before a melee gets there. Effects report the factor (`AbstractEffect.getDefenceTraitFactor`, `DefenceTrait`). Batch 1 |
 | 2 | It opens with Prahnah against fighters and archers | 1.0 casts a battle against every kind, 2.7 s; aborted 100% against archers (`000326-MoonlightSentinel-vs-Trickster`: Soul Barrier and Prahnah aborted under fire, 12% HP lost before it shoots) | Nothing told `castOnSelf` that an M. Def buff is worth nothing against a player without magic | General AI (by effect) | `onlyRaisesMagicDefence`: a buff whose only effect is M. Def is skipped against a PvP target that doesn't fight with magic. Batch 1 |
 
+| 3 | Warp jumps through the melee it peels from | `000016-Duelist-vs-Trickster` (baseline): the Duelist west of it at gap 7, the Trickster facing it; after Warp it stands 500 west, on the Duelist's far side. From a gap of 200 that lands 300 behind the melee instead of 700 away | Warp's fly course is 180 ("to the front"); `useSkill` faced the target before any Blink, which is right for Blink (course 0) only | Harness / general AI | `faceToJumpAway`: face the target turned by the skill's fly course, in `useSkill` and `jumpAway`. Reaches Warp in the Judicator's `peel` too. Batch 2 |
+| 4 | Its peel opens with Soul Shock, which lands 12% | Soul Shock 0.9 to 1.2 casts a battle, landed 11 to 12%; Warp (sure, every 10 s) only after it | `<peel>627,628</peel>` | Build data | `<peel>628,627</peel>`. Batch 2 |
+| 5 | Soul Barrier against a melee | 1.4 casts a battle after batch 1, 2.3 against tanks; its effects are M. Def ×2 and a defence against bows and crossbows | Nothing checked what the buff defends against | General AI (by effect) | `defendsAgainst` replaces batch 1's `onlyRaisesMagicDefence`: a buff in a fight is skipped when every effect is M. Def against a player without magic or a defence against a weapon the player doesn't use. A resistance to a state (Courage: fear) always counts. Batch 2 |
+
 Not fixed here:
 
 - **Final Form keeps the crossbow (harness).** For a fake player the Transformation effect only applies its stats (P. Atk, P. Def, M. Atk, M. Def ×2) and swaps the skill lists (`FakePlayerPvpManager.transform`); the NPC keeps its weapon, so a transformed Trickster shoots on from 850 at twice its P. Atk. A player in Final Form fights with the form's base attack (`stats/transformations/00251.xml`: SWORD, range 20). Measured at baseline after the transform: bolt damage per second 1,896 → 2,671 against archers, 1,276 → 2,548 against nukers, 470 → 1,454 against melee; damage taken against archers 3,067 → 1,341. Casting it at the start of every fight would win more fights by leaning on a mechanic no player has, so the AI is not tuned around it. Giving the fake player the form's attack type and range is a balance change (it would weaken the Trickster and touch the hybrid Soul Hounds and the Judicator): `docs/class-balance-85.md`, not the clinic.
@@ -61,3 +65,20 @@ Not fixed here:
 Real Target 0 → 1.66 casts a battle (1% aborted), Prahnah 1.01 → 0.44 (only against magic users now). Damage dealt +18% a second.
 
 Guard: `useWeaponWeakness` reaches only a build with a debuff that lowers the defence against its own weapon (the Trickster's Real Target; no other build lists one). `onlyRaisesMagicDefence` also reaches the tanks' Anti Magic Armor (Phoenix Knight, Hell Knight, Eva's and Shillien Templar: M. Def only, 30 s, 15 min reuse), which is now kept for an opponent with magic; Spirit Barrier (20 min) is cast before the fight and is not touched. Like `isWastedSilence`, it only removes casts that do nothing to the opponent; no guard run.
+
+### Batch 2: Warp away and first, no Soul Barrier against a melee (`matrix-20261113-225308`, against batch 1)
+
+| Against | Before | After | Difference (95%) | Verdict | Damage /s dealt | Damage /s taken |
+|---|---|---|---|---|---|---|
+| **tank** | 72.5% | 68.3% | −4.2 (−15.7 to +7.4) | no clear change | 334 → 312 | 125 → 125 |
+| **melee** | 54.9% | 60.6% | +5.7 (−1.5 to +12.9) | no clear change | 646 → 718 | 319 → 321 |
+| **dagger** | 28.3% | 36.7% | +8.3 (−5.3 to +22.0) | no clear change | 488 → 641 | 821 → 875 |
+| **archer** | 22.2% | 35.6% | +13.3 (+0.2 to +26.4) | **better** | 946 → 1153 | 1910 → 1633 |
+| **nuker** | 86.3% | 88.5% | +2.2 (−3.4 to +7.8) | no clear change | 1373 → 1353 | 467 → 428 |
+| **healer** | 97.2% | 98.9% | +1.7 (−2.4 to +5.7) | no clear change | 1533 → 1486 | 16 → 14 |
+| **buffer** | 83.0% | 84.7% | +1.7 (−6.7 to +10.0) | no clear change | 602 → 633 | 159 → 158 |
+| **all** | 66.2% | 70.1% | +3.8 (+0.1 to +7.6) | **better** | 759 → 777 | 279 → 271 |
+
+Soul Barrier 1.39 → 0.92 casts a battle, Soul Shock 0.92 → 0.74. Warp (`positions.jsonl`, the gap to the target just before a Warp and 0.4 to 1 s after): median 50 → 453 at batch 1, 69 → 504 now. Against archers the gain is the walk-in: Soul Barrier is kept (it defends against bows) but no longer stands beside Prahnah and the debuffs that went before.
+
+Guard: `defendsAgainst` reaches every buff cast in a fight that is all M. Def or weapon defence: Anti Magic Armor (the four tanks), Soul Barrier (Doombringer), Song of Wind Storm (Battle Bard, Sword Muse, if sung in a fight), Deflect Arrow (a lasting buff, on before the fight, so not touched). It only removes casts that defend against nothing the opponent does; no guard run. `faceToJumpAway` changes the direction of the Judicator's peel Warp (from through the target to away from it); no guard run.

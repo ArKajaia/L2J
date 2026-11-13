@@ -2878,7 +2878,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			if (hasEffect(skill, "Blink") && canCast(npc, skill, npc))
 			{
 				clientStopMoving(null);
-				npc.setHeading(LocationUtil.calculateHeadingFrom(target, npc));
+				faceToJumpAway(npc, target, skill);
 				npc.setTarget(npc);
 				npc.doCast(skill);
 				npc.setTarget(target);
@@ -2888,6 +2888,18 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Turns so that a jump (Blink effect) takes it straight away from {@code target}: the jump goes the way it faces turned by half a circle and the skill's fly course, so Blink (course 0) faces the target and
+	 * Warp (course 180, "to the front") turns its back on it. Facing the target, a Warp from a melee at 200 landed 300 behind the melee instead of 700 away.
+	 * @param npc the one that jumps
+	 * @param target the one it gets away from
+	 * @param skill the jump
+	 */
+	private static void faceToJumpAway(Attackable npc, Creature target, Skill skill)
+	{
+		npc.setHeading((LocationUtil.calculateHeadingFrom(npc, target) - (int) ((skill.getFlyCourse() * 65536) / 360)) & 0xFFFF);
 	}
 	
 	/** Outrun: how much faster than the melee on it a caster has to be. */
@@ -4601,10 +4613,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			markShot();
 		}
 		
-		// Blink and Warp jump back from where it faces: it faces the player it gets away from.
+		// Blink and Warp jump away from the player it gets away from: Blink jumps back from where it faces, Warp forward (its fly course).
 		if (hasEffect(skill, "Blink"))
 		{
-			npc.setHeading(LocationUtil.calculateHeadingFrom(npc, target));
+			faceToJumpAway(npc, target, skill);
 		}
 		
 		npc.setTarget(target);
@@ -5160,8 +5172,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				continue;
 			}
 			
-			// A buff that only raises M. Def (Prahnah) is for a fight against magic: against an archer or a melee its cast time is all it brings.
-			if ((target != null) && (target != npc) && isPvpEnemy(target) && !castsMagic(target) && onlyRaisesMagicDefence(skill))
+			// A buff that only defends against what this opponent doesn't do costs its cast time and brings nothing: M. Def (Prahnah) against a player without magic, a defence against bows and crossbows
+			// (Soul Barrier, M. Def and bows) against a melee.
+			if ((target != null) && (target != npc) && isPvpEnemy(target) && !defendsAgainst(skill, target))
 			{
 				continue;
 			}
@@ -5696,32 +5709,54 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	
 	/**
 	 * @param skill a buff
-	 * @return {@code true} if all it does is raise M. Def (Prahnah)
+	 * @param target the player it fights
+	 * @return {@code false} for a buff whose every effect is M. Def against a player that doesn't fight with magic, or a defence against weapons the player doesn't use (Soul Barrier, Deflect Arrow against a
+	 *         melee); {@code true} for any other
 	 */
-	private static boolean onlyRaisesMagicDefence(Skill skill)
+	private static boolean defendsAgainst(Skill skill, Creature target)
 	{
 		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
 		if ((effects == null) || effects.isEmpty())
 		{
-			return false;
+			return true;
 		}
-		boolean magicDefence = false;
+		final boolean magic = castsMagic(target);
+		final TraitType weapon = target.getAttackType().getTraitType();
 		for (AbstractEffect effect : effects)
 		{
-			if (!"Buff".equals(effect.getClass().getSimpleName()) || (effect.getFuncTemplates() == null))
+			final String name = effect.getClass().getSimpleName();
+			if ("Buff".equals(name))
 			{
-				return false;
-			}
-			for (FuncTemplate func : effect.getFuncTemplates())
-			{
-				if (func.getStat() != Stat.MAGIC_DEFENCE)
+				final List<FuncTemplate> funcs = effect.getFuncTemplates();
+				if ((funcs == null) || funcs.isEmpty())
 				{
-					return false;
+					return true;
 				}
-				magicDefence = true;
+				for (FuncTemplate func : funcs)
+				{
+					if ((func.getStat() != Stat.MAGIC_DEFENCE) || magic)
+					{
+						return true;
+					}
+				}
+			}
+			else if ("DefenceTrait".equals(name))
+			{
+				for (TraitType trait : TraitType.values())
+				{
+					// A resistance to a state (Courage: fear) always counts; one to a weapon only against that weapon.
+					if ((effect.getDefenceTraitFactor(trait) != 1) && ((trait.getType() != 1) || (trait == weapon)))
+					{
+						return true;
+					}
+				}
+			}
+			else
+			{
+				return true;
 			}
 		}
-		return magicDefence;
+		return false;
 	}
 	
 	/**
