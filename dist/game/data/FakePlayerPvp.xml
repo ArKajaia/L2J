@@ -60,6 +60,9 @@
      outrun  - true for a fast caster: against a melee player on it that is clearly slower (FakePlayerPvpAI
                OUTRUN_SPEED_RATIO) and that it is losing to (its HP is the lower share), it doesn't stand and
                trade: it runs out of reach, casts while the melee walks back, and runs again.
+     caughtMain - true for a build with a caster kit (the hybrid Soul Hounds): against a melee player that is on it (within
+               120) while it has no jump ready (Blink, Warp), it fights with its main weapon instead of standing in the melee's
+               reach with the magic weapon; once a jump is ready it takes the magic weapon out again, jumps away and kites.
      Skills are lists of skill ids. The level of each skill (and whether the fake player
 	     has it at all) comes from the class skill tree for its level, like a real character.
 	     "a|b|c" means only the first learned one is used (e.g. exclusive totems).
@@ -1111,8 +1114,8 @@
 		</combo>
 		<variant name="Female Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Male Soul Hound Hybrid" classId="132" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1" range="500" outrun="true"> <!-- Kamael, male: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
-		<attack>1469,1513,1554,1555,1516,1512,1439,1436,504,505,478,1433,939</attack> <!-- As the nuker build (docs/class-clinic/female-soul-hound.md): Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain; then the rapier skills Triple Thrust, Shining Edge, Double Thrust (left out while the mace is out); then Abyssal Blaze and Soul Rage -->
+	<build name="Male Soul Hound Hybrid" classId="132" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1" range="500" outrun="true" caughtMain="true"> <!-- Kamael, male: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
+		<attack>1469,1513,1554,1555,1516,1512,1439,1436,506,504,505,478,1433</attack> <!-- As the nuker build (docs/class-clinic/female-soul-hound.md): Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain; then the rapier skills Checkmate (only on a target under Death Mark), Triple Thrust, Shining Edge, Double Thrust (left out while the mace is out); then Abyssal Blaze. No Soul Rage: 120 to 210 a cast -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
@@ -1155,8 +1158,8 @@
 		</combo>
 		<variant name="Male Soul Hound Hybrid Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Female Soul Hound Hybrid" classId="133" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1" range="500" outrun="true"> <!-- Kamael, female: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
-		<attack>1469,1513,1554,1555,1516,1512,1439,1436,504,505,478,1433,939</attack> <!-- As the nuker build (docs/class-clinic/female-soul-hound.md): Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain; then the rapier skills Triple Thrust, Shining Edge, Double Thrust (left out while the mace is out); then Abyssal Blaze and Soul Rage -->
+	<build name="Female Soul Hound Hybrid" classId="133" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1" range="500" outrun="true" caughtMain="true"> <!-- Kamael, female: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
+		<attack>1469,1513,1554,1555,1516,1512,1439,1436,506,504,505,478,1433</attack> <!-- As the nuker build (docs/class-clinic/female-soul-hound.md): Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain; then the rapier skills Checkmate (only on a target under Death Mark), Triple Thrust, Shining Edge, Double Thrust (left out while the mace is out); then Abyssal Blaze. No Soul Rage: 120 to 210 a cast -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>

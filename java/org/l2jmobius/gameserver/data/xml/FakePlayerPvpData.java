@@ -183,6 +183,7 @@ public class FakePlayerPvpData implements IXmlReader
 				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "bow", null), parseString(attrs, "polearm", null), parseString(attrs, "caster", null), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)), parseBoolean(attrs, "skillFighter", false), parseBoolean(attrs, "support", false), parseString(attrs, "keystones", null), parseBoolean(attrs, "hybrid", false), parseString(attrs, "weights", null));
 				build.setMageRange(Math.max(0, parseInteger(attrs, "range", 0)));
 				build.setOutrunner(parseBoolean(attrs, "outrun", false));
+				build.setCaughtMain(parseBoolean(attrs, "caughtMain", false));
 				final List<NamedNodeMap> variants = new ArrayList<>();
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
