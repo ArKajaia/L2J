@@ -990,16 +990,16 @@
 		<variant name="Duelist Light" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
 	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" polearm="POLEARM" weight="2" skillFighter="true" keystones="+Soul Harvest*0.5"> <!-- Soul Harvest: its normal hits charge its force; a few take it -->
-		<attack>35,17,776,346,81,284,280,54,29,3</attack>
-		<debuff>120,281,95</debuff>
+		<attack>81,776,284,54,280,346,35,17</attack> <!-- by damage per cast second: Punch of Doom, Force of Destruction, Hurricane Assault, Force Blaster (reaches 600), Burning Fist, Raging Force (charges as it hits), then the area ones -->
+		<debuff>281,95</debuff> <!-- Soul Breaker, not Stunning Fist: magic level 74 against 36, lands 14-19% at 85 against 3-12%, and power 2,411 against 152 -->
 		<buff>425|292|298|109|282|76|83,420,917</buff>
 		<emergency>443</emergency>
-		<toggle>222</toggle>
+		<toggle>222,335,424</toggle> <!-- Fury Fists, Fortitude, War Frenzy (stun resistance) -->
 		<charge>918,50</charge>
 		<rush>994</rush>
 		<cleanse>461</cleanse>
 		<combo name="Stun punch" pvp="true">
-			<step skill="120|281" /> <!-- Stunning Fist / Soul Breaker -->
+			<step skill="281" /> <!-- Soul Breaker -->
 			<step skill="81" disabledTarget="true" optional="true" /> <!-- Punch of Doom -->
 			<step skill="776" optional="true" /> <!-- Force of Destruction -->
 			<step skill="284" /> <!-- Hurricane Assault -->
