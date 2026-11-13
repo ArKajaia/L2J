@@ -120,3 +120,16 @@ Baseline `matrix-20261112-214810` against the last run `matrix-20261112-222400`,
 - **The Final Secret gap.** `EnergyDamage` applies `PHYSICAL_SKILL_POWER` (Final Secret's +30% skill power) and the PvP stats only when the target is a player; `Formulas.calcPhysDam` applies `PHYSICAL_SKILL_POWER` against anyone. Against fake players, and against monsters, Final Secret does nothing for the energy skills. A mechanics question for `docs/class-balance-85.md`, not the AI; the estimate follows the effect as it is.
 - Nukers at 60%: the Soul Hounds and the robe nukers still win about 60% (Male Soul Hound 37%, Archmage and Mystic Muse 40%).
 
+
+## 8. Soul Harvest (asked 2026-11-13): tried, not kept
+
+The question: do the classes with charges get charge generation from the passive tree? The tree has one such node, the **Soul Harvest** keystone (Reaver sector, `KS_SOUL_HARVEST:25`: a landed normal attack has a 25% chance to grant a charge and a soul). It is 9 points from the Juggernaut start the Gladiator and Tyrant lines use, as close as any keystone, so players can take it. Fake players got nothing from it: no keystone list held it, and `PassiveMechanics.harvestSoul` returned for anything that isn't a player.
+
+Fixed: `harvestSoul` now gives a roaming fake player its charge and soul on its profile, as `FocusEnergy` and `FocusSouls` do. Then the Duelist and the Grand Khavatari were made to always take it (`keystones="+!Soul Harvest"`) and measured, same seed:
+
+| Build | Before | With Soul Harvest | Difference (95%) | Average P. Atk / max HP over the run |
+|---|---|---|---|---|
+| Duelist (1,170 battles) | 69.2% (`matrix-20261112-222400`) | 65.1% (`matrix-20261113-045030`) | **-4.1 (-7.9 to -0.3), worse**; buffers -10.0 (-18.1 to -1.9) | 6,096 → 5,682 / 28,692 → 27,938 |
+| Grand Khavatari (585) | 69.2% (`matrix-20261112-223750`) | 65.1% (`matrix-20261113-045802`) | -4.1 (-9.5 to +1.3), no clear change | 6,123 → 5,844 / 28,838 → 28,679 |
+
+The charges came (Double and Triple Sonic Slash +0.3 and +0.2 casts a battle), but the points spent on the way to the keystone came out of P. Atk and HP nodes (-7% P. Atk), and the proc only rolls on normal attacks, which a skill fighter uses little: since batch 1 it charges with Sonic Rage, a sure charge and about 1,300 damage in the same 0.5 s. The two builds were taken back off it; the fix to `harvestSoul` stays, so a fake player that takes the keystone gets what it says. A charge node that pays for these classes would have to be cheaper (a notable near the Juggernaut start, not a keystone 9 points away) or roll on skill hits too: a design question, not tried here.

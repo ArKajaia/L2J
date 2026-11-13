@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.model.conditions.ConditionUsingItemType;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.effects.EffectType;
@@ -1112,14 +1113,30 @@ public final class PassiveMechanics
 	}
 	
 	/**
-	 * Soul Harvest: a landed normal hit may grant a Force charge and a soul.
+	 * Soul Harvest: a landed normal hit may grant a Force charge and a soul, to a player or a roaming fake player.
 	 * @param attacker the attacker
 	 */
 	private static void harvestSoul(Creature attacker)
 	{
 		final double chance = value(attacker, SOUL_HARVEST);
-		if ((chance <= 0) || !attacker.isPlayer() || (Rnd.get(100) >= chance))
+		if ((chance <= 0) || (!attacker.isPlayer() && !attacker.isPvpFakePlayer()) || (Rnd.get(100) >= chance))
 		{
+			return;
+		}
+		
+		// A roaming fake player keeps its charges and souls on its profile (like FocusEnergy and FocusSouls do for it).
+		if (attacker.isPvpFakePlayer())
+		{
+			final FakePlayerPvpProfile profile = attacker.asNpc().getTemplate().getFakePlayerPvpProfile();
+			if (profile.getMaxCharges() > 0)
+			{
+				profile.increaseCharges(1, profile.getMaxCharges());
+			}
+			final int maxSouls = (int) attacker.calcStat(Stat.MAX_SOULS, 0, null, null);
+			if (maxSouls > 0)
+			{
+				profile.increaseSouls(1, maxSouls);
+			}
 			return;
 		}
 		
