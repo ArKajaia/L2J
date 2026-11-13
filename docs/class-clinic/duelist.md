@@ -132,4 +132,13 @@ Fixed: `harvestSoul` now gives a roaming fake player its charge and soul on its 
 | Duelist (1,170 battles) | 69.2% (`matrix-20261112-222400`) | 65.1% (`matrix-20261113-045030`) | **-4.1 (-7.9 to -0.3), worse**; buffers -10.0 (-18.1 to -1.9) | 6,096 → 5,682 / 28,692 → 27,938 |
 | Grand Khavatari (585) | 69.2% (`matrix-20261112-223750`) | 65.1% (`matrix-20261113-045802`) | -4.1 (-9.5 to +1.3), no clear change | 6,123 → 5,844 / 28,838 → 28,679 |
 
-The charges came (Double and Triple Sonic Slash +0.3 and +0.2 casts a battle), but the points spent on the way to the keystone came out of P. Atk and HP nodes (-7% P. Atk), and the proc only rolls on normal attacks, which a skill fighter uses little: since batch 1 it charges with Sonic Rage, a sure charge and about 1,300 damage in the same 0.5 s. The two builds were taken back off it; the fix to `harvestSoul` stays, so a fake player that takes the keystone gets what it says. A charge node that pays for these classes would have to be cheaper (a notable near the Juggernaut start, not a keystone 9 points away) or roll on skill hits too: a design question, not tried here.
+The charges came (Double and Triple Sonic Slash +0.3 and +0.2 casts a battle), but the points spent on the way to the keystone came out of P. Atk and HP nodes (-7% P. Atk), and the proc only rolls on normal attacks, which a skill fighter uses little: since batch 1 it charges with Sonic Rage, a sure charge and about 1,300 damage in the same 0.5 s. Every one of them taking it was taken back out; the fix to `harvestSoul` stays, so a fake player that takes the keystone gets what it says.
+
+Then, as asked, Soul Harvest as one keystone among the others at a low weight (`keystones="+Soul Harvest*0.5"`: picked like the role's keystones, in place of one of them, not on top):
+
+| Build | Before | Soul Harvest *0.5 | Difference (95%) | Fights it was taken in | Won there (95%) |
+|---|---|---|---|---|---|
+| Duelist (1,170 battles) | 69.2% (`matrix-20261112-222400`) | 66.7% (`matrix-20261113-050658`) | -2.6 (-6.3 to +1.2), no clear change, no kind clearly worse | 57 | 68.4% (56-79), the run's average |
+| Grand Khavatari (585) | 69.2% (`matrix-20261112-223750`) | 68.5% (`matrix-20261113-051431`) | -0.8 (-6.1 to +4.5), no clear change, no kind clearly worse | 141 | 66.0% (58-73), the run's average |
+
+Kept at that weight: a few fake players of these classes take it, and they do as well as the ones that don't. A charge node that pays for these classes would have to be cheaper (a notable near the Juggernaut start, not a keystone 9 points away) or roll on skill hits too: a design question, not tried here.
