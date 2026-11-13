@@ -4682,7 +4682,9 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		else if (isMeleeThreat(target))
 		{
-			wantsCaster = true;
+			// A build with caughtMain (data/FakePlayerPvp.xml) that a melee has caught fights it with its rapier while it can't jump away: with the mace it stood in the melee's reach with half a nuker's M. Atk. Once a jump
+			// is ready it takes the mace out again, and the mage's pressed block jumps it away (docs/class-clinic/soul-hound-hybrid.md). Not a tank: it hits softly and never catches a Hound that kites it.
+			wantsCaster = !profile.getBuild().isCaughtMain() || isTank(target) || !isCaught(npc, profile, target, held);
 		}
 		else
 		{
@@ -4699,6 +4701,38 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		{
 			_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
 		}
+	}
+	
+	/** caughtMain: a melee this close has caught it; with the rapier out it keeps it until the melee is this far. */
+	private static final int CAUGHT_GAP = 120;
+	private static final int CAUGHT_RELEASE_GAP = 300;
+	
+	/**
+	 * @param held {@code true} if it holds its magic weapon now
+	 * @return {@code true} if the melee {@code target} is on it and it has no jump ready (a move or peel skill with a Blink effect, Warp or Blink) to get away with
+	 */
+	private static boolean isCaught(Attackable npc, FakePlayerPvpProfile profile, Creature target, boolean held)
+	{
+		final double gap = npc.calculateDistance2D(target) - npc.getTemplate().getCollisionRadius() - target.getTemplate().getCollisionRadius();
+		if (gap > (held ? CAUGHT_GAP : CAUGHT_RELEASE_GAP))
+		{
+			return false;
+		}
+		for (SkillCategory category : new SkillCategory[]
+		{
+			SkillCategory.MOVE,
+			SkillCategory.PEEL
+		})
+		{
+			for (Skill skill : profile.getSkills(category))
+			{
+				if (hasEffect(skill, "Blink") && canCast(npc, skill, npc))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 	
 	/**

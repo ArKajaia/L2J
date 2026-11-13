@@ -122,6 +122,8 @@ public class FakePlayerPvpBuild
 	private int _mageRange;
 	/** A mage of this build runs from a slower melee it is losing to, and casts while the melee walks back. */
 	private boolean _outrun;
+	/** A build with a caster kit fights a melee that is on it with its main weapon while it has no jump ready, instead of standing in its reach with the magic weapon. */
+	private boolean _caughtMain;
 	
 	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String casterKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights)
 	{
@@ -169,6 +171,7 @@ public class FakePlayerPvpBuild
 		variant._variant = true;
 		variant._mageRange = _mageRange;
 		variant._outrun = _outrun;
+		variant._caughtMain = _caughtMain;
 		return variant;
 	}
 	
@@ -321,6 +324,19 @@ public class FakePlayerPvpBuild
 	public void setOutrunner(boolean outrun)
 	{
 		_outrun = outrun;
+	}
+	
+	/**
+	 * @return {@code true} for a build with a caster kit that fights a melee on it with its main weapon while it has no jump ready (the caughtMain attribute), and takes the magic weapon out again to jump away and kite
+	 */
+	public boolean isCaughtMain()
+	{
+		return _caughtMain;
+	}
+	
+	public void setCaughtMain(boolean caughtMain)
+	{
+		_caughtMain = caughtMain;
 	}
 	
 	/**
