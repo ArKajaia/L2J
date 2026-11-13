@@ -492,6 +492,28 @@ public class Prophecies
 
 	/**
 	 * @param oracle the Oracle
+	 * @param target a character
+	 * @return {@code true} if the Oracle's Doom on {@code target} would deal its {@link OraclesWarchiefsConfig#DOOM_STILL_BONUS} if it came true now (the target is still near where it stood when the Doom was last cast on it), {@code false} if not or no Doom of its is on it
+	 */
+	public static boolean isDoomStill(Creature oracle, Creature target)
+	{
+		final Prophecy prophecy = PROPHECIES.get(key(target, DOOM_SKILL_ID));
+		return (prophecy != null) && (prophecy.oracle == oracle) && (target.calculateDistance2D(prophecy.start) < OraclesWarchiefsConfig.DOOM_STILL_RANGE);
+	}
+
+	/**
+	 * @param oracle the Oracle
+	 * @param target a character
+	 * @return the damage {@code target} has taken since the Oracle's Prophecy of Salvation landed on it (what it heals back when it comes true), -1 if none of its Salvations is on it
+	 */
+	public static double getSalvationDamage(Creature oracle, Creature target)
+	{
+		final Prophecy prophecy = PROPHECIES.get(key(target, SALVATION_SKILL_ID));
+		return (prophecy != null) && (prophecy.oracle == oracle) ? prophecy.damageTaken : -1;
+	}
+
+	/**
+	 * @param oracle the Oracle
 	 * @return how many of its prophecies haven't come true yet, on anyone
 	 */
 	public static int countPending(Creature oracle)

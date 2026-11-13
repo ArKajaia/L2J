@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.ai;
 import java.util.List;
 
 import org.l2jmobius.gameserver.config.custom.OraclesWarchiefsConfig;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Attackable;
@@ -51,6 +52,10 @@ final class FakePlayerPvpOraclesWarchiefs
 {
 	/** Totem of Flames: what the Warchief fights next to. */
 	static final int FLAME_TOTEM_SKILL_ID = 27559;
+	/** Doom Strike: what Prophecy of Doom comes true with, at the prophecy's level. */
+	private static final int DOOM_STRIKE_SKILL_ID = 27531;
+	/** Prophecy of Salvation is kept up against a player that has it as its target within this distance. */
+	private static final int SALVATION_THREAT_RANGE = 1200;
 	/** Spell Turning (Hierophant): cancels a spell, only worth it while the target casts. */
 	private static final int SPELL_TURNING_SKILL_ID = 1412;
 	
@@ -60,6 +65,14 @@ final class FakePlayerPvpOraclesWarchiefs
 	private static final int FULFIL_DOOM_STACKS = 3;
 	/** Fulfilment finishes a target this low that has its Doom on. */
 	private static final double FULFIL_FINISH_HP = 0.35;
+	/** Fulfilment brings on its Salvation below this share of HP, when it heals at least FULFIL_HEAL_SHARE of its max HP. */
+	private static final double FULFIL_HEAL_HP = 0.45;
+	private static final double FULFIL_HEAL_SHARE = 0.25;
+	/** Prophecy of Reckoning: the share of the damage dealt that comes back (level 2), and the chance it lands on a player at level 85 (43% in docs/class-clinic/doom-oracle.md). */
+	private static final double RECKONING_SHARE = 0.4;
+	private static final double RECKONING_LAND = 0.45;
+	/** Prophecy of Doom: what the target staying put (x1.5) is worth on average, and for one that can't move. */
+	private static final double DOOM_STILL_EXPECTED = 1.2;
 	/** Fulfilment spends a Foresight about to run out (seconds left) on whatever prophecy is on. */
 	private static final int FULFIL_FORESIGHT_ENDING = 5;
 	/** Prophecy of Salvation on itself below this share of HP (against players, against monsters). */
@@ -110,6 +123,68 @@ final class FakePlayerPvpOraclesWarchiefs
 				return true;
 			}
 		}
+	}
+	
+	/**
+	 * The damage of a prophecy, which the damage estimate can't see (its power is that of the skill it comes true with): one stack of Prophecy of Doom, without shots (a prophecy uses none), and what
+	 * Prophecy of Reckoning would give back of the damage the target deals now, by the chance it lands.
+	 * @param npc the fake player
+	 * @param target its target
+	 * @param skill a skill of its attack or debuff list
+	 * @param incomingDps the damage a second it takes now
+	 * @return the damage, 0 for any other skill
+	 */
+	static double estimateDamage(Attackable npc, Creature target, Skill skill, double incomingDps)
+	{
+		switch (skill.getId())
+		{
+			case Prophecies.DOOM_SKILL_ID:
+			{
+				final Skill strike = SkillData.getInstance().getSkill(DOOM_STRIKE_SKILL_ID, skill.getLevel());
+				if (strike == null)
+				{
+					return 0;
+				}
+				final double damage = ((91 * Math.sqrt(npc.getMAtk(target, strike))) / Math.max(1, target.getMDef(npc, strike))) * strike.getPower();
+				return damage * (target.isMovementDisabled() ? OraclesWarchiefsConfig.DOOM_STILL_BONUS : DOOM_STILL_EXPECTED);
+			}
+			case Prophecies.RECKONING_SKILL_ID:
+			{
+				final double back = Math.min(incomingDps * skill.getAbnormalTime() * RECKONING_SHARE, target.getMaxHp() * OraclesWarchiefsConfig.RECKONING_MAX_SHARE);
+				return back * RECKONING_LAND;
+			}
+			default:
+			{
+				return 0;
+			}
+		}
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param target its target
+	 * @param skill an emergency or defensive skill it would cast on itself as a reflex
+	 * @return {@code false} if casting it now would be wasted (Unwritten would replace the Salvation on it, and with it what that one heals back)
+	 */
+	static boolean isWorthReflex(Attackable npc, Creature target, Skill skill)
+	{
+		return (skill.getId() != Prophecies.UNWRITTEN_SKILL_ID) || !hasHealingSalvation(npc);
+	}
+	
+	/**
+	 * @return {@code true} if a Prophecy of Salvation of its own is on it
+	 */
+	private static boolean hasHealingSalvation(Attackable npc)
+	{
+		return Prophecies.getSalvationDamage(npc, npc) >= 0;
+	}
+	
+	/**
+	 * @return {@code true} if {@code enemy} has it as its target and is near enough to hit it (what Prophecy of Salvation is kept up against)
+	 */
+	private static boolean isFightingMe(Attackable npc, Creature enemy)
+	{
+		return (enemy.getTarget() == npc) && npc.isInsideRadius2D(enemy, SALVATION_THREAT_RANGE);
 	}
 	
 	/**
@@ -185,8 +260,9 @@ final class FakePlayerPvpOraclesWarchiefs
 		{
 			case Prophecies.SALVATION_SKILL_ID:
 			{
-				// It heals back the damage taken while it is on: worth it while the hits come in.
-				return fighting && !npc.isAffectedBySkill(skillId) && (hpRatio < (pvp ? SALVATION_PVP_HP : SALVATION_PVE_HP));
+				// It heals back the damage taken while it is on: worth it while the hits come in. Against a player that fights it, it is kept up from the first hit on, so every hit of the fight comes back
+				// (one cast every 6 s, and each one that comes true is a Foresight towards Fulfilment).
+				return fighting && !npc.isAffectedBySkill(skillId) && ((hpRatio < (pvp ? SALVATION_PVP_HP : SALVATION_PVE_HP)) || (pvp && isFightingMe(npc, target)));
 			}
 			case Prophecies.FULFILMENT_SKILL_ID:
 			{
@@ -194,7 +270,8 @@ final class FakePlayerPvpOraclesWarchiefs
 			}
 			case Prophecies.UNWRITTEN_SKILL_ID:
 			{
-				return fighting && ((countEnemies(npc, npc, 600, skill) >= CROWD) || (pvp && (hpRatio < 0.5) && npc.isInsideRadius2D(target, 600)));
+				// Its Salvation would take the place of the one on it, and what that one would heal back is lost.
+				return fighting && !hasHealingSalvation(npc) && ((countEnemies(npc, npc, 600, skill) >= CROWD) || (pvp && (hpRatio < 0.5) && npc.isInsideRadius2D(target, 600)));
 			}
 			case Totems.SHATTER_SKILL_ID:
 			{
@@ -232,8 +309,16 @@ final class FakePlayerPvpOraclesWarchiefs
 		
 		if (fighting)
 		{
+			// Its Salvation heals back now, x1.5, what would otherwise come too late.
+			final double salvation = Prophecies.getSalvationDamage(npc, npc);
+			if (((npc.getCurrentHp() / npc.getMaxHp()) < FULFIL_HEAL_HP) && ((salvation * OraclesWarchiefsConfig.FULFILMENT_MULTIPLIER) >= (npc.getMaxHp() * FULFIL_HEAL_SHARE)))
+			{
+				return true;
+			}
+			
+			// A big Doom: right after it was cast again, while the target still stands where the Doom found it (x1.5 more). Full, it can't be cast again: it comes true now.
 			final int stacks = Prophecies.getDoomStacks(npc, target);
-			if ((stacks >= Math.min(FULFIL_DOOM_STACKS, OraclesWarchiefsConfig.DOOM_MAX_STACKS)) || ((stacks > 0) && ((target.getCurrentHp() / target.getMaxHp()) < FULFIL_FINISH_HP)))
+			if (((stacks >= Math.min(FULFIL_DOOM_STACKS, OraclesWarchiefsConfig.DOOM_MAX_STACKS)) && ((stacks >= OraclesWarchiefsConfig.DOOM_MAX_STACKS) || Prophecies.isDoomStill(npc, target))) || ((stacks > 0) && ((target.getCurrentHp() / target.getMaxHp()) < FULFIL_FINISH_HP)))
 			{
 				return true;
 			}
