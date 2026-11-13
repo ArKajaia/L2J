@@ -100,7 +100,16 @@ public class EnchantSkillGroup
 		
 		public byte getRate(Player ply)
 		{
-			return ply.getLevel() < 76 ? 0 : _rate[ply.getLevel() - 76];
+			return getRate(ply.getLevel());
+		}
+		
+		/**
+		 * @param level a character level
+		 * @return the chance (in %) a character of {@code level} succeeds at this enchant, 0 below 76
+		 */
+		public byte getRate(int level)
+		{
+			return level < 76 ? 0 : _rate[Math.min(level, 76 + _rate.length - 1) - 76];
 		}
 	}
 }

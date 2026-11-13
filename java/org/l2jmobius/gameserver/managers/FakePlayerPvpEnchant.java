@@ -82,6 +82,15 @@ public class FakePlayerPvpEnchant
 	}
 
 	/**
+	 * @return how rich it is (FakePvpGearWealthMin to FakePvpGearWealthMax, the highest for a strong fake player of the PvP spots): its enchant odds, and also how far it enchanted its skills and whether it holds the weapon of the rich (see
+	 *         {@link FakePlayerPvpSkillEnchant})
+	 */
+	public double getWealth()
+	{
+		return _wealth;
+	}
+
+	/**
 	 * @param chances {minLevel, chance} rows (FakePvpShirtChance, FakePvpBeltChance...)
 	 * @return {@code true} with the chance of the fake player's level, grown by its wealth
 	 */

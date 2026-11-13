@@ -33,6 +33,9 @@
 	               anyone else it takes it out from afar (FakePvpCasterSwapDistance) for a weapon="CASTER" combo, then goes back to
 	               its weapon. A special ability of either weapon only counts while it holds it (see FakePvpCasterSwap* in
 	               config/Custom/FakePlayerPvp.ini).
+	     richWeapon - kit of the weapon it holds instead of its weapon kit once it is rich (its wealth at least
+	               FakePvpRichWeaponWealth in config/Custom/FakePlayerPvp.ini) and the kit has a tier for its level:
+	               dual daggers (DUAL_DAGGER) for the daggers from 81. Its variants keep it.
 	     weight  - relative chance to pick this build.
      variant - a second build of the same class: the same skills and combos, other gear, like players of
                a class that don't all wear the same set (a dagger in Tallum Plate, a mage still in its Dark
@@ -95,6 +98,13 @@
 	     transform - combat transformations (Kamael Final Form) used once a PvP gets serious (hurt, or several
 	                 players). It then looks transformed and fights up close with the transformation's skills only,
 	                 like a player, until it ends.
+	     enchant   - the skills it enchants from 76 (FakePvpSkillEnchant* in config/Custom/FakePlayerPvp.ini), as
+	                 "skillId:route", most important first: the damage skills it uses most and the chance of its stuns
+	                 and debuffs (Bluff 358:1, Stun Shot 101:1...). The route is the hundreds of the enchanted skill
+	                 level (Deadly Blow +5 Duel is level 705, route 7). "a:1|a:7" means one of them, picked for each
+	                 fake player (Power or Duel). How far it gets depends on its wealth and level; skills it hasn't
+	                 learned at their last level are left out. Without a list it enchants the power of its first
+	                 attack skills and the chance of its debuffs. Its variants keep the list.
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
 	                 ready (required steps learned and off cooldown, enough energy) starts.
 	                 pvp="true": only against players. chance: % to start it when ready (default 100).
@@ -440,6 +450,10 @@
 		<tier minLevel="80" rhand="9442" lhand="9441" /> <!-- Dynasty Sword / Dynasty Shield -->
 		<tier minLevel="84" rhand="10215" lhand="13471" /> <!-- Icarus Sawsword / Vesper Shield -->
 	</kit>
+	<kit name="DUAL_DAGGER"> <!-- The weapon of rich daggers (richWeapon, FakePvpRichWeaponWealth): dual daggers, which dagger classes hold from 81 like in retail (crafted from two daggers). No tier below 81: there they hold their dagger. -->
+		<tier minLevel="81" rhand="13883" /> <!-- Icarus Dual Daggers -->
+		<tier minLevel="84" rhand="13884" /> <!-- Vesper Dual Daggers -->
+	</kit>
 	<kit name="DAGGER_ALT">
 		<tier minLevel="1" rhand="219" /> <!-- Sword Breaker -->
 		<tier minLevel="20" rhand="225" /> <!-- Mithril Dagger -->
@@ -551,6 +565,7 @@
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
 		<peel>1417,1169</peel>
+		<enchant>1292:1|1292:3,1230:1,1339:1,1083:1,1451:1,1160:1,1417:2,1169:2,1338:1</enchant>
 		<combo name="Surrender burst" pvp="true">
 			<step skill="1083" /> <!-- Surrender To Fire -->
 			<step skill="1292|1289|1288" optional="true" /> <!-- Elemental Assault / Inferno / Aura Symphony -->
@@ -576,6 +591,7 @@
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
 		<peel>1417,1169</peel>
+		<enchant>1293:1|1293:3,1235:1,1236:1,1340:1,1071:1,1453:1,1164:1,1417:2,1169:2,1338:1</enchant>
 		<combo name="Surrender burst" pvp="true">
 			<step skill="1071" /> <!-- Surrender To Water -->
 			<step skill="1293|1290|1288" optional="true" /> <!-- Elemental Symphony / Blizzard / Aura Symphony -->
@@ -598,6 +614,7 @@
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
 		<peel>1417,1169</peel>
+		<enchant>1294:1|1294:3,1148:1,1239:1,1341:1,1074:1,1064:1,1456:1,1160:1,1417:2,1169:2,1338:1</enchant>
 		<combo name="Silence and burst" pvp="true">
 			<step skill="1064" optional="true" /> <!-- Silence -->
 			<step skill="1074" /> <!-- Surrender To Wind -->
@@ -621,6 +638,7 @@
 		<peel>260,100,1208,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a player that reached it -->
 		<groupHeal>1229</groupHeal> <!-- Chant of Life, in a party -->
 		<partyBuff>1414,1415,1365,1364,1003,1004,1005,1008,1249,1250,1260,1261,1282,1536,1537,1538,1563</partyBuff> <!-- In a party: Victory of Pa'agrio, Pa'agrio's Emblem, Soul/Eye of Pa'agrio, Gift, Wisdom, Blessings, Glory, Vision, Shield, Tact, Rage, Haste, Combat, Critical, Condition, Fury -->
+		<enchant>1245:1,1246:1,1367:1,1366:1,1462:1,1208:1,1097:1,260:1,1104:1,1099:1,1096:1,1092:1</enchant>
 		<combo name="Silence and drain" pvp="true">
 			<step skill="1246" /> <!-- Seal of Silence -->
 			<step skill="1367" optional="true" /> <!-- Seal of Disease -->
@@ -649,6 +667,7 @@
 		<peel>1169,1170,1069,1381</peel>
 		<summon>1129|1154</summon> <!-- Summon Reanimated Man (skeleton), Summon Corrupted Man before 44 -->
 		<link>1262</link> <!-- Transfer Pain -->
+		<enchant>1159:1,1148:1,1234:1,1343:1,1336:1,1337:1,1064:1,1263:1,1170:1,1069:1,1169:2,1164:1,1160:1</enchant>
 		<combo name="Doom and death link" pvp="true">
 			<step skill="1336" /> <!-- Curse of Doom -->
 			<step skill="1337" optional="true" /> <!-- Curse of Abyss -->
@@ -680,6 +699,7 @@
 		<toggle>322,335</toggle>
 		<peel>92,403</peel>
 		<cleanse>44</cleanse>
+		<enchant>353:1,403:2,400:1,49:1,92:1,110:1|110:2,406:4|406:3,262:1</enchant>
 		<combo name="Shield stun" pvp="true">
 			<step skill="92" /> <!-- Shield Stun -->
 			<step skill="353" optional="true" /> <!-- Shield Slam -->
@@ -697,6 +717,7 @@
 		<toggle>322,335</toggle>
 		<peel>352,402,102</peel>
 		<cleanse>21</cleanse>
+		<enchant>352:1,402:2,102:1,110:1|110:2,58:1,123:1</enchant>
 		<combo name="Shield bash" pvp="true">
 			<step skill="352" /> <!-- Shield Bash -->
 			<step skill="984" /> <!-- Shield Strike -->
@@ -717,6 +738,7 @@
 		<toggle>322,335</toggle>
 		<peel>92,403,763</peel> <!-- Shield Stun, Shackle, Hell Scream -->
 		<summon>283</summon> <!-- Summon Dark Panther -->
+		<enchant>353:1,403:2,127:1,342:2,401:1,92:1,70:1,110:1|110:2,86:1</enchant>
 		<combo name="Shield stun" pvp="true">
 			<step skill="92" /> <!-- Shield Stun -->
 			<step skill="353" optional="true" /> <!-- Shield Slam -->
@@ -742,6 +764,7 @@
 		<emergency>110</emergency>
 		<toggle>322,335</toggle>
 		<peel>352,402</peel>
+		<enchant>279:1|279:3,352:1,402:2,342:2,115:1,122:1,223:1,105:1|105:3,289:1,110:1|110:2</enchant>
 		<combo name="Curse burst" pvp="true">
 			<step skill="122" /> <!-- Hex -->
 			<step skill="115" optional="true" /> <!-- Power Break -->
@@ -762,8 +785,8 @@
 	</build>
 
 	<!-- Daggers -->
-	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true" weights="BLOW_RATE_PCT:2"> <!-- No Mortal Strike in its line (as in retail): its tree wants blow rate twice as much -->
-		<attack>991,409,344,263,30,16</attack>
+	<build name="Adventurer" richWeapon="DUAL_DAGGER" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true" weights="BLOW_RATE_PCT:2"> <!-- No Mortal Strike in its line (as in retail): its tree wants blow rate twice as much -->
+		<attack>928,991,409,344,263,30,16</attack>
 		<debuff>358,531,412,96</debuff>
 		<buff>357|356,768,445</buff>
 		<emergency>111</emergency>
@@ -771,6 +794,7 @@
 		<move>4</move>
 		<rush>821</rush>
 		<peel>11,12</peel>
+		<enchant>263:1|263:7,358:1,344:1|344:7,30:1|30:7,409:1|409:7,412:2,111:1,209:2|209:3</enchant>
 		<combo name="Backstab opener (already behind)" pvp="true">
 			<step skill="357|356" self="true" optional="true" /> <!-- Focus Power / Focus Chance (one Focus buff: they replace each other) -->
 			<step skill="30" /> <!-- Backstab -->
@@ -810,8 +834,8 @@
 		</combo>
 		<variant name="Adventurer Heavy" armor="HEAVY_DAGGER" weight="1" />
 	</build>
-	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
-		<attack>991,344,263,321,30,16</attack>
+	<build name="Wind Rider" richWeapon="DUAL_DAGGER" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
+		<attack>928,991,344,263,321,30,16</attack>
 		<debuff>358,531,102,412,96</debuff>
 		<buff>355|356,410,769,446,230</buff>
 		<heal>58</heal>
@@ -819,6 +843,7 @@
 		<toggle>312,256</toggle>
 		<rush>821</rush>
 		<peel>102,12</peel>
+		<enchant>263:1|263:7,358:1,344:1|344:7,410:1,30:1|30:7,102:1,412:2,321:1,111:1,209:2|209:3</enchant>
 		<combo name="Backstab opener (already behind)" pvp="true">
 			<step skill="355|356" self="true" optional="true" /> <!-- Focus Death / Focus Chance (one Focus buff: they replace each other) -->
 			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
@@ -854,14 +879,15 @@
 		</combo>
 		<variant name="Wind Rider Heavy" weapon="DAGGER_ALT" armor="HEAVY_DAGGER" weight="1" />
 	</build>
-	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
-		<attack>991,344,263,321,30,223,16</attack>
+	<build name="Ghost Hunter" richWeapon="DUAL_DAGGER" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
+		<attack>928,991,344,263,321,30,223,16</attack>
 		<debuff>358,531,115,122,412,96</debuff>
 		<buff>355|357,410,770,447</buff>
 		<emergency>111</emergency>
 		<toggle>312,256</toggle>
 		<rush>821</rush>
 		<peel>11</peel>
+		<enchant>263:1|263:7,358:1,344:1|344:7,410:1,30:1|30:7,122:1,115:1,223:1,412:2,111:1,209:2|209:3</enchant>
 		<combo name="Backstab opener (already behind)" pvp="true">
 			<step skill="355|357" self="true" optional="true" /> <!-- Focus Death / Focus Power (one Focus buff: they replace each other) -->
 			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
@@ -908,6 +934,7 @@
 		<toggle>312,256</toggle>
 		<move>4</move>
 		<peel>101,354</peel>
+		<enchant>343:1|343:7,101:1,19:1|19:7,354:2,99:1,111:1</enchant>
 		<combo name="Stun shot" pvp="true">
 			<step skill="101" /> <!-- Stun Shot -->
 			<step skill="343" optional="true" /> <!-- Lethal Shot -->
@@ -930,6 +957,7 @@
 		<emergency>111</emergency>
 		<toggle>312,256</toggle>
 		<peel>101,102,354</peel>
+		<enchant>343:1|343:7,101:1,19:1|19:7,354:2,102:1,369:1|369:8,99:1,413:2,111:1</enchant>
 		<combo name="Stun shot" pvp="true">
 			<step skill="101" /> <!-- Stun Shot -->
 			<step skill="343" optional="true" /> <!-- Lethal Shot -->
@@ -952,6 +980,7 @@
 		<emergency>111</emergency>
 		<toggle>312,256</toggle>
 		<peel>101,354</peel>
+		<enchant>343:1|343:7,101:1,314:1|314:7,19:1|19:7,354:2,122:1,115:1,369:1|369:8,99:1,111:1</enchant>
 		<combo name="Stun shot" pvp="true">
 			<step skill="101" /> <!-- Stun Shot -->
 			<step skill="343" optional="true" /> <!-- Lethal Shot -->
@@ -979,6 +1008,7 @@
 		<charge>919,8</charge>
 		<move>451</move>
 		<rush>994</rush>
+		<enchant>261:1|261:7,5:1|5:7,1:1|1:7,6:1|6:7,9:1,7:1,297:1</enchant>
 		<combo name="Sonic burst" pvp="true">
 			<step skill="297" self="true" optional="true" /> <!-- Duelist Spirit -->
 			<step skill="78" self="true" optional="true" /> <!-- War Cry -->
@@ -1001,6 +1031,7 @@
 		<charge>918,50</charge>
 		<rush>994</rush>
 		<cleanse>461</cleanse>
+		<enchant>284:1|284:7,54:1|54:7,81:1,281:1,95:1,280:1,35:1,17:1,420:2</enchant>
 		<combo name="Stun punch" pvp="true">
 			<step skill="281" /> <!-- Soul Breaker -->
 			<step skill="81" disabledTarget="true" optional="true" /> <!-- Punch of Doom -->
@@ -1028,6 +1059,7 @@
 		<toggle>312,424,335</toggle>
 		<rush>994</rush>
 		<cleanse>34</cleanse>
+		<enchant>315:1|315:7,190:1,362:3,94:1,420:2</enchant>
 		<combo name="Berserk crush" pvp="true">
 			<step skill="420" self="true" optional="true" /> <!-- Zealot -->
 			<step skill="176|139" self="true" optional="true" /> <!-- Frenzy / Guts (they replace each other) -->
@@ -1052,6 +1084,7 @@
 		<peel>485</peel>
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
+		<enchant>497:1|497:7,526:1|526:4,477:1|477:4,498:1|498:3,1435:2,485:1,501:1,1445:2,496:1|496:7,794:1</enchant>
 		<combo name="Shoulder charge" pvp="true">
 			<step skill="494" /> <!-- Shoulder Charge: charges in and stuns -->
 			<step skill="482" self="true" optional="true" /> <!-- Furious Soul -->
@@ -1076,6 +1109,7 @@
 		<peel>1448,791,1446,1447</peel> <!-- Blink stuns around it and jumps back; Lightning Shock halves the Speed of those around it, then paralyzes them -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
+		<enchant>1516:1|1516:2,1512:1|1512:4,1469:1|1469:4,1435:2,1447:1,1446:1,1513:1|1513:3,1436:1|1436:4,1529:2,1511:2,1445:2</enchant>
 		<combo name="Soul vortex" pvp="true">
 			<step skill="1512" /> <!-- Soul Vortex -->
 			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
@@ -1100,6 +1134,7 @@
 		<peel>1448,791,1446,1447</peel> <!-- Blink stuns around it and jumps back; Lightning Shock halves the Speed of those around it, then paralyzes them -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
+		<enchant>1516:1|1516:2,1512:1|1512:4,1469:1|1469:4,1435:2,1447:1,1446:1,1513:1|1513:3,1436:1|1436:4,1529:2,1511:2,1445:2</enchant>
 		<combo name="Soul vortex" pvp="true">
 			<step skill="1512" /> <!-- Soul Vortex -->
 			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
@@ -1123,6 +1158,7 @@
 		<peel>1448,791,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Lightning Shock halves the Speed of those around it and then paralyzes them, Shadow Bind roots -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
+		<enchant>1516:1|1516:2,504:1|504:7,505:1|505:7,1512:1|1512:4,1435:2,1447:1,1446:1,1469:1,1513:1,506:1|506:4,1529:2</enchant>
 		<combo name="Soul vortex" pvp="true" weapon="MAIN">
 			<step skill="1512" /> <!-- Soul Vortex: slows it down -->
 			<step skill="504" /> <!-- Triple Thrust -->
@@ -1168,6 +1204,7 @@
 		<peel>1448,791,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Lightning Shock halves the Speed of those around it and then paralyzes them, Shadow Bind roots -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
+		<enchant>1516:1|1516:2,504:1|504:7,505:1|505:7,1512:1|1512:4,1435:2,1447:1,1446:1,1469:1,1513:1,506:1|506:4,1529:2</enchant>
 		<combo name="Soul vortex" pvp="true" weapon="MAIN">
 			<step skill="1512" /> <!-- Soul Vortex: slows it down -->
 			<step skill="504" /> <!-- Triple Thrust -->
@@ -1213,6 +1250,7 @@
 		<peel>628</peel> <!-- Warp -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
+		<enchant>505:1|505:7,504:1|504:7,1482:2,1483:2,1484:2,1485:2,1486:2,1435:2,1476:2,1445:2</enchant>
 		<combo name="Weak constitution" pvp="true">
 			<step skill="1482" /> <!-- Weak Constitution: makes the target faint when hit -->
 			<step skill="1476" self="true" optional="true" /> <!-- Appetite for Destruction -->
@@ -1236,6 +1274,7 @@
 		<peel>627,628</peel> <!-- Soul Shock, Warp (jumps back from a player in melee range) -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
+		<enchant>507:1|507:7,627:4,509:3,508:1|508:7,1435:2,1445:2,490:1</enchant>
 		<combo name="Real target" pvp="true">
 			<step skill="522" /> <!-- Real Target -->
 			<step skill="790" optional="true" /> <!-- Wild Shot -->
@@ -1256,6 +1295,7 @@
 		<toggle>312,424</toggle>
 		<rush>995,994</rush>
 		<peel>452,48</peel>
+		<enchant>361:3,320:1,452:1,48:1,347:1,36:1|36:7,116:1</enchant>
 		<combo name="Shock crush" pvp="true">
 			<step skill="78" self="true" optional="true" /> <!-- War Cry -->
 			<step skill="361" /> <!-- Shock Blast -->
@@ -1281,6 +1321,7 @@
 		<buff>917</buff> <!-- Final Secret -->
 		<toggle>424</toggle> <!-- War Frenzy -->
 		<peel>260|100,362</peel>
+		<enchant>190:1,260:1,362:3,36:1|36:7,347:1</enchant>
 		<combo name="Crush the armor" pvp="true">
 			<step skill="917" self="true" optional="true" /> <!-- Final Secret -->
 			<step skill="362" /> <!-- Armor Crush: shock, P. Def. and M. Def. down -->
@@ -1304,6 +1345,7 @@
 		<peel>260|100,362</peel>
 		<summon>25</summon> <!-- Summon Mechanic Golem -->
 		<transform>778</transform> <!-- Golem Armor -->
+		<enchant>190:1,260:1,362:3,36:1|36:7,347:1</enchant>
 		<combo name="Stun and strike" pvp="true">
 			<step skill="260|100" /> <!-- Hammer Crush / Stun Attack -->
 			<step skill="362" optional="true" /> <!-- Armor Crush -->
@@ -1324,6 +1366,7 @@
 		<perform>27504|27502|27500,27500</perform> <!-- Hunting: Anthem of Valor / Hymn of Renewal / Ballad of the Bulwark. PvP: Ballad of the Bulwark -->
 		<peel>102,402</peel>
 		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
+		<enchant>102:1,402:2,437:1,110:1|110:2,58:1</enchant>
 		<combo name="Song of Silence" pvp="true" chance="50">
 			<step skill="437" /> <!-- Song of Silence -->
 			<step skill="98" optional="true" /> <!-- Sword Symphony -->
@@ -1337,6 +1380,7 @@
 		<toggle>27526</toggle> <!-- Blade Waltz: its dual sword attacks may slash every enemy around -->
 		<perform>27520,27522|27520</perform> <!-- Hunting: Dance of Ruin. PvP: Dance of Torment / Dance of Ruin -->
 		<peel>402</peel> <!-- Arrest -->
+		<enchant>223:1,402:2,274:1</enchant>
 		<combo name="Blade burst" pvp="true">
 			<step skill="408" /> <!-- Demonic Blade Dance -->
 			<step skill="986" /> <!-- Deadly Strike -->
@@ -1375,6 +1419,7 @@
 		<emergency>27532,27540,1015</emergency> <!-- Prophecy of Salvation, Unwritten (never over a Salvation, which it would replace), Battle Heal -->
 		<toggle>27539</toggle> <!-- Glimpse -->
 		<peel>1201,1272</peel> <!-- Dryad Root (a rooted dagger can't get behind it), Word of Fear -->
+		<enchant>1201:1</enchant>
 		<combo name="Ruin and doom" pvp="true">
 			<step skill="27533" /> <!-- Prophecy of Ruin: a stun if the player casts meanwhile, a silence if not -->
 			<step skill="27530" /> <!-- Prophecy of Doom -->
@@ -1406,6 +1451,7 @@
 		<emergency>27554,27561,27558</emergency> <!-- Spirit Walk away from a player on it, Spirit Trance, Great Totem -->
 		<toggle>27551</toggle> <!-- War Drums: its hits bring the totems back sooner -->
 		<peel>260|100,1097</peel> <!-- Hammer Crush / Stun Attack on what reached it, Dreaming Spirit -->
+		<enchant>1245:1,260:1,1097:1</enchant>
 		<combo name="Burn them down" pvp="true">
 			<step skill="1244|1100" optional="true" /> <!-- Freezing Flame / Chill Flame -->
 			<step skill="1245" /> <!-- Steal Essence -->
@@ -1435,6 +1481,7 @@
 		<groupHeal>1402|1219|1027,1335</groupHeal> <!-- Major / Greater Group Heal / Group Heal, Balance Life -->
 		<partyBuff>1307</partyBuff> <!-- Prayer -->
 		<resurrect>1016</resurrect>
+		<enchant>1028:1,1394:2,1069:1,1201:1,1218:1</enchant>
 		<variant name="Cardinal Legacy" armor="ROBE_LEGACY" weight="0" />
 	</build>
 	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Prophet line: an Oracle, it casts prophecies instead of buffs (config/Custom/OraclesWarchiefs.ini) -->
@@ -1448,6 +1495,7 @@
 		<partyHeal>27532,1011,1015</partyHeal> <!-- Prophecy of Salvation, Heal, Battle Heal -->
 		<groupHeal>1027</groupHeal>
 		<resurrect>1016</resurrect>
+		<enchant>1201:1</enchant>
 		<variant name="Hierophant Tallum" armor="ROBE_TALLUM" weight="0" />
 	</build>
 	<build name="Eva's Saint" classId="105" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Elven Elder line -->
@@ -1462,6 +1510,7 @@
 		<partyBuff>1355,1040,1068,1087,1204,1035,1078,1303,1397,1259,1504,1503,1243,1044,1033</partyBuff> <!-- Prophecy of Water, Shield, Might, Agility, Wind Walk, Mental Shield, Concentration, Wild Magic, Clarity, Resist Shock, Improve Movement/Shield Defense, Bless Shield, Regeneration, Resist Poison -->
 		<recharge>1013</recharge>
 		<resurrect>1016</resurrect>
+		<enchant>1206:1,1201:1</enchant>
 		<variant name="Eva's Saint Legacy" armor="ROBE_LEGACY" weight="0" />
 	</build>
 	<build name="Shillien Saint" classId="112" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Shillien Elder line -->
@@ -1476,6 +1525,7 @@
 		<partyBuff>1357,1068,1040,1059,1268,1077,1242,1240,1204,1035,1078,1303,1500,1502,1189,1392</partyBuff> <!-- Prophecy of Wind, Might, Shield, Empower, Vampiric Rage, Focus, Death Whisper, Guidance, Wind Walk, Mental Shield, Concentration, Wild Magic, Improve Magic/Critical, Resist Wind/Holy -->
 		<recharge>1013</recharge>
 		<resurrect>1016</resurrect>
+		<enchant>1206:1,1201:1</enchant>
 		<variant name="Shillien Saint Legacy" armor="ROBE_LEGACY" weight="0" />
 	</build>
 	<build name="Doomcryer" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Warcryer line: a Totem Warchief, it plants totems instead of chanting (config/Custom/OraclesWarchiefs.ini) -->
@@ -1485,6 +1535,7 @@
 		<emergency>27558,27561,27554</emergency> <!-- Great Totem of the Horde-Father, Spirit Trance, Spirit Walk -->
 		<toggle>336,27551</toggle> <!-- Arcane Wisdom, War Drums -->
 		<peel>260,100,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a monster or player that reached it -->
+		<enchant>1245:1,1097:1,1092:1,260:1</enchant>
 		<variant name="Doomcryer Tallum" armor="ROBE_TALLUM" weight="0" />
 	</build>
 	<build name="Sword Muse" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="0" support="true"> <!-- Swordsinger line -->
@@ -1499,6 +1550,7 @@
 		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
 		<groupHeal>27508</groupHeal> <!-- Sanctuary Chorus -->
 		<partyBuff>364,267,268,269,264,304,363,349,529,764,265,266,270,305,306,308,914</partyBuff> <!-- Champion, Warding, Wind, Hunter, Earth, Vitality, Meditation, Renewal, Elemental, Wind Storm, Life, Water, Invocation, Vengeance, Flame Guard, Storm Guard, Purification -->
+		<enchant>102:1,402:2,437:1,110:1|110:2,58:1</enchant>
 		<variant name="Sword Muse Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="0" />
 	</build>
 	<build name="Spectral Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="0" support="true"> <!-- Bladedancer line -->
@@ -1508,6 +1560,7 @@
 		<perform>27524|27520,27520</perform> <!-- Hunting: Dance of Frenzy / Dance of Ruin. PvP: Dance of Ruin -->
 		<peel>402,105</peel>
 		<partyBuff>271,275,274,310,915,765,273,276,365,530,311,272,307,309,277</partyBuff> <!-- Warrior, Fury, Fire, Vampire, Berserker, Blade Storm, Mystic, Concentration, Siren, Alignment, Protection, Inspiration, Aqua/Earth Guard, Light -->
+		<enchant>84:1,223:1,122:1,115:1,105:3,402:2</enchant>
 		<variant name="Spectral Dancer Light" armor="LIGHT_FIGHTER" weight="0" />
 	</build>
 </list>

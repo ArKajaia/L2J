@@ -184,6 +184,7 @@ public class FakePlayerPvpData implements IXmlReader
 				build.setMageRange(Math.max(0, parseInteger(attrs, "range", 0)));
 				build.setOutrunner(parseBoolean(attrs, "outrun", false));
 				build.setCaughtMain(parseBoolean(attrs, "caughtMain", false));
+				build.setRichWeaponKit(parseString(attrs, "richWeapon", null));
 				final List<NamedNodeMap> variants = new ArrayList<>();
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
@@ -193,6 +194,39 @@ public class FakePlayerPvpData implements IXmlReader
 						continue;
 					}
 
+					if ("enchant".equalsIgnoreCase(skillsNode.getNodeName()))
+					{
+						for (String entry : skillsNode.getTextContent().split(","))
+						{
+							entry = entry.trim();
+							if (entry.isEmpty())
+							{
+								continue;
+							}
+							
+							try
+							{
+								final String[] alternatives = entry.split("\\|");
+								final int[][] enchant = new int[alternatives.length][];
+								for (int i = 0; i < alternatives.length; i++)
+								{
+									final String[] skillAndRoute = alternatives[i].split(":");
+									enchant[i] = new int[]
+									{
+										Integer.parseInt(skillAndRoute[0].trim()),
+										Integer.parseInt(skillAndRoute[1].trim())
+									};
+								}
+								build.addEnchant(enchant);
+							}
+							catch (RuntimeException e)
+							{
+								LOGGER.warning(getClass().getSimpleName() + ": Build " + name + " has a bad enchant entry \"" + entry + "\" (skillId:route|skillId:route).");
+							}
+						}
+						continue;
+					}
+					
 					if ("combo".equalsIgnoreCase(skillsNode.getNodeName()))
 					{
 						final NamedNodeMap comboAttrs = skillsNode.getAttributes();
