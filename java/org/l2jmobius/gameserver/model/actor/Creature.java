@@ -451,9 +451,16 @@ public abstract class Creature extends WorldObject
 			case PVP:
 			{
 				final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
-				if ((instance != null) && instance.isPvP())
+				if (instance != null)
 				{
-					return true;
+					if (instance.isPvP())
+					{
+						return true;
+					}
+					if (instance.isPeace())
+					{
+						return false;
+					}
 				}
 				
 				return (_zones[ZoneId.PVP.ordinal()] > 0) && (_zones[ZoneId.PEACE.ordinal()] == 0) && (_zones[ZoneId.NO_PVP.ordinal()] == 0);
@@ -461,10 +468,18 @@ public abstract class Creature extends WorldObject
 			case PEACE:
 			{
 				final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
-				if ((instance != null) && instance.isPvP())
+				if (instance != null)
 				{
-					return false;
+					if (instance.isPvP())
+					{
+						return false;
+					}
+					if (instance.isPeace())
+					{
+						return true;
+					}
 				}
+				break;
 			}
 		}
 		

@@ -103,6 +103,7 @@ import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.taskmanagers.AttackStanceTaskManager;
+import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * Maps and the Map Device, after the atlas of Path of Exile.
@@ -193,6 +194,8 @@ public class MapDeviceManager
 	/** When this few monsters are left, they hunt the players down (none stays hidden in a corner of the field). */
 	private static final int LAST_HUNT_COUNT = 10;
 	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
+	/** The last hunt radar follows its monster once it has moved this far from the marker. */
+	private static final int LAST_HUNT_RADAR_MOVE = 300;
 	private static final int PACK_MIN = 6;
 	private static final int PACK_MAX = 10;
 	private static final int PACK_RADIUS = 420;
@@ -578,7 +581,23 @@ public class MapDeviceManager
 	 */
 	private static boolean isLastHunt(MapRun run)
 	{
-		return (run.getStatus() == Status.OPEN) && (run.getMonsters().size() <= LAST_HUNT_COUNT);
+		return (run.getStatus() == Status.OPEN) && (getMonstersToGo(run) <= LAST_HUNT_COUNT);
+	}
+
+	/**
+	 * A map is complete once {@link MapDeviceConfig#COMPLETION_PERCENT}% of its counted monsters are slain (all of them on a map of fewer than 100); a unique map needs every one, its waves and final encounter hang on it.
+	 * @param run a run
+	 * @return how many more of its counted monsters must die to complete it
+	 */
+	public static int getMonstersToGo(MapRun run)
+	{
+		final int remaining = run.getMonsters().size();
+		if (run.isUnique())
+		{
+			return remaining;
+		}
+		final int mayStay = (Math.max(run.getMonsterTotal(), remaining) * (100 - MapDeviceConfig.COMPLETION_PERCENT)) / 100;
+		return Math.max(0, remaining - mayStay);
 	}
 
 	/**
@@ -893,6 +912,7 @@ public class MapDeviceManager
 			final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
 			instance.setAllowSummon(false);
 			instance.setEjectTime(0);
+			instance.setPeace(true); // A town of its own: no fighting between the players who visit it.
 			final Hideout hideout = new Hideout(player.getObjectId(), player.getName(), instance.getId());
 			HIDEOUTS_BY_INSTANCE.put(instance.getId(), hideout);
 			_hideouts.put(player.getObjectId(), hideout);
@@ -2114,7 +2134,7 @@ public class MapDeviceManager
 		}
 		if (run.getStatus() != Status.OPEN)
 		{
-			return run.getStatus() == Status.COMPLETED ? "This map is complete: every monster is slain." : "This map is closed.";
+			return run.getStatus() == Status.COMPLETED ? "This map is complete: its monsters are slain." : "This map is closed.";
 		}
 		if (!isAllowed(player, run))
 		{
@@ -2213,6 +2233,7 @@ public class MapDeviceManager
 		if (oldRun != null)
 		{
 			oldRun.getPlayersInside().remove(player.getObjectId());
+			clearLastHuntRadar(oldRun, player.getObjectId());
 			removePlayerEffects(player, oldRun);
 			if (oldRun.isUnique())
 			{
@@ -2599,7 +2620,7 @@ public class MapDeviceManager
 			return;
 		}
 
-		if (counted && run.getMonsters().isEmpty() && (run.getStatus() == Status.OPEN))
+		if (counted && (getMonstersToGo(run) == 0) && (run.getStatus() == Status.OPEN))
 		{
 			// A unique map's field is cleared: its next wave or its final encounter, unless that was its end.
 			if (run.isUnique() && UniqueMapManager.getInstance().onFieldCleared(run))
@@ -2608,9 +2629,116 @@ public class MapDeviceManager
 			}
 			completeRun(run, victim, player);
 		}
-		else if (counted && !run.isUnique() && (run.getMonsters().size() == LAST_HUNT_COUNT))
+		else if (counted && !run.isUnique())
 		{
-			sendScreenToMap(run, "Only " + LAST_HUNT_COUNT + " monsters remain: they are coming for you!");
+			if (getMonstersToGo(run) == LAST_HUNT_COUNT)
+			{
+				sendScreenToMap(run, "Only " + LAST_HUNT_COUNT + " monsters to go: they are coming for you, and your radar shows the way!");
+			}
+			updateLastHuntRadar(run, getPlayersInside(run)); // The next one, at once.
+		}
+	}
+
+	/**
+	 * The last hunt: once {@link #LAST_HUNT_COUNT} monsters or fewer stand between the players and a complete map, each player's radar points at one of them, the nearest, and follows it until it dies; then the next, one by one. Regular maps only.
+	 * @param run the run
+	 * @param players the players inside
+	 */
+	private static void updateLastHuntRadar(MapRun run, List<Player> players)
+	{
+		synchronized (run.getRadarMarks())
+		{
+			final int toGo = getMonstersToGo(run);
+			if (run.isUnique() || (run.getStatus() != Status.OPEN) || (toGo == 0) || (toGo > LAST_HUNT_COUNT))
+			{
+				clearLastHuntRadar(run);
+				return;
+			}
+
+			final List<Monster> alive = new ArrayList<>();
+			for (int objectId : run.getMonsters())
+			{
+				final WorldObject object = World.getInstance().findObject(objectId);
+				if ((object != null) && object.isMonster() && !((Monster) object).isDead() && (object.getInstanceId() == run.getInstanceId()))
+				{
+					alive.add((Monster) object);
+				}
+			}
+			if (alive.isEmpty())
+			{
+				clearLastHuntRadar(run);
+				return;
+			}
+
+			for (Player player : players)
+			{
+				final MapRun.RadarMark mark = run.getRadarMarks().get(player.getObjectId());
+				Monster target = null;
+				if (mark != null)
+				{
+					for (Monster monster : alive)
+					{
+						if (monster.getObjectId() == mark.monsterId())
+						{
+							target = monster;
+							break;
+						}
+					}
+				}
+
+				final boolean next = target == null;
+				if (next)
+				{
+					double nearest = Double.MAX_VALUE;
+					for (Monster monster : alive)
+					{
+						final double distance = player.calculateDistance2D(monster);
+						if (distance < nearest)
+						{
+							nearest = distance;
+							target = monster;
+						}
+					}
+				}
+				else if (Math.hypot(target.getX() - mark.spot().getX(), target.getY() - mark.spot().getY()) < LAST_HUNT_RADAR_MOVE)
+				{
+					continue; // Still about where the marker stands.
+				}
+
+				final Location spot = new Location(target.getX(), target.getY(), target.getZ());
+				run.getRadarMarks().put(player.getObjectId(), new MapRun.RadarMark(target.getObjectId(), spot));
+				QuestSpawnUtil.moveMarker(player, mark != null ? mark.spot() : null, spot);
+				if (next)
+				{
+					player.sendMessage("Radar: " + toGo + (toGo == 1 ? " monster" : " monsters") + " to go. The nearest, a " + target.getName() + ", is " + describeWay(player, target) + ".");
+				}
+			}
+		}
+	}
+
+	/**
+	 * Takes the last hunt radar off every player of a run.
+	 * @param run the run
+	 */
+	private static void clearLastHuntRadar(MapRun run)
+	{
+		for (Integer objectId : new ArrayList<>(run.getRadarMarks().keySet()))
+		{
+			clearLastHuntRadar(run, objectId);
+		}
+	}
+
+	/**
+	 * Takes the last hunt radar off a player.
+	 * @param run the run
+	 * @param objectId the player's object id
+	 */
+	private static void clearLastHuntRadar(MapRun run, int objectId)
+	{
+		final MapRun.RadarMark mark = run.getRadarMarks().remove(objectId);
+		if (mark != null)
+		{
+			QuestSpawnUtil.moveMarker(World.getInstance().getPlayer(objectId), mark.spot(), null);
 		}
 	}
 
@@ -2916,7 +3044,7 @@ public class MapDeviceManager
 	 */
 	void checkCompleted(MapRun run)
 	{
-		if (run.getMonsters().isEmpty() && (run.getStatus() == Status.OPEN))
+		if ((getMonstersToGo(run) == 0) && (run.getStatus() == Status.OPEN))
 		{
 			if (run.isUnique() && UniqueMapManager.getInstance().onFieldCleared(run))
 			{
@@ -2937,9 +3065,10 @@ public class MapDeviceManager
 			run.setStatus(Status.COMPLETED);
 			run.setCompletedAt(System.currentTimeMillis());
 		}
+		clearLastHuntRadar(run);
 
 		sendScreenToMap(run, run.isUnique() ? run.getUnique().name() + " is conquered!" : "Map complete!");
-		sendToMap(run, "Every monster of the map is slain. The map collapses in " + MapDeviceConfig.COMPLETED_CLOSE_DELAY + " seconds.");
+		sendToMap(run, (run.getMonsters().isEmpty() ? "Every monster of the map is slain." : "The map is cleared: the few monsters left may still be hunted.") + " The map collapses in " + MapDeviceConfig.COMPLETED_CLOSE_DELAY + " seconds.");
 		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (player != null))
 		{
 			dropRunMap(run, lastKill, player, rollInMapTier(run));
@@ -3224,6 +3353,11 @@ public class MapDeviceManager
 			if (_run.isBounty() && (_run.getStatus() == Status.OPEN))
 			{
 				updateBounty(_run, players, now);
+			}
+
+			if (((_tick % 2) == 0) && !_run.isUnique() && (_run.getStatus() == Status.OPEN))
+			{
+				updateLastHuntRadar(_run, players);
 			}
 
 			final HotzoneModifier hotzone = _run.getHotzoneEffect();

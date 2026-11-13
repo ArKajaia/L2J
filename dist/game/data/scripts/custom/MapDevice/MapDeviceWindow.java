@@ -369,7 +369,8 @@ public final class MapDeviceWindow
 		table(sb);
 		final String state = run.getStatus() == MapRun.Status.COMPLETED ? text(COLOR_POSITIVE, "Complete!") : run.isClosed() ? text(COLOR_NEGATIVE, "Closed") : text(COLOR_TITLE, "Open");
 		row(sb, "State", state, false);
-		row(sb, "Monsters left", text(COLOR_VALUE, run.getMonsters().size() + " / " + run.getMonsterTotal()), true);
+		final int toGo = MapDeviceManager.getMonstersToGo(run);
+		row(sb, "Monsters left", text(COLOR_VALUE, run.getMonsters().size() + " / " + run.getMonsterTotal()) + ((run.getStatus() == MapRun.Status.OPEN) && (toGo != run.getMonsters().size()) ? text(COLOR_MUTED, " (" + toGo + " to go)") : ""), true);
 		row(sb, "Portals left", run.getPortals().size() + " / " + run.getPortalCount(), false);
 		final int seconds = run.getRemainingSeconds();
 		row(sb, "Collapses in", (seconds / 60) + "m " + (seconds % 60) + "s", true);

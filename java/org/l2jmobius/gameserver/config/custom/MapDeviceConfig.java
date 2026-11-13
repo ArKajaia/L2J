@@ -60,6 +60,7 @@ public class MapDeviceConfig
 	public static int PORTAL_RADIUS;
 	public static int MAP_DURATION;
 	public static int COMPLETED_CLOSE_DELAY;
+	public static int COMPLETION_PERCENT;
 	public static int SAFE_RADIUS;
 	public static int MONSTER_SPACING;
 	public static boolean RANDOM_PASSIVES;
@@ -123,6 +124,7 @@ public class MapDeviceConfig
 		PORTAL_RADIUS = Math.max(60, config.getInt("PortalRadius", 150));
 		MAP_DURATION = Math.max(5, config.getInt("MapDurationMinutes", 60));
 		COMPLETED_CLOSE_DELAY = Math.max(10, config.getInt("CompletedMapCloseSeconds", 120));
+		COMPLETION_PERCENT = Math.max(1, Math.min(100, config.getInt("CompletionPercent", 99)));
 		SAFE_RADIUS = Math.max(0, config.getInt("EntrySafeRadius", 900));
 		MONSTER_SPACING = Math.max(0, config.getInt("MonsterSpacing", 500));
 		RANDOM_PASSIVES = config.getBoolean("MapMonsterRandomPassives", true);
