@@ -298,8 +298,9 @@ final class FakePlayerPvpOraclesWarchiefs
 			}
 			case BLOOD:
 			{
-				// Life steal for itself, or for its party around it.
-				final boolean worth = (hpRatio < (pvp ? 0.95 : 0.8)) || (AreaTargets.getParty(npc).size() > 1);
+				// Life steal on normal hits (absorbDam) for the party around it. Not for itself alone: it fights with spells and never hits, so a Totem of Blood planted because something hit it (an archer 700
+				// away) did nothing (docs/class-clinic/flame-warchief.md).
+				final boolean worth = AreaTargets.getParty(npc).size() > 1;
 				return worth && (replace || !current.isInsideRadius2D(npc, OraclesWarchiefsConfig.TOTEM_RANGE - 150));
 			}
 			case HORDE:
