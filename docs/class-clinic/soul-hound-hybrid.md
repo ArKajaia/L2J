@@ -95,3 +95,54 @@ Runs: Female `matrix-20261113-121845`, Male `matrix-20261113-122804`, each again
 - The rule fires seldom: swaps to the rapier in 300 melee fights went from 185 to 308 (Female, who has Warp every 10 s besides Blink) and from 176 to 336 (Male, Blink only).
 - When it fires the rapier phase is short and weak: in `battles/000101-FemaleSoulHoundHybrid-vs-Judicator` (28.8 to 33.9 s) it casts Triple Thrust (285), Soul of Pain (252, weaker without the mace's Acumen), a Shining Edge that misses and Aura Blast (460), and **no normal attack**, the rapier's strongest damage (300 to 2,100 a hit). Why the scorer leaves it is a general question (its normal-attack estimate), not done here.
 - Checkmate: 0.3 to 0.4 casts a battle, about 300 damage a battle (Death Mark lands 21%, and a marked target in rapier reach is rare). Soul Rage: gone (1.1 to 1.3 casts, 200 to 270 damage a battle).
+
+### Batch 3: not against a tank
+
+Tanks fell on both builds in batch 2 (not clearly). A tank hits softly and never catches a Hound that kites it, which is how batch 1 won the tanks; `caughtMain` now leaves a tank to the mace (`isTank`).
+
+| Against | Female batch 2 | batch 3 | Difference (95%) | Male batch 2 | batch 3 | Difference (95%) |
+|---|---|---|---|---|---|---|
+| tank | 61.7% | 65.0% | +3.3 (−8.9 to +15.5) | 49.2% | 55.0% | +5.8 (−6.8 to +18.5) |
+| melee | 44.2% | 45.8% | +1.5 | 44.4% | 47.1% | +2.7 |
+| dagger | 82.2% | 78.9% | −3.3 | 77.8% | 76.7% | −1.1 |
+| archer | 73.3% | 72.5% | −0.8 | 79.2% | 76.7% | −2.5 |
+| nuker | 53.0% | 49.6% | −3.3 | 52.8% | 57.4% | +4.6 |
+| healer | 99.4% | 100.0% | +0.6 | 99.4% | 100.0% | +0.6 |
+| buffer | 81.3% | 88.7% | +7.3 (−0.7 to +15.4) | 75.7% | 80.3% | +4.7 |
+| **all** | 62.9% | 63.6% | +0.6 (−3.3 to +4.5) | 61.2% | 63.9% | +2.7 (−1.2 to +6.7) |
+
+Runs: Female `matrix-20261113-123840`, Male `matrix-20261113-124759`.
+
+**Batches 2 and 3 together, against batch 1:** Female +0.7 (−3.2 to +4.6), Male +3.2 (−0.8 to +7.1): no clear change overall on either. Daggers +10.0 (−2.8 to +22.8) and **+17.8 (+4.4 to +31.2)**; no kind clearly worse on either build, in any of the four runs. Kept under the clinic's exception (its own measure moved: the rapier against a melee that caught it, the dagger fights won on both builds; nothing clearly worse), and written down as what it is: it doesn't move the overall win rate.
+
+## 5. Before and after
+
+Baseline against batch 3, 1,170 battles each.
+
+| Against | Female before | after | Difference (95%) | Male before | after | Difference (95%) |
+|---|---|---|---|---|---|---|
+| **tank** | 46.7% | 65.0% | **+18.3 (+6.0 to +30.7)** | 40.0% | 55.0% | **+15.0 (+2.5 to +27.5)** |
+| **melee** | 32.1% | 45.8% | **+13.6 (+6.3 to +21.0)** | 42.1% | 47.1% | +5.0 (−2.6 to +12.6) |
+| **dagger** | 62.2% | 78.9% | **+16.7 (+3.6 to +29.8)** | 68.9% | 76.7% | +7.8 (−5.2 to +20.7) |
+| **archer** | 60.8% | 72.5% | +11.7 (−0.2 to +23.5) | 65.8% | 76.7% | +10.8 (−0.5 to +22.2) |
+| **nuker** | 48.9% | 49.6% | +0.7 (−7.7 to +9.2) | 46.7% | 57.4% | **+10.7 (+2.4 to +19.1)** |
+| **healer** | 99.4% | 100.0% | +0.6 | 98.9% | 100.0% | +1.1 |
+| **buffer** | 74.7% | 88.7% | **+14.0 (+5.4 to +22.6)** | 74.0% | 80.3% | +6.3 (−3.1 to +15.8) |
+| **all** | 53.4% | 63.6% | **+10.2 (+6.2 to +14.2)** | 55.9% | 63.9% | **+8.0 (+4.1 to +12.0)** |
+
+Female: damage taken 229 → 204 a second, an enemy within 200 of it 64% → 58% of the fight (against tanks 49% → 31%).
+
+## 6. What changed
+
+- `dist/game/data/FakePlayerPvp.xml`, Male and Female Soul Hound Hybrid: the attack list (the nuker's order, Soul Vortex Extinction, Aura Blast, Aura Cannon, Checkmate; no Soul Rage), `range="500"`, `outrun="true"`, `caughtMain="true"`, Lightning Shock in `peel`, Hard March in `toggle`, Extinction in the mace's Soul Vortex combo; the Female one also `<move>628,622</move>` (Warp, Ultimate Escape). `caughtMain` is documented at the top of the file and in `xsd/FakePlayerPvp.xsd`.
+- `ai/FakePlayerPvpAI.java` and `ai/FakePlayerPvpAIExperimental.java` (the same in both): `chooseCaster` keeps the rapier against a melee that is not a tank, within 120 (300 once it holds the rapier), while no Blink-effect skill of its `move` or `peel` list is ready (`isCaught`).
+- `model/actor/holders/npc/FakePlayerPvpBuild.java`, `data/xml/FakePlayerPvpData.java`: the `caughtMain` attribute.
+- Guard: none needed. Every code change is reached only through the hybrids' data (`caughtMain`, a caster kit); the nuker's code paths (`range`, `outrun`, `jumpAway`) were already there and only act with the mace out.
+
+## 7. Not fixed here, and next
+
+- **The rapier phase doesn't use the normal attack.** With the rapier out against a melee it casts skills of 250 to 460 where its normal attack hits for 300 to 2,100. The scorer's normal-attack estimate (`estimateAutoAttackDps`) against the skills' is shared code: a general question for a guard run, not a hybrid fix.
+- **Melee are still under 50%** (Female 46%, Male 47%). Battle Oracle, Grand Khavatari, Doombringer and Judicator win 70 to 90% against it. The rest of melee's gap is its stats: M. Atk 2,100 to 3,100 with the mace, a third of a robe nuker's.
+- **Nukers about 50 to 57%.** Out-statted, as for the nuker build (`female-soul-hound.md`).
+- **Class skills still outside the build:** Spread Wing (2,192, around it, 4 s; it fights one target here), the Male's Sword Shield (+P. Def, 30 s) and Courage (the forum's "a MUST against a Tyrant"), Disarm (lands at level 36: rarely at 85). Not tried.
+- **Final Form** is cast late (below 70% HP, with 20 souls); against melee it is the fights it wins. Casting it earlier needs the souls first.
