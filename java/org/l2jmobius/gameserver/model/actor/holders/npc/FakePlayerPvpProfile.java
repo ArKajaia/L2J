@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.FakeBrain;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpRefine;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
@@ -134,6 +135,8 @@ public class FakePlayerPvpProfile
 	private double _wealth = 1;
 	/** The skills it enchanted (id -> enchanted level), see FakePlayerPvpSkillEnchant. */
 	private Map<Integer, Integer> _skillEnchants = Collections.emptyMap();
+	/** Its attributes and augment, see FakePlayerPvpRefine; {@code null} for none. */
+	private FakePlayerPvpRefine _refine;
 	private volatile long _spotStayUntil;
 	private volatile int _grudgeObjectId;
 	private volatile long _grudgeUntil;
@@ -1035,6 +1038,27 @@ public class FakePlayerPvpProfile
 	public void setSkillEnchants(Map<Integer, Integer> skillEnchants)
 	{
 		_skillEnchants = skillEnchants;
+	}
+	
+	/**
+	 * @return its weapon and armor attributes and its weapon augment, {@code null} for none (made before level 76 or by an older factory)
+	 */
+	public FakePlayerPvpRefine getRefine()
+	{
+		return _refine;
+	}
+	
+	public void setRefine(FakePlayerPvpRefine refine)
+	{
+		_refine = refine;
+	}
+	
+	/**
+	 * @return the augmentation id of its main weapon, 0 for none
+	 */
+	public int getAugmentationId()
+	{
+		return _refine != null ? _refine.getAugmentationId() : 0;
 	}
 	
 	/**

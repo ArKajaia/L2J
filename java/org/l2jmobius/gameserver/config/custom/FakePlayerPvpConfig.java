@@ -82,6 +82,17 @@ public class FakePlayerPvpConfig
 	public static List<int[]> SHIRT_CHANCE = new ArrayList<>();
 	public static List<int[]> BELT_CHANCE = new ArrayList<>();
 	public static List<int[]> CLOAK_CHANCE = new ArrayList<>();
+	/**
+	 * Attributes and augments from 76 (see {@link org.l2jmobius.gameserver.managers.FakePlayerPvpRefine}): {minLevel, chance} rows sorted by level for a fake player of wealth 1, grown by its wealth: the chance its weapon has an attack attribute, its armor
+	 * attribute resistances, an attribute goes past the stone level (crystals), its weapon is augmented, and an augment is from a top-grade life stone (else high-grade).
+	 */
+	public static boolean REFINE_ENABLED;
+	public static int REFINE_MIN_LEVEL;
+	public static List<int[]> WEAPON_ATTRIBUTE_CHANCE = new ArrayList<>();
+	public static List<int[]> ARMOR_ATTRIBUTE_CHANCE = new ArrayList<>();
+	public static List<int[]> ATTRIBUTE_CRYSTAL_CHANCE = new ArrayList<>();
+	public static List<int[]> AUGMENT_CHANCE = new ArrayList<>();
+	public static List<int[]> AUGMENT_TOP_GRADE_CHANCE = new ArrayList<>();
 	public static int BONUS_STAT_MAX;
 	public static boolean PASSIVE_TREE_ENABLED;
 	public static int PASSIVE_TREE_MAX_SUBCLASSES;
@@ -268,6 +279,13 @@ public class FakePlayerPvpConfig
 		SHIRT_CHANCE = parseTiers(config.getString("FakePvpShirtChance", "1:0;20:10;40:25;52:35;61:50;76:65;80:75;84:80"), "FakePvpShirtChance", 1);
 		BELT_CHANCE = parseTiers(config.getString("FakePvpBeltChance", "1:0;40:10;52:25;61:40;76:55;80:70;84:80"), "FakePvpBeltChance", 1);
 		CLOAK_CHANCE = parseTiers(config.getString("FakePvpCloakChance", "1:0;80:50;82:60;84:70"), "FakePvpCloakChance", 1);
+		REFINE_ENABLED = config.getBoolean("FakePvpRefineEnabled", true);
+		REFINE_MIN_LEVEL = Math.max(1, config.getInt("FakePvpRefineMinLevel", 76));
+		WEAPON_ATTRIBUTE_CHANCE = parseTiers(config.getString("FakePvpWeaponAttributeChance", "1:0;76:30;78:40;80:55;82:65;84:75"), "FakePvpWeaponAttributeChance", 1);
+		ARMOR_ATTRIBUTE_CHANCE = parseTiers(config.getString("FakePvpArmorAttributeChance", "1:0;76:20;78:30;80:45;82:55;84:65"), "FakePvpArmorAttributeChance", 1);
+		ATTRIBUTE_CRYSTAL_CHANCE = parseTiers(config.getString("FakePvpAttributeCrystalChance", "1:0;76:10;80:35;82:50;84:65"), "FakePvpAttributeCrystalChance", 1);
+		AUGMENT_CHANCE = parseTiers(config.getString("FakePvpAugmentChance", "1:0;76:30;78:40;80:55;82:65;84:75"), "FakePvpAugmentChance", 1);
+		AUGMENT_TOP_GRADE_CHANCE = parseTiers(config.getString("FakePvpAugmentTopGradeChance", "1:0;76:50;80:65;84:80"), "FakePvpAugmentTopGradeChance", 1);
 		BONUS_STAT_MAX = Math.max(0, config.getInt("FakePvpBonusStatMax", 10));
 		PASSIVE_TREE_ENABLED = config.getBoolean("FakePvpPassiveTreeEnabled", true);
 		PASSIVE_TREE_MAX_SUBCLASSES = Math.max(0, config.getInt("FakePvpPassiveTreeMaxSubclasses", 3));
