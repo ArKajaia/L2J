@@ -2,7 +2,7 @@
 
 Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds (1,170 a run). The Trickster (classId 134) is the Kamael crossbow archer; it shares the archers' AI (role ARCHER, `docs/class-clinic/archers.md`), whose batches it already had at baseline.
 
-**Result: 54.4% → 70.1% overall after batch 2 (batch 1 +11.8, 95% +7.9 to +15.8; batch 2 +3.8, +0.1 to +7.6).** Batches follow below.
+**Result: 54.4% → 70.1% overall (+15.7, 95% +11.8 to +19.6; batch 1 +11.8, 95% +7.9 to +15.8, batch 2 +3.8, +0.1 to +7.6).** Clearly better against tanks (48% → 68%), melee (36% → 61%), daggers (18% → 37%), archers (11% → 36%) and buffers (73% → 85%). Batches 3 (Sharpshooting) and 4 (no magic buff under ranged fire) were not kept. Final Form keeps a fake Trickster's crossbow, which a player's doesn't: written down, not used (section 3).
 
 ## 1. The class
 
@@ -82,3 +82,65 @@ Guard: `useWeaponWeakness` reaches only a build with a debuff that lowers the de
 Soul Barrier 1.39 → 0.92 casts a battle, Soul Shock 0.92 → 0.74. Warp (`positions.jsonl`, the gap to the target just before a Warp and 0.4 to 1 s after): median 50 → 453 at batch 1, 69 → 504 now. Against archers the gain is the walk-in: Soul Barrier is kept (it defends against bows) but no longer stands beside Prahnah and the debuffs that went before.
 
 Guard: `defendsAgainst` reaches every buff cast in a fight that is all M. Def or weapon defence: Anti Magic Armor (the four tanks), Soul Barrier (Doombringer), Song of Wind Storm (Battle Bard, Sword Muse, if sung in a fight), Deflect Arrow (a lasting buff, on before the fight, so not touched). It only removes casts that defend against nothing the opponent does; no guard run. `faceToJumpAway` changes the direction of the Judicator's peel Warp (from through the target to away from it); no guard run.
+
+### Batch 3: Sharpshooting, not kept (`matrix-20261113-230330`, against batch 2)
+
+Sharpshooting (521) at the end of the `buff` list, under the Sagittarius' Snipe rule (`castOnSelf`: only against an archer or mage by class, no melee coming), with the reach the buff itself adds counted (`addedReach`, so a crossbow at 850 could cast it at the 986 a fight starts from).
+
+| Against | Before | After | Difference (95%) | Verdict |
+|---|---|---|---|---|
+| **tank** | 68.3% | 63.3% | −5.0 (−17.0 to +7.0) | no clear change |
+| **melee** | 60.6% | 57.2% | −3.3 (−10.5 to +3.9) | no clear change |
+| **dagger** | 36.7% | 35.6% | −1.1 (−15.1 to +12.9) | no clear change |
+| **archer** | 35.6% | 22.2% | **−13.3 (−26.4 to −0.2)** | **worse** |
+| **nuker** | 88.5% | 88.1% | −0.4 (−5.8 to +5.0) | no clear change |
+| **healer** | 98.9% | 98.9% | +0.0 (−3.1 to +3.1) | no clear change |
+| **buffer** | 84.7% | 84.7% | +0.0 (−8.2 to +8.2) | no clear change |
+| **all** | 70.1% | 67.4% | −2.7 (−6.5 to +1.0) | no clear change |
+
+Cast 0.45 times a battle. Against archers damage taken rose 1,633 → 2,035 a second and dealt fell 1,153 → 951. `000013-Sagittarius-vs-Trickster`: Soul Barrier aborted by the first arrow, then Sharpshooting at 3.5 s under fire, and from then on a standing trade at 985 against a bow with nearly twice its P. Atk (6,037 crits): the Trickster's first bolt flies at 6.1 s. Standing still in reach of an archer that out-stats it loses the race; moving (batch 2's walk-in without buffs, the range steps) won it. Taken back out, the `addedReach` code with it.
+
+### Batch 4: no magic buff under ranged fire, not kept (`matrix-20261113-231349`, against batch 2)
+
+An archer leaves out of its `buff` list the magic buffs that take over 0.6 s while an archer or a mage that targets it has it in reach (`isUnderRangedFire`): at batch 2, Soul Barrier was aborted 88% of the time against archers and Prahnah 52% against nukers.
+
+| Against | Before | After | Difference (95%) | Verdict |
+|---|---|---|---|---|
+| **tank** | 68.3% | 64.2% | −4.2 (−16.1 to +7.8) | no clear change |
+| **melee** | 60.6% | 55.8% | −4.7 (−11.9 to +2.5) | no clear change |
+| **dagger** | 36.7% | 30.0% | −6.7 (−20.4 to +7.1) | no clear change |
+| **archer** | 35.6% | 30.0% | −5.6 (−19.2 to +8.1) | no clear change |
+| **nuker** | 88.5% | 87.8% | −0.7 (−6.2 to +4.7) | no clear change |
+| **healer** | 98.9% | 100.0% | +1.1 (−1.1 to +3.3) | no clear change |
+| **buffer** | 84.7% | 84.0% | −0.7 (−8.9 to +7.6) | no clear change |
+| **all** | 70.1% | 67.1% | −3.0 (−6.8 to +0.8) | no clear change |
+
+Its own measure moved (Prahnah 0.44 → 0.17 casts a battle, aborted 33% → 2%; Soul Barrier aborted 24% → 13%), but damage taken rose against nukers (428 → 494 a second) and archers (1,633 → 1,815): a Prahnah or Soul Barrier that does finish is worth the ones that don't. Down in six kinds of seven, so not kept under the exception either. Two batches in a row without a gain: the clinic stops here.
+
+## 5. Before and after
+
+Baseline `matrix-20261113-222901` against batch 2 `matrix-20261113-225308`, 1,170 battles each:
+
+| Against | Before | After | Difference (95%) | Verdict | Damage /s dealt | Damage /s taken |
+|---|---|---|---|---|---|---|
+| **tank** | 47.5% | 68.3% | +20.8 (+8.6 to +33.0) | **better** | 243 → 312 | 129 → 125 |
+| **melee** | 36.0% | 60.6% | +24.6 (+17.5 to +31.7) | **better** | 543 → 718 | 332 → 321 |
+| **dagger** | 17.8% | 36.7% | +18.9 (+6.2 to +31.6) | **better** | 360 → 641 | 864 → 875 |
+| **archer** | 11.1% | 35.6% | +24.4 (+12.6 to +36.3) | **better** | 692 → 1153 | 1724 → 1633 |
+| **nuker** | 84.8% | 88.5% | +3.7 (−2.0 to +9.4) | no clear change | 1138 → 1353 | 405 → 428 |
+| **healer** | 95.6% | 98.9% | +3.3 (−1.4 to +8.1) | no clear change | 1302 → 1486 | 18 → 14 |
+| **buffer** | 72.7% | 84.7% | +12.0 (+2.8 to +21.2) | **better** | 441 → 633 | 144 → 158 |
+| **all** | 54.4% | 70.1% | +15.7 (+11.8 to +19.6) | **better** | 645 → 777 | 245 → 271 |
+
+## 6. Next for this class
+
+- **Daggers (37%) and archers (36%)** stay under 50%. A dagger is on it half the fight and kills it in about 20 s, as it does every archer (the elven and human archers win 3 to 17% against daggers). Against archers it is outranged (850 against 1,000) and out-statted (P. Atk 5,000 to 5,700 against 7,000 to 11,000); standing to trade (batch 3) made it worse.
+- **Decoy and the traps** (learned, not in the build) are what retail Tricksters use against daggers and to take an enemy's target. A fake player's Decoy and traps are NPCs: whether other fake players target or step on them needs checking before they are worth a try.
+- **Final Form** (section 3, not fixed here): decide in `docs/class-balance-85.md` whether a fake Kamael in Final Form should fight with the form's attack like a player. Until then its win rates include a crossbow at double P. Atk once it is under 70% HP.
+
+## 7. Files and runs
+
+- `java/org/l2jmobius/gameserver/ai/FakePlayerPvpAI.java` and `FakePlayerPvpAIExperimental.java`: `useWeaponWeakness`, `weakensAgainst`, `defendsAgainst`, `faceToJumpAway`.
+- `java/org/l2jmobius/gameserver/model/effects/AbstractEffect.java`, `dist/game/data/scripts/handlers/skill/effects/DefenceTrait.java`: `getDefenceTraitFactor`.
+- `dist/game/data/FakePlayerPvp.xml`: the Trickster's `peel` (Warp first).
+- Runs in `../build/server/game/log/simulation-matrix/`: baseline `matrix-20261113-222901`, batch 1 `matrix-20261113-224154`, batch 2 `matrix-20261113-225308`, batch 3 `matrix-20261113-230330`, batch 4 `matrix-20261113-231349`.
