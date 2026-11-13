@@ -86,7 +86,14 @@ Cast once a battle, at the start (+10% M. Atk. and x1.5 magic critical rate for 
 - `FakePlayerPvpOraclesWarchiefs` (Oracle and Warchief skills only): Salvation kept up against a player that targets it; Unwritten never over its own Salvation (also as a reflex: `isWorthReflex`, called from the reflex options in both brains); Fulfilment on a big Salvation when low and on a 3-4 stack Doom only while the target is still in place; `estimateDamage` for Doom and Reckoning, used by `addScoredOptions` in both brains.
 - `Prophecies`: `isDoomStill` and `getSalvationDamage`, for the above.
 
-The skills it changed are also the Battle Oracle's and the Hierophant's (Salvation, Unwritten, Fulfilment, Doom, Reckoning): see the guard below.
+The skills it changed are also the Battle Oracle's and the Hierophant's (Salvation, Unwritten, Fulfilment, Doom, Reckoning). **Guard** (`--battles 15`, the pre-clinic code built from `009152f4` against the final code):
+
+| Build | Before | After | Difference (95%) | Runs |
+|---|---|---|---|---|
+| Battle Oracle | 28.5% | 41.2% | **+12.7 (+7.3 to +18.1), better**: tanks +20.8, melee +10.3, daggers +35.6, buffers +17.3 clearly better, no kind worse | `matrix-20261113-104237` → `matrix-20261113-102718` |
+| Hierophant (support) | 18.2% | 17.4% | −0.8 (−5.2 to +3.6), no clear change, no kind clearly worse | `matrix-20261113-104908` → `matrix-20261113-103405` |
+
+The Battle Oracle takes the same Salvation, Unwritten and Fulfilment rules from its own `buff` and `emergency` lists; its own clinic is still to be done.
 
 ## 6. Not fixed here, and next
 
