@@ -1315,9 +1315,9 @@
 	<!-- Performers who hunt on their own (the Sword Muse and Spectral Dancer below are their party buffers): a performance
 	     and a stance always on, the finale saved for players (see config/Custom/Performers.ini). -->
 	<build name="Battle Bard" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Swordsinger line. docs/class-clinic/battle-bard.md -->
-		<attack>986,98,3</attack> <!-- Deadly Strike (power 4,640, its strongest hit), Sword Symphony, Power Strike -->
+		<attack>986,98</attack> <!-- Deadly Strike (power 4,640, its strongest hit), Sword Symphony. No Power Strike: 654 damage per cast second, less than its normal attack -->
 		<buff>988,913,112,305,349,266</buff> <!-- Battle Whisper (P. Atk +15%, crit damage +10%, Atk. Spd +10%), Deflect Magic, Deflect Arrow, Songs of Vengeance (reflect +20%), Renewal (reuse -20%), Water (evasion +3) -->
-		<emergency>27508,110</emergency> <!-- Sanctuary Chorus, Ultimate Defense -->
+		<emergency>27508</emergency> <!-- Sanctuary Chorus. No Ultimate Defense: the burst reflex cast it at full HP, then it stood rooted for 30 s -->
 		<toggle>27506</toggle> <!-- Battle Hymn: its attacks may heal it and its party -->
 		<perform>27504|27502|27500,27500</perform> <!-- Hunting: Anthem of Valor / Hymn of Renewal / Ballad of the Bulwark. PvP: Ballad of the Bulwark -->
 		<peel>402</peel> <!-- Arrest -->
