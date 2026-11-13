@@ -55,3 +55,15 @@ Faults 1 to 6. **59.4% → 70.9% (+11.5, 95% +7.7 to +15.4)**; clearly better ag
 ### Batch 2: no Dryad Root at all (`matrix-20261113-091903`): taken out
 
 70.9% → 72.9% (+2.0, 95% −1.6 to +5.7), no clear change; **daggers 86.7% → 61.1% (−25.6, −37.8 to −13.3), clearly worse** (an enemy within 200 36% → 68% of the fight, damage taken 566 → 1,193 a second): a rooted dagger can't get behind it, and a root lands 25% on a dagger. Archers +12.1 and nukers +8.3, not clear.
+
+### Batch 2b: Dryad Root only as a peel (`matrix-20261113-093018`): kept
+
+Out of `debuff` and without the "Rooted doom" combo; still first in `peel`, so it is cast on what reaches it (the daggers above). 70.9% → 73.2% (+2.4, 95% −1.3 to +6.0), no kind clearly better or worse; daggers 86.7% → 87.8%, archers +4.6, healers +7.2. Root 10.9 → 6.3 casts a battle (its own measure moved as meant, no kind worse: kept, by the rule in `docs/class-clinic.md`).
+
+### Batch 3: Turn to Stone over a big Salvation (`matrix-20261113-094143`): taken out
+
+The idea: 8 s of stone (invulnerable) below 30% HP while a Salvation that heals 30% of its HP is on it; its prophecies keep running, so the Salvation comes true while nothing gets through. 73.2% → 72.0% (−1.2, 95% −4.9 to +2.4), no clear change (buffers +6.0). Cast 0.13 times a battle, and too late: its cast takes 0.8 s and the reflex reached it at 5% HP (`battles/000016-Duelist-vs-DoomOracle`: cast at 14.4 s, dead at 14.6 s). Logged 100% aborted, like Spirit Trance (its own paralysis ends the cast). Code and data taken back out.
+
+### Batch 4: no step back while a Doom is about to come true (`matrix-20261113-095406`): taken out
+
+Measured first, with a script over the battle logs (the target's position when the last Doom stack landed against when Doom Strike hit, in `matrix-20261113-093018`): **81.5% of Doom Strikes got the x1.5 for a target that stayed put; 57-70% against melee, tanks and daggers**, 93-99% against archers, nukers and healers (who don't chase it). The Oracle kites (16-26% of a melee or tank fight on KITE_MOVING) and the chaser follows it out of the 300. The batch: `kiteStep` does nothing for an Oracle whose Doom on its target comes true within 1.5 s while the target still stands where the Doom found it (logged DOOM_HOLD, 2,631 times). 73.2% → 72.1% (−1.2, 95% −4.8 to +2.5), no clear change; daggers −8.9, tanks −4.2. The still share moved 81.5% → 82.5% only: a melee chasing it has already walked the 300 by the time the Doom is 1.5 s from coming true; holding longer means standing in its reach.
