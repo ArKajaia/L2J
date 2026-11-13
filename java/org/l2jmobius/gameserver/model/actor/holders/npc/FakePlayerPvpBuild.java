@@ -124,6 +124,10 @@ public class FakePlayerPvpBuild
 	private boolean _outrun;
 	/** A build with a caster kit fights a melee that is on it with its main weapon while it has no jump ready, instead of standing in its reach with the magic weapon. */
 	private boolean _caughtMain;
+	/** The skills it enchants, most important first: each entry {skillId, route} alternatives, of which one is picked for each fake player. */
+	private List<int[][]> _enchants = new ArrayList<>();
+	/** The kit of the weapon it holds instead of its weapon kit once it is rich, {@code null} for none. */
+	private String _richWeaponKit;
 	
 	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String casterKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights)
 	{
@@ -172,6 +176,8 @@ public class FakePlayerPvpBuild
 		variant._mageRange = _mageRange;
 		variant._outrun = _outrun;
 		variant._caughtMain = _caughtMain;
+		variant._enchants = _enchants;
+		variant._richWeaponKit = _richWeaponKit;
 		return variant;
 	}
 	
@@ -199,6 +205,36 @@ public class FakePlayerPvpBuild
 	public List<int[]> getSkills(SkillCategory category)
 	{
 		return _skills.getOrDefault(category, Collections.emptyList());
+	}
+	
+	/**
+	 * @param alternatives {skillId, route} pairs of which only one is enchanted by each fake player (picked at random), e.g. Deadly Blow Power or Duel
+	 */
+	public void addEnchant(int[][] alternatives)
+	{
+		_enchants.add(alternatives);
+	}
+	
+	/**
+	 * @return the skills it enchants (the &lt;enchant&gt; list of data/FakePlayerPvp.xml), most important first, each entry {skillId, route} alternatives; empty for a build that enchants the chance of its debuffs and the power of its first attack
+	 *         skills (see {@link org.l2jmobius.gameserver.managers.FakePlayerPvpSkillEnchant})
+	 */
+	public List<int[][]> getEnchants()
+	{
+		return _enchants;
+	}
+	
+	/**
+	 * @return the kit of the weapon it holds instead of its weapon kit once it is rich enough (FakePvpRichWeaponWealth), when the kit has one for its level: dual daggers for the daggers; {@code null} for none
+	 */
+	public String getRichWeaponKit()
+	{
+		return _richWeaponKit;
+	}
+	
+	public void setRichWeaponKit(String richWeaponKit)
+	{
+		_richWeaponKit = richWeaponKit;
 	}
 	
 	public void addCombo(FakePlayerPvpCombo combo)

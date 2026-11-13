@@ -79,6 +79,16 @@ public class EnchantSkillLearn
 		return EnchantSkillGroupsData.getInstance().getEnchantSkillGroupById(_enchantRoutes.firstEntry().getValue());
 	}
 	
+	/**
+	 * @param route an enchant route (1 for the levels 101-1xx, 2 for 201-2xx...)
+	 * @return the enchant group of that route, {@code null} if the skill has no such route
+	 */
+	public EnchantSkillGroup getRouteGroup(int route)
+	{
+		final Integer group = _enchantRoutes.get(route);
+		return group != null ? EnchantSkillGroupsData.getInstance().getEnchantSkillGroupById(group) : null;
+	}
+	
 	public Set<Integer> getAllRoutes()
 	{
 		return _enchantRoutes.keySet();

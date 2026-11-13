@@ -55,6 +55,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpSkillEnchant;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -752,6 +753,10 @@ public class FakeSimulationManager
 					}
 				}
 				line.put("skills", skills);
+				line.put("wealth", Math.round(profile.getWealth() * 100) / 100.0);
+				line.put("weaponId", profile.getMainWeapon() != null ? profile.getMainWeapon().getWeaponId() : 0);
+				line.put("skillEnchants", FakePlayerPvpSkillEnchant.describe(profile.getSkillEnchants()));
+				line.put("epicJewels", profile.getEpicJewels());
 				final FakePlayerPvpPassives passives = profile.getPassives();
 				if (passives != null)
 				{
