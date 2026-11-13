@@ -60,7 +60,7 @@
      outrun  - true for a fast caster: against a melee player on it that is clearly slower (FakePlayerPvpAI
                OUTRUN_SPEED_RATIO) and that it is losing to (its HP is the lower share), it doesn't stand and
                trade: it runs out of reach, casts while the melee walks back, and runs again.
-     caughtMain - true for a build with a caster kit (the hybrid Soul Hounds): against a melee player that is on it (within
+     caughtMain - true for a build with a caster kit (the hybrid Soul Hounds): against a melee player (not a tank) on it (within
                120) while it has no jump ready (Blink, Warp), it fights with its main weapon instead of standing in the melee's
                reach with the magic weapon; once a jump is ready it takes the magic weapon out again, jumps away and kites.
      Skills are lists of skill ids. The level of each skill (and whether the fake player

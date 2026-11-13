@@ -73,3 +73,25 @@ Male (`matrix-20261113-120822` against `-114848`):
 | **all** | 55.9% | 60.8% | +4.9 (+0.9 to +8.9) | **better** |
 
 Skill use moved as meant (Female): Warp 0 → 2.5 casts a battle, Aura Blast 2.8, Aura Cannon 1.7 (2,753 damage a battle), Soul Vortex Extinction 0.9, Soul of Pain 10.0 → 5.2. Phoenix Knight 13% → 63%, Doom Oracle 17% → 60%. The Male gains less against melee: without Warp it has only Blink to get away with.
+
+### Batch 2: the rapier when a melee has caught it, Checkmate, no Soul Rage
+
+New build attribute `caughtMain` (`FakePlayerPvpBuild`, `FakePlayerPvpData`, `xsd/FakePlayerPvp.xsd`, documented at the top of `data/FakePlayerPvp.xml`): in `chooseCaster`, against a melee within 120 (kept until 300) while it has no jump ready (a `move` or `peel` skill with a Blink effect: Warp, Blink), it takes the rapier out; once a jump is ready it takes the mace out again, and the mage's pressed block jumps it away. Checkmate in the attack list ahead of Triple Thrust; Soul Rage out.
+
+| Against | Female before | after | Difference (95%) | Male before | after | Difference (95%) |
+|---|---|---|---|---|---|---|
+| tank | 70.0% | 61.7% | −8.3 (−20.3 to +3.6) | 54.2% | 49.2% | −5.0 (−17.6 to +7.6) |
+| melee | 43.0% | 44.2% | +1.2 (−6.4 to +8.8) | 41.1% | 44.4% | +3.3 (−4.2 to +10.9) |
+| **dagger** | 68.9% | 82.2% | **+13.3 (+0.9 to +25.7)** | 58.9% | 77.8% | **+18.9 (+5.6 to +32.2)** |
+| archer | 74.2% | 73.3% | −0.8 | 81.7% | 79.2% | −2.5 |
+| nuker | 53.3% | 53.0% | −0.4 | 54.8% | 52.8% | −2.0 |
+| healer | 98.9% | 99.4% | +0.6 | 98.3% | 99.4% | +1.1 |
+| buffer | 84.0% | 81.3% | −2.7 | 82.0% | 75.7% | −6.3 (−15.6 to +2.9) |
+| **all** | 62.9% | 62.9% | +0.0 (−3.9 to +4.0) | 60.8% | 61.2% | +0.4 (−3.5 to +4.4) |
+
+Runs: Female `matrix-20261113-121845`, Male `matrix-20261113-122804`, each against its batch 1 run.
+
+- Daggers clearly better on both builds; nothing else clear. Tanks down on both (not clear on either).
+- The rule fires seldom: swaps to the rapier in 300 melee fights went from 185 to 308 (Female, who has Warp every 10 s besides Blink) and from 176 to 336 (Male, Blink only).
+- When it fires the rapier phase is short and weak: in `battles/000101-FemaleSoulHoundHybrid-vs-Judicator` (28.8 to 33.9 s) it casts Triple Thrust (285), Soul of Pain (252, weaker without the mace's Acumen), a Shining Edge that misses and Aura Blast (460), and **no normal attack**, the rapier's strongest damage (300 to 2,100 a hit). Why the scorer leaves it is a general question (its normal-attack estimate), not done here.
+- Checkmate: 0.3 to 0.4 casts a battle, about 300 damage a battle (Death Mark lands 21%, and a marked target in rapier reach is rare). Soul Rage: gone (1.1 to 1.3 casts, 200 to 270 damage a battle).

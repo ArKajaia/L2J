@@ -4683,8 +4683,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		else if (isMeleeThreat(target))
 		{
 			// A build with caughtMain (data/FakePlayerPvp.xml) that a melee has caught fights it with its rapier while it can't jump away: with the mace it stood in the melee's reach with half a nuker's M. Atk. Once a jump
-			// is ready it takes the mace out again, and the mage's pressed block jumps it away (docs/class-clinic/soul-hound-hybrid.md).
-			wantsCaster = !profile.getBuild().isCaughtMain() || !isCaught(npc, profile, target, held);
+			// is ready it takes the mace out again, and the mage's pressed block jumps it away (docs/class-clinic/soul-hound-hybrid.md). Not a tank: it hits softly and never catches a Hound that kites it.
+			wantsCaster = !profile.getBuild().isCaughtMain() || isTank(target) || !isCaught(npc, profile, target, held);
 		}
 		else
 		{
