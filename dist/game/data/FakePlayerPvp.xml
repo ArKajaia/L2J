@@ -1331,20 +1331,21 @@
 		</combo>
 		<variant name="Battle Bard Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="War Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="2"> <!-- Bladedancer line -->
-		<attack>27528,408,84,223,70</attack> <!-- Danse Macabre, Demonic Blade Dance, Poison Blade Dance, Sting, Drain Health -->
-		<debuff>122,115,105,402</debuff> <!-- Hex, Power Break, Freezing Strike, Arrest -->
+	<build name="War Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="2"> <!-- Bladedancer line. docs/class-clinic/war-dancer.md -->
+		<attack>27528,986,408,223,84</attack> <!-- Danse Macabre, Deadly Strike (power 4,640, its single-target hit), Demonic Blade Dance, Sting, Poison Blade Dance -->
+		<debuff>122</debuff> <!-- Hex -->
+		<buff>989,913,112</buff> <!-- Defense Motion (P. Def +25%, M. Def +10%), Deflect Magic, Deflect Arrow -->
 		<toggle>27526</toggle> <!-- Blade Waltz: its dual sword attacks may slash every enemy around -->
 		<perform>27520,27522|27520</perform> <!-- Hunting: Dance of Ruin. PvP: Dance of Torment / Dance of Ruin -->
-		<peel>402,105</peel>
-		<combo name="Hex and blade dance" pvp="true">
-			<step skill="122" /> <!-- Hex -->
+		<peel>402</peel> <!-- Arrest -->
+		<combo name="Blade burst" pvp="true">
 			<step skill="408" /> <!-- Demonic Blade Dance -->
+			<step skill="986" /> <!-- Deadly Strike -->
 			<step skill="223" optional="true" /> <!-- Sting -->
 		</combo>
 		<combo name="Danse Macabre" pvp="true" chance="50">
-			<step skill="402" optional="true" /> <!-- Arrest -->
 			<step skill="27528" /> <!-- Danse Macabre -->
+			<step skill="986" optional="true" /> <!-- Deadly Strike -->
 			<step skill="408" optional="true" /> <!-- Demonic Blade Dance -->
 		</combo>
 		<variant name="War Dancer Light" armor="LIGHT_FIGHTER" weight="1" />
