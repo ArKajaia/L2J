@@ -62,6 +62,12 @@ public class EnergyDamage extends AbstractEffect
 	{
 		return EffectType.PHYSICAL_ATTACK;
 	}
+
+	@Override
+	public double getPower()
+	{
+		return _power;
+	}
 	
 	@Override
 	public boolean isInstant()

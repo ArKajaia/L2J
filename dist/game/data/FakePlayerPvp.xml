@@ -966,11 +966,11 @@
 	</build>
 
 	<!-- Warriors -->
-	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" polearm="POLEARM" weight="2" skillFighter="true">
-		<attack>7,9,345,261,5,1,6,255,3</attack>
+	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" polearm="POLEARM" weight="2" skillFighter="true" keystones="+Soul Harvest*0.5"> <!-- Soul Harvest: its normal hits charge its sonic energy; a few take it (every one taking it cost 4 points, docs/class-clinic/duelist.md) -->
+		<attack>261,5,6,1,345,7,9</attack> <!-- Triple Sonic Slash, Double Sonic Slash, Sonic Blaster (reaches 600), Triple Slash, Sonic Rage (charges as it hits), then the area ones (Sonic Storm, Sonic Buster) -->
 		<debuff>775</debuff>
 		<buff>297,917,78,287</buff>
-		<heal>121</heal>
+		<heal>121,440</heal> <!-- Battle Roar, Braveheart (1,000 CP) -->
 		<emergency>442</emergency>
 		<toggle>312,424</toggle>
 		<charge>919,8</charge>
@@ -989,7 +989,7 @@
 		</combo>
 		<variant name="Duelist Light" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
-	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" polearm="POLEARM" weight="2" skillFighter="true">
+	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" polearm="POLEARM" weight="2" skillFighter="true" keystones="+Soul Harvest*0.5"> <!-- Soul Harvest: its normal hits charge its force; a few take it -->
 		<attack>35,17,776,346,81,284,280,54,29,3</attack>
 		<debuff>120,281,95</debuff>
 		<buff>425|292|298|109|282|76|83,420,917</buff>

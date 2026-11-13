@@ -99,6 +99,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Totem;
 import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.Weapon;
+import org.l2jmobius.gameserver.model.item.enums.ShotType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
@@ -198,6 +199,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long COMBO_STEP_TIMEOUT = 3000;
 	/** How long a combo may take in total. */
 	private static final long COMBO_TIMEOUT = 15000;
+	/** How long it walks toward a combo step's target before the combo gives up, and how long before it starts a combo again. */
+	private static final long COMBO_APPROACH_TIMEOUT = 3000;
+	private static final long COMBO_APPROACH_PAUSE = 4000;
 	/** How long it tries to get behind its target before using the skill from where it is. */
 	private static final long BEHIND_TIMEOUT = 2500;
 	/** A dagger runs behind a target still casting for at least this long (ms) before its blow: it lands before the target turns. */
@@ -1262,10 +1266,19 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// Duelists and tyrants recharge their energy when they are running low (big energy skills need 2-4 charges).
-		if ((profile.getMaxCharges() > 0) && (profile.getCharges() < profile.getMaxCharges()) && ((profile.getCharges() < Math.min(4, profile.getMaxCharges())) || (Rnd.get(100) < 20)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, pvp))
+		if ((profile.getMaxCharges() > 0) && (profile.getCharges() < profile.getMaxCharges()) && ((profile.getCharges() < Math.min(4, profile.getMaxCharges())) || (Rnd.get(100) < 20)))
 		{
-			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "CHARGE");
-			return;
+			// In a fight, unless every charge comes at once (Maximum Focus Sonic), a skill that hits the enemy and charges as well (Sonic Rage) instead of the bare charge (Sonic Focus): the same cast, with damage on top.
+			if (pvp && !isFullChargeReady(npc, profile) && useChargingAttack(npc, profile, target, distance, collision))
+			{
+				trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "CHARGE_ATTACK");
+				return;
+			}
+			if (castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, pvp))
+			{
+				trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "CHARGE");
+				return;
+			}
 		}
 		
 		// A spoiler spoils the monster it fights first (Spoil, Spoil Crush), so it can be swept.
@@ -2628,7 +2641,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return canMove && (now >= _nextKiteTime) && kiteStep(npc, target, now, Math.max(personality.getKiteStep(), (int) (reach - gap) + 50));
 		}
 
-		final int keep = personality.getDefenseKeepDistance();
+		// One that can't move (Ultimate Defense) still casts: a melee waits out of its reach too, not at its usual distance. A Duelist holding off 300 from a Hell Knight under Ultimate Defense took Drain Health and Shackle
+		// for 20 s and lost a third of its HP before the fight went on.
+		final int keep = target.isMovementDisabled() ? Math.max(personality.getDefenseKeepDistance(), getThreatReach(target) + IMMOBILE_REACH_MARGIN) : personality.getDefenseKeepDistance();
 		if (gap < keep)
 		{
 			// Too close: step away when it can, otherwise fight back meanwhile.
@@ -2644,6 +2659,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		if (npc.isMoving())
 		{
 			clientStopMoving(null);
+		}
+		
+		// A Duelist or Tyrant waits with its energy full, so it comes back with its burst ready instead of charging in front of the enemy.
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((profile != null) && (profile.getCharges() < profile.getMaxCharges()))
+		{
+			castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, true);
 		}
 		return true;
 	}
@@ -4511,6 +4533,37 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/**
+	 * @return {@code true} if a charge skill that fills every charge at once (Maximum Focus Sonic) can be cast now
+	 */
+	private static boolean isFullChargeReady(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.CHARGE))
+		{
+			if (hasEffect(skill, "FocusMaxEnergy") && canCast(npc, skill, npc))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Hits the target with an attack skill that also charges it (Sonic Rage), if one reaches it from where it stands.
+	 * @return {@code true} if it cast one
+	 */
+	private boolean useChargingAttack(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.ATTACK))
+		{
+			if (hasEffect(skill, "FocusEnergy") && canCast(npc, skill, target) && ((distance - collision) <= getSkillReach(skill)) && (castOrApproach(npc, target, skill, distance, collision, false) == CastResult.CAST))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * Starts or continues a combo (see data/FakePlayerPvp.xml). Steps are played in order; an optional step is skipped when it can't be used right now, a required one is waited for up to {@link #COMBO_STEP_TIMEOUT}, and blows marked "behind" first try to get behind
 	 * the target.
 	 * @return {@code true} if the combo acted this tick
@@ -4625,6 +4678,14 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				}
 				case MOVING:
 				{
+					// A target it has walked after for a while without reaching it (an archer kiting it, a mage with a speed buff): the combo waits, and what reaches from here (Sonic Blaster, Sonic Rage) and its
+					// gap closers take over. Before, a Duelist walked behind a Moonlight Sentinel for up to the whole combo (15 s) without a cast.
+					if (pvp && ((now - _comboStepStart) > COMBO_APPROACH_TIMEOUT))
+					{
+						endCombo(now);
+						_nextComboTime = Math.max(_nextComboTime, now + COMBO_APPROACH_PAUSE);
+						return false;
+					}
 					return true;
 				}
 				default:
@@ -7695,7 +7756,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		if (skill.getPower() <= 0)
 		{
-			return 0;
+			final double energy = skill.isMagic() ? 0 : SkillFactsReader.of(skill).power();
+			return energy > 0 ? estimateEnergyDamage(npc, target, skill, energy) : 0;
 		}
 		if (skill.isMagic())
 		{
@@ -7709,6 +7771,21 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		// A blow deals its damage only when it lands, which depends on where it hits from (twice as often from behind).
 		return Formulas.calcBlowDamage(npc, target, skill, (byte) 0, true) * blowChance(npc, target, skill);
+	}
+	
+	/**
+	 * The EnergyDamage effect's formula without the critical hit (the Duelist's sonic skills, the Grand Khavatari's force skills): P. Atk. plus the effect's power, doubled by a soulshot, +20% for every
+	 * charge it holds past the first, against P. Def. Their power is the effect's, not the skill's, so without this they were worth nothing to the scorer and only their place in the list counted.
+	 * @param power the effect's power
+	 */
+	private static double estimateEnergyDamage(Attackable npc, Creature target, Skill skill, double power)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final int charges = profile != null ? profile.getCharges() : 1;
+		final double soulshot = skill.useSoulShot() && npc.isChargedShot(ShotType.SOULSHOTS) ? 2 : 1;
+		final double attack = (npc.getPAtk(target) + power) * soulshot * (((Math.max(1, charges) - 1) * 0.2) + 1) * 77;
+		final double damage = (attack / Math.max(1, target.getPDef(npc))) * Formulas.calcWeaponTraitBonus(npc, target) * Formulas.calcAttributeBonus(npc, target, skill) * Formulas.calcGeneralTraitBonus(npc, target, skill.getTraitType(), true);
+		return target.isPlayer() ? npc.calcStat(Stat.PHYSICAL_SKILL_POWER, damage, null, null) : damage;
 	}
 	
 	/**
