@@ -115,6 +115,7 @@ import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.TraitType;
 import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
@@ -1340,6 +1341,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if (pvp && (role == Role.ARCHER) && !bowHeld && (_combo == null) && useSlowOpener(npc, profile, target, distance, collision, safeCast))
 		{
 			trace(Reason.CAST, target, npc.getLastSkillCast(), "SLOW_OPENER");
+			return;
+		}
+		
+		// An archer keeps the debuff on its target that makes its own weapon hit harder (Real Target: crossbow damage taken x1.4 for 30 s): nearly all of its damage is arrows, which arrows first (#29) would otherwise never let it cast.
+		if (pvp && (role == Role.ARCHER) && !bowHeld && (_combo == null) && useWeaponWeakness(npc, profile, target, distance, collision, safeCast))
+		{
+			trace(Reason.CAST, target, npc.getLastSkillCast(), "WEAPON_WEAKNESS");
 			return;
 		}
 		
@@ -5476,6 +5484,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				continue;
 			}
 			
+			// A buff that only raises M. Def (Prahnah) is for a fight against magic: against an archer or a melee its cast time is all it brings.
+			if ((target != null) && (target != npc) && isPvpEnemy(target) && !castsMagic(target) && onlyRaisesMagicDefence(skill))
+			{
+				continue;
+			}
+			
 			// An immobilizing buff (Snipe) only against an archer or a mage (by its class, not the weapon it holds now: a tank with its spare bow out charges in a moment later), within the bow's reach, with no melee coming at it.
 			if (hasEffect(skill, "ImmobileBuff") && ((target == null) || (target == npc) || !isRangedClass(target) || (npc.calculateDistance2D(target) > (npc.getPhysicalAttackRange() + IMMOBILE_BUFF_REACH_SLACK)) || isMeleeOnMe(npc, IMMOBILE_BUFF_THREAT)))
 			{
@@ -5929,6 +5943,53 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	}
 	
 	/**
+	 * Puts on its target the debuff of its {@code debuff} list that weakens the target against its own weapon (Real Target), when it isn't on yet, reaches from where it stands and is off before a melee
+	 * coming at it gets there.
+	 * @param npc the archer
+	 * @param profile its profile
+	 * @param target its target
+	 * @param distance the distance to it
+	 * @param collision both collision radii
+	 * @param safeCast how long it may cast before a melee reaches it
+	 * @return {@code true} if it cast one
+	 */
+	private boolean useWeaponWeakness(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision, long safeCast)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.DEBUFF))
+		{
+			if (!weakensAgainst(skill, npc) || target.isAffectedBySkill(skill.getId()) || ((getCastTime(npc, skill) + CAST_MARGIN) >= safeCast) || ((skill.getCastRange() + collision) < distance) || !canCast(npc, skill, target))
+			{
+				continue;
+			}
+			return useSkill(npc, target, skill, distance, collision, false);
+		}
+		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @param attacker the one that would cast it
+	 * @return {@code true} if it lowers its target's defence against the attacker's weapon (Real Target against a crossbow or a bow)
+	 */
+	private static boolean weakensAgainst(Skill skill, Creature attacker)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects == null)
+		{
+			return false;
+		}
+		final TraitType trait = attacker.getAttackType().getTraitType();
+		for (AbstractEffect effect : effects)
+		{
+			if (effect.getDefenceTraitFactor(trait) < 1)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * @param skill a skill
 	 * @return {@code true} if it multiplies its target's speed by less than 1 (Hamstring Shot, Entangle)
 	 */
@@ -5955,6 +6016,36 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * @param skill a buff
+	 * @return {@code true} if all it does is raise M. Def (Prahnah)
+	 */
+	private static boolean onlyRaisesMagicDefence(Skill skill)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if ((effects == null) || effects.isEmpty())
+		{
+			return false;
+		}
+		boolean magicDefence = false;
+		for (AbstractEffect effect : effects)
+		{
+			if (!"Buff".equals(effect.getClass().getSimpleName()) || (effect.getFuncTemplates() == null))
+			{
+				return false;
+			}
+			for (FuncTemplate func : effect.getFuncTemplates())
+			{
+				if (func.getStat() != Stat.MAGIC_DEFENCE)
+				{
+					return false;
+				}
+				magicDefence = true;
+			}
+		}
+		return magicDefence;
 	}
 	
 	/**
