@@ -63,8 +63,24 @@ The play suggested: when a melee comes in among its totems, Shatter. 41.7% → 3
 
 The play suggested: a totem left behind that the player ran past, or one near a player at range, is a way back in: swap with it and plant Flames there. 41.7% → 40.7% (-1.0, 95% -5.0 to +3.0), no clear change. It ran 616 times (Spirit Walk 0.6 → 1.1 casts a battle) and works as meant (`battles/000009-ShillienTemplar-vs-FlameWarchief`: the swap at a gap of 835, the Totem of Flames 0.8 s later at 172), but the Flames planted that way didn't move the fights, and the swap spends Spirit Walk's 30 s reuse, which is also its escape.
 
+### Batches 7 to 9: fighting in the fire (taken out)
+
+Asked for: the Totem of Flames has more in it than the AI got out of it. Measured first, with a script over the battle logs (pulses of each Totem of Flames against where the enemy stood): in `matrix-20261113-065253` the Flames burned its target in **44% of the pulses against melee, 24% against tanks, 53% against daggers**, and in 52% (melee) and 73% (tanks) of the pulses the enemy was out of the fire because **the Warchief itself had kited away from its totem**, the melee following it out. At full uptime one Totem of Flames burns a melee for about 200 a second, as much as Steal Essence. Each version below kept the melee in the fire; none won more fights, all against `matrix-20261113-065253` (41.7%):
+
+| Batch | What it did | Fire uptime vs melee / tank / dagger | Win % (95%) | Damage /s vs melee: dealt / taken |
+|---|---|---|---|---|
+| 7 (`matrix-20261113-073745`) | Holding the fire: in reach of its own Totem of Flames against a melee, a kite step goes to the far side of the totem, or it stands and casts | 88% / 73% / 97% | 36.5% (-5.3, -9.2 to -1.3), **worse**; tanks -15.0, melee -6.5 clearly worse | 526 → 591 / 596 → 805 |
+| 7b (`matrix-20261113-075921`) | The same, but each kite step is an arc around the totem (radius 200), away from the melee's side | 88% / 72% / 100% | 39.8% (-1.9, -5.9 to +2.1) | 526 → 563 / 596 → 706 |
+| 8 (`matrix-20261113-081052`) | 7b, and it stacks Totems of Flames while it holds the fire (up to 3; each extra one burns for half) | 86% / 76% / 95% | 38.6% (-3.1, -7.1 to +0.9); tanks -9.2 clearly worse | 526 → 576 / 596 → 677 |
+| 9 (`matrix-20261113-082214`) | 8, and Spirit Trance (x4 defences for 5 s) below 75% HP with a melee on it burning in two Totems of Flames | 86% / 77% / 96% | 40.3% (-1.4, -5.4 to +2.6); melee +2.5, daggers -11.1 | 526 → 566 / 596 → 686 |
+
+What they show: the fire was there (Flames damage 5,692 → 7,715 a battle in batch 9, burns against melee 12 → 22 a battle), but every way of staying in it gave the melee more time on the Warchief than the fire paid back: a melee does about 800 a second to a Warchief that doesn't move away, the fire about 200 (two stacked, 300). Kiting away from the totem was worth more than the burns it cost. Spirit Trance from the buff list also went off at low HP against archers and nukers, paralyzed (disabled 10% → 19% of an archer fight).
+
+The trade depends on tuning, not on the AI: `dist/game/config/Custom/OraclesWarchiefs.ini` documents defaults of FlameTotemRange 400 and FlameTotemPulse 1667 (a burn 20% more often) and runs 350 and 2000. With those, or a stronger burn, holding the fire (the code of batch 9 is in this file's history) may pay; a balance question for `docs/class-balance-85.md`.
+
 ## 5. Not fixed here, and next
 
 - **Shatter and the Totem Circle.** Shatter needs three totems up; Blood was the cheap third one. A Shatter plan (plant Blood or Frost-Teeth as the third totem when a melee comes in among Flames, then Shatter) would need the two together; not tried.
+- **The Totem of Flames' tuning** (batches 7 to 9): range 350 and a pulse every 2 s, where the config documents 400 and 1.667 s. At these numbers fighting in the fire loses to kiting away from it.
 - **Melee (24%)**: it loses the race standing (it deals 494 a second, takes 622). Damage per second is Steal Essence on a 2 s reuse after a 4 s cast; the Totem of Flames is the only other damage. What is left is a balance question (`docs/class-balance-85.md`), or making it keep out of reach longer (a root: it has none; Dreaming Spirit lands 11%).
 - **Nukers (18%)**: out-damaged at range; Steal Essence's 900 reach is its edge and is already used.
