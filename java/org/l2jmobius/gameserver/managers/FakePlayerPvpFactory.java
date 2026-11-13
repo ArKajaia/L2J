@@ -23,8 +23,10 @@ package org.l2jmobius.gameserver.managers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
@@ -258,8 +260,19 @@ public class FakePlayerPvpFactory
 		final ItemTemplate gloves = getItem(armors != null ? armors.getGloves() : 0);
 		final ItemTemplate feet = getItem(armors != null ? armors.getFeet() : 0);
 		final ItemTemplate earring = getItem(jewels != null ? jewels.getEarring() : 0);
-		final ItemTemplate necklace = getItem(jewels != null ? jewels.getNecklace() : 0);
+		final ItemTemplate kitNecklace = getItem(jewels != null ? jewels.getNecklace() : 0);
 		final ItemTemplate ring = getItem(jewels != null ? jewels.getRing() : 0);
+		
+		// The rich of 80 and up own some raid boss jewels useful to their role, worn in place of the ones of their kit (see rollEpicJewels).
+		final List<ItemTemplate> epicJewels = rollEpicJewels(build.getRole(), level, enchanter);
+		final List<ItemTemplate> epicEarrings = filterSlot(epicJewels, BodyPart.LR_EAR);
+		final List<ItemTemplate> epicNecklaces = filterSlot(epicJewels, BodyPart.NECK);
+		final List<ItemTemplate> epicRings = filterSlot(epicJewels, BodyPart.LR_FINGER);
+		final ItemTemplate leftEarring = epicEarrings.size() > 0 ? epicEarrings.get(0) : earring;
+		final ItemTemplate rightEarring = epicEarrings.size() > 1 ? epicEarrings.get(1) : earring;
+		final ItemTemplate necklace = epicNecklaces.size() > 0 ? epicNecklaces.get(0) : kitNecklace;
+		final ItemTemplate leftRing = epicRings.size() > 0 ? epicRings.get(0) : ring;
+		final ItemTemplate rightRing = epicRings.size() > 1 ? epicRings.get(1) : ring;
 		final boolean fullArmor = (chest != null) && (chest.getBodyPart() == BodyPart.FULL_ARMOR);
 		
 		// Armor set.
@@ -281,11 +294,11 @@ public class FakePlayerPvpFactory
 		final int feetEnchant = enchanter.roll(feet, Kind.ARMOR, fullSet);
 		final int shirtEnchant = enchanter.roll(shirt, Kind.ARMOR);
 		final int beltEnchant = enchanter.roll(belt, Kind.ARMOR);
-		final int leftEarringEnchant = enchanter.roll(earring, Kind.JEWEL);
-		final int rightEarringEnchant = enchanter.roll(earring, Kind.JEWEL);
+		final int leftEarringEnchant = enchanter.roll(leftEarring, Kind.JEWEL);
+		final int rightEarringEnchant = enchanter.roll(rightEarring, Kind.JEWEL);
 		final int necklaceEnchant = enchanter.roll(necklace, Kind.JEWEL);
-		final int leftRingEnchant = enchanter.roll(ring, Kind.JEWEL);
-		final int rightRingEnchant = enchanter.roll(ring, Kind.JEWEL);
+		final int leftRingEnchant = enchanter.roll(leftRing, Kind.JEWEL);
+		final int rightRingEnchant = enchanter.roll(rightRing, Kind.JEWEL);
 		
 		// Base stats.
 		int str = classTemplate.getBaseSTR();
@@ -357,20 +370,30 @@ public class FakePlayerPvpFactory
 		
 		// M. Def.: same for jewels (FuncMDefMod).
 		double mDef = classTemplate.getBaseMDef();
-		if (earring != null)
+		if (leftEarring != null)
 		{
-			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_REAR) + classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_LEAR);
-			mDef += (2 * getStat(earring, Stat.MAGIC_DEFENCE)) + defenceEnchantBonus(leftEarringEnchant) + defenceEnchantBonus(rightEarringEnchant);
+			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_LEAR);
+			mDef += getStat(leftEarring, Stat.MAGIC_DEFENCE) + defenceEnchantBonus(leftEarringEnchant);
+		}
+		if (rightEarring != null)
+		{
+			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_REAR);
+			mDef += getStat(rightEarring, Stat.MAGIC_DEFENCE) + defenceEnchantBonus(rightEarringEnchant);
 		}
 		if (necklace != null)
 		{
 			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_NECK);
 			mDef += getStat(necklace, Stat.MAGIC_DEFENCE) + defenceEnchantBonus(necklaceEnchant);
 		}
-		if (ring != null)
+		if (leftRing != null)
 		{
-			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_RFINGER) + classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_LFINGER);
-			mDef += (2 * getStat(ring, Stat.MAGIC_DEFENCE)) + defenceEnchantBonus(leftRingEnchant) + defenceEnchantBonus(rightRingEnchant);
+			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_LFINGER);
+			mDef += getStat(leftRing, Stat.MAGIC_DEFENCE) + defenceEnchantBonus(leftRingEnchant);
+		}
+		if (rightRing != null)
+		{
+			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_RFINGER);
+			mDef += getStat(rightRing, Stat.MAGIC_DEFENCE) + defenceEnchantBonus(rightRingEnchant);
 		}
 		
 		// Weapon: its stats replace the unarmed ones (weapon "set" functions). A polearm (Dreadnoughts) also gives its Polearm Multi-attack while it holds it, and the weapon of a build that swaps to a magic weapon its special ability
@@ -417,7 +440,7 @@ public class FakePlayerPvpFactory
 		
 		// HP/MP (a real character also has CP on top of HP).
 		final double hp = classTemplate.getBaseHpMax(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpMax(level) : 0);
-		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring, shirt, belt, cloak);
+		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, leftEarring, rightEarring, necklace, leftRing, rightRing, shirt, belt, cloak);
 		
 		int armorWornMask = 0;
 		for (ItemTemplate item : new ItemTemplate[]
@@ -479,11 +502,11 @@ public class FakePlayerPvpFactory
 			head,
 			gloves,
 			feet,
-			earring,
-			earring,
+			leftEarring,
+			rightEarring,
 			necklace,
-			ring,
-			ring,
+			leftRing,
+			rightRing,
 			shirt,
 			belt,
 			cloak
@@ -575,6 +598,15 @@ public class FakePlayerPvpFactory
 			skills.put(skill.getId(), skill);
 		}
 
+		// The effects of its raid boss jewels (the kit's jewels have none).
+		for (ItemTemplate jewel : epicJewels)
+		{
+			for (Skill skill : getPassiveSkills(jewel))
+			{
+				skills.put(skill.getId(), skill);
+			}
+		}
+		
 		if (fullSet)
 		{
 			addSkills(skills, armorSet.getSkills());
@@ -601,11 +633,12 @@ public class FakePlayerPvpFactory
 		addEquipment(equipment, head, headEnchant);
 		addEquipment(equipment, gloves, glovesEnchant);
 		addEquipment(equipment, feet, feetEnchant);
-		addEquipment(equipment, earring, leftEarringEnchant);
-		addEquipment(equipment, earring, rightEarringEnchant);
-		addEquipment(equipment, necklace, necklaceEnchant);
-		addEquipment(equipment, ring, leftRingEnchant);
-		addEquipment(equipment, ring, rightRingEnchant);
+		// Not its raid boss jewels: a kill must not make them out of thin air (every one in the world comes from its boss).
+		addEquipment(equipment, epicJewels.contains(leftEarring) ? null : leftEarring, leftEarringEnchant);
+		addEquipment(equipment, epicJewels.contains(rightEarring) ? null : rightEarring, rightEarringEnchant);
+		addEquipment(equipment, epicJewels.contains(necklace) ? null : necklace, necklaceEnchant);
+		addEquipment(equipment, epicJewels.contains(leftRing) ? null : leftRing, leftRingEnchant);
+		addEquipment(equipment, epicJewels.contains(rightRing) ? null : rightRing, rightRingEnchant);
 		addEquipment(equipment, shirt, shirtEnchant);
 		addEquipment(equipment, belt, beltEnchant);
 		addEquipment(equipment, cloak, 0);
@@ -628,6 +661,7 @@ public class FakePlayerPvpFactory
 		profile.setElite(elite);
 		profile.setWealth(enchanter.getWealth());
 		profile.setSkillEnchants(enchanted);
+		profile.setEpicJewels(epicJewels.stream().map(ItemTemplate::getId).toList());
 		
 		// The top of its HP pool is its CP, which CP potions refill (see FakePlayerPvpManager#tryCpPotion).
 		profile.setCpShare(FakePlayerPvpConfig.INCLUDE_CP_IN_HP && (hp > 0) ? classTemplate.getBaseCpMax(level) / hp : 0);
@@ -988,6 +1022,75 @@ public class FakePlayerPvpFactory
 		}
 		
 		return skills;
+	}
+	
+	/**
+	 * The raid boss jewels a fake player owns (the epicJewel list of data/FakePlayerPvp.xml), like a player that could afford a few of them: only a rich one of {@link FakePlayerPvpConfig#EPIC_JEWEL_MIN_LEVEL} or more, whose wealth reaches
+	 * {@link FakePlayerPvpConfig#EPIC_JEWEL_WEALTH} moved up or down by up to {@link FakePlayerPvpConfig#EPIC_JEWEL_WEALTH_JITTER}, owns any. Then each jewel useful to its role is rolled on its own with its chance, grown by its wealth, in a random
+	 * order until the slot is full (two earrings, one necklace, two rings). A jewel whose effect it already has (the other Earring of Zaken) is passed over: only one of them would count.
+	 * @param role the role of its build
+	 * @param level its level
+	 * @param enchanter its gear roller, for its wealth
+	 * @return the raid boss jewels it wears, empty for none
+	 */
+	private static List<ItemTemplate> rollEpicJewels(Role role, int level, FakePlayerPvpEnchant enchanter)
+	{
+		final double jitter = FakePlayerPvpConfig.EPIC_JEWEL_WEALTH_JITTER;
+		if ((level < FakePlayerPvpConfig.EPIC_JEWEL_MIN_LEVEL) || (enchanter.getWealth() < (FakePlayerPvpConfig.EPIC_JEWEL_WEALTH + (jitter > 0 ? Rnd.get(-jitter, jitter) : 0))))
+		{
+			return Collections.emptyList();
+		}
+		
+		final List<ItemTemplate> picked = new ArrayList<>();
+		final Set<Integer> effects = new HashSet<>();
+		for (BodyPart slot : new BodyPart[]
+		{
+			BodyPart.LR_EAR,
+			BodyPart.NECK,
+			BodyPart.LR_FINGER
+		})
+		{
+			int free = slot == BodyPart.NECK ? 1 : 2;
+			for (FakePlayerPvpData.EpicJewel jewel : FakePlayerPvpData.getInstance().getEpicJewels(role, level, slot))
+			{
+				if (free == 0)
+				{
+					break;
+				}
+				
+				final ItemTemplate item = getItem(jewel.itemId());
+				if ((item == null) || !enchanter.roll(jewel.chance()))
+				{
+					continue;
+				}
+				
+				final List<Skill> itemSkills = getPassiveSkills(item);
+				if (itemSkills.stream().anyMatch(skill -> effects.contains(skill.getId())))
+				{
+					continue;
+				}
+				
+				itemSkills.forEach(skill -> effects.add(skill.getId()));
+				picked.add(item);
+				free--;
+			}
+		}
+		
+		return picked;
+	}
+	
+	private static List<ItemTemplate> filterSlot(List<ItemTemplate> items, BodyPart slot)
+	{
+		final List<ItemTemplate> result = new ArrayList<>();
+		for (ItemTemplate item : items)
+		{
+			if (item.getBodyPart() == slot)
+			{
+				result.add(item);
+			}
+		}
+		
+		return result;
 	}
 	
 	private static void addSkills(Map<Integer, Skill> skills, List<SkillHolder> holders)

@@ -32,6 +32,14 @@
 						<xs:attribute type="xs:nonNegativeInteger" name="weight" />
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="epicJewel" maxOccurs="unbounded" minOccurs="0">
+					<xs:complexType>
+						<xs:attribute type="xs:int" name="id" use="required" />
+						<xs:attribute type="xs:string" name="roles" use="required" />
+						<xs:attribute type="xs:nonNegativeInteger" name="chance" use="required" />
+						<xs:attribute type="xs:int" name="minLevel" />
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="buffs" maxOccurs="unbounded" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence>

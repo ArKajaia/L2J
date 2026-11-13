@@ -519,6 +519,28 @@
 	<cloak id="21721" minLevel="80" weight="4" /> <!-- Soul Cloak of Frintezza -->
 	<cloak id="21720" minLevel="82" weight="3" /> <!-- Soul Cloak of Freya -->
 
+	<!-- Raid boss jewels: a rich fake player (FakePvpEpicJewel* in config/Custom/FakePlayerPvp.ini, from level 80) wears some of them in place
+	     of the jewels of its kit. Each one useful to its role is rolled on its own with its chance (grown by its wealth), in a random order,
+	     until the slot is full: two earrings, one necklace, two rings. Two jewels with the same effect (both Zaken earrings) are never worn
+	     together, since only one of them would count. Their effects come from their item skills (data/stats/skills).
+	     Only the ones still worth wearing at 80 and up are listed: the Earring of Orfen and the Ring of Core (A grade, 1 Accuracy or a 6%
+	     heal bonus) have less M. Def. than the Dynasty and Vesper jewels and nearly nothing else.
+	     roles    - the roles (FIGHTER, TANK, DAGGER, ARCHER, MAGE) it is useful to. The Ring of Queen Ant gives Critical Damage and Accuracy,
+	                which a mage doesn't use (Critical Damage doesn't grow magic critical hits) and a tank barely does; the Ring of Beleth gives
+	                M. Def. +12%, HP and MP, for the ones that take the hits; the Necklace of Freya cuts only the reuse of magic.
+	     chance   - % a rich fake player of one of those roles owns it, before its wealth: the rarer the boss, the lower.
+	     minLevel - the lowest level that wears it (the Freya and Daytime Zaken jewels drop in instances for 82 and up). -->
+	<epicJewel id="6660" roles="FIGHTER,DAGGER,ARCHER" chance="45" /> <!-- Ring of Queen Ant: Critical Damage +15%, Accuracy +2 -->
+	<epicJewel id="6658" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="15" /> <!-- Ring of Baium: Critical Damage +15%, Atk. Spd./Casting Spd. +4%, Accuracy +2 -->
+	<epicJewel id="10314" roles="TANK,MAGE" chance="25" /> <!-- Ring of Beleth: M. Def. +12%, HP +105, MP +38 -->
+	<epicJewel id="6659" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="35" /> <!-- Earring of Zaken: vampiric 4%, heals received +10%, bleed/shock/mental resistance -->
+	<epicJewel id="21712" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="12" minLevel="82" /> <!-- Blessed Earring of Zaken: the same, stronger, and Dark resistance -->
+	<epicJewel id="6656" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="12" /> <!-- Earring of Antharas: vampiric 4%, MP cost -5%, heals received +10%, bleed/shock/mental resistance -->
+	<epicJewel id="6657" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="10" /> <!-- Necklace of Valakas: HP +445, P. Atk. +4%, M. Atk. +8%, reuse -10%, reflect 5% -->
+	<epicJewel id="8191" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="30" /> <!-- Necklace of Frintezza: reuse -5%, reflect 4%, many resistances -->
+	<epicJewel id="16025" roles="MAGE" chance="25" minLevel="82" /> <!-- Necklace of Freya: magic reuse -5%, MP regeneration, resistances -->
+	<epicJewel id="16026" roles="MAGE" chance="8" minLevel="82" /> <!-- Blessed Necklace of Freya: the same, stronger, magic MP cost -5% -->
+
 	<!-- Buffs -->
 	<buffs name="FIGHTER">
 		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Bless the Body/Soul, Mental Shield, Magic Barrier -->
