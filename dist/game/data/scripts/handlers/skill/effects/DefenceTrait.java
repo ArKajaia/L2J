@@ -71,6 +71,13 @@ public class DefenceTrait extends AbstractEffect
 	}
 	
 	@Override
+	public float getDefenceTraitFactor(TraitType trait)
+	{
+		final Float factor = _defenceTraits.get(trait);
+		return factor != null ? factor : 1;
+	}
+	
+	@Override
 	public void onExit(Creature effector, Creature effected, Skill skill)
 	{
 		final CreatureStat charStat = effected.getStat();

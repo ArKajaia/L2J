@@ -1299,7 +1299,7 @@
 		<buff>490,482,1514,1470</buff>
 		<toggle>334,481,479</toggle>
 		<move>622</move>
-		<peel>627,628</peel> <!-- Soul Shock, Warp (jumps back from a player in melee range) -->
+		<peel>628,627</peel> <!-- Warp (a jump of 500 away from a player in melee range, every 10 s), then Soul Shock (a 3 s fear that lands about 12%) -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
 		<enchant>507:1|507:7,627:4,509:3,508:1|508:7,1435:2,1445:2,490:1</enchant>

@@ -113,6 +113,7 @@ import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.TraitType;
 import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
@@ -1316,6 +1317,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		if (pvp && (role == Role.ARCHER) && !bowHeld && (_combo == null) && useSlowOpener(npc, profile, target, distance, collision, safeCast))
 		{
 			trace(Reason.CAST, target, npc.getLastSkillCast(), "SLOW_OPENER");
+			return;
+		}
+		
+		// An archer keeps the debuff on its target that makes its own weapon hit harder (Real Target: crossbow damage taken x1.4 for 30 s): nearly all of its damage is arrows, which arrows first (#29) would otherwise never let it cast.
+		if (pvp && (role == Role.ARCHER) && !bowHeld && (_combo == null) && useWeaponWeakness(npc, profile, target, distance, collision, safeCast))
+		{
+			trace(Reason.CAST, target, npc.getLastSkillCast(), "WEAPON_WEAKNESS");
 			return;
 		}
 		
@@ -2870,7 +2878,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			if (hasEffect(skill, "Blink") && canCast(npc, skill, npc))
 			{
 				clientStopMoving(null);
-				npc.setHeading(LocationUtil.calculateHeadingFrom(target, npc));
+				faceToJumpAway(npc, target, skill);
 				npc.setTarget(npc);
 				npc.doCast(skill);
 				npc.setTarget(target);
@@ -2880,6 +2888,18 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Turns so that a jump (Blink effect) takes it straight away from {@code target}: the jump goes the way it faces turned by half a circle and the skill's fly course, so Blink (course 0) faces the target and
+	 * Warp (course 180, "to the front") turns its back on it. Facing the target, a Warp from a melee at 200 landed 300 behind the melee instead of 700 away.
+	 * @param npc the one that jumps
+	 * @param target the one it gets away from
+	 * @param skill the jump
+	 */
+	private static void faceToJumpAway(Attackable npc, Creature target, Skill skill)
+	{
+		npc.setHeading((LocationUtil.calculateHeadingFrom(npc, target) - (int) ((skill.getFlyCourse() * 65536) / 360)) & 0xFFFF);
 	}
 	
 	/** Outrun: how much faster than the melee on it a caster has to be. */
@@ -4593,10 +4613,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			markShot();
 		}
 		
-		// Blink and Warp jump back from where it faces: it faces the player it gets away from.
+		// Blink and Warp jump away from the player it gets away from: Blink jumps back from where it faces, Warp forward (its fly course).
 		if (hasEffect(skill, "Blink"))
 		{
-			npc.setHeading(LocationUtil.calculateHeadingFrom(npc, target));
+			faceToJumpAway(npc, target, skill);
 		}
 		
 		npc.setTarget(target);
@@ -5152,6 +5172,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				continue;
 			}
 			
+			// A buff that only defends against what this opponent doesn't do costs its cast time and brings nothing: M. Def (Prahnah) against a player without magic, a defence against bows and crossbows
+			// (Soul Barrier, M. Def and bows) against a melee.
+			if ((target != null) && (target != npc) && isPvpEnemy(target) && !defendsAgainst(skill, target))
+			{
+				continue;
+			}
+			
 			// An immobilizing buff (Snipe) only against an archer or a mage (by its class, not the weapon it holds now: a tank with its spare bow out charges in a moment later), within the bow's reach, with no melee coming at it.
 			if (hasEffect(skill, "ImmobileBuff") && ((target == null) || (target == npc) || !isRangedClass(target) || (npc.calculateDistance2D(target) > (npc.getPhysicalAttackRange() + IMMOBILE_BUFF_REACH_SLACK)) || isMeleeOnMe(npc, IMMOBILE_BUFF_THREAT)))
 			{
@@ -5605,6 +5632,53 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/**
+	 * Puts on its target the debuff of its {@code debuff} list that weakens the target against its own weapon (Real Target), when it isn't on yet, reaches from where it stands and is off before a melee
+	 * coming at it gets there.
+	 * @param npc the archer
+	 * @param profile its profile
+	 * @param target its target
+	 * @param distance the distance to it
+	 * @param collision both collision radii
+	 * @param safeCast how long it may cast before a melee reaches it
+	 * @return {@code true} if it cast one
+	 */
+	private boolean useWeaponWeakness(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision, long safeCast)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.DEBUFF))
+		{
+			if (!weakensAgainst(skill, npc) || target.isAffectedBySkill(skill.getId()) || ((getCastTime(npc, skill) + CAST_MARGIN) >= safeCast) || ((skill.getCastRange() + collision) < distance) || !canCast(npc, skill, target))
+			{
+				continue;
+			}
+			return useSkill(npc, target, skill, distance, collision, false);
+		}
+		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @param attacker the one that would cast it
+	 * @return {@code true} if it lowers its target's defence against the attacker's weapon (Real Target against a crossbow or a bow)
+	 */
+	private static boolean weakensAgainst(Skill skill, Creature attacker)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects == null)
+		{
+			return false;
+		}
+		final TraitType trait = attacker.getAttackType().getTraitType();
+		for (AbstractEffect effect : effects)
+		{
+			if (effect.getDefenceTraitFactor(trait) < 1)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * @param skill a skill
 	 * @return {@code true} if it multiplies its target's speed by less than 1 (Hamstring Shot, Entangle)
 	 */
@@ -5628,6 +5702,58 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				{
 					return true;
 				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param skill a buff
+	 * @param target the player it fights
+	 * @return {@code false} for a buff whose every effect is M. Def against a player that doesn't fight with magic, or a defence against weapons the player doesn't use (Soul Barrier, Deflect Arrow against a
+	 *         melee); {@code true} for any other
+	 */
+	private static boolean defendsAgainst(Skill skill, Creature target)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if ((effects == null) || effects.isEmpty())
+		{
+			return true;
+		}
+		final boolean magic = castsMagic(target);
+		final TraitType weapon = target.getAttackType().getTraitType();
+		for (AbstractEffect effect : effects)
+		{
+			final String name = effect.getClass().getSimpleName();
+			if ("Buff".equals(name))
+			{
+				final List<FuncTemplate> funcs = effect.getFuncTemplates();
+				if ((funcs == null) || funcs.isEmpty())
+				{
+					return true;
+				}
+				for (FuncTemplate func : funcs)
+				{
+					if ((func.getStat() != Stat.MAGIC_DEFENCE) || magic)
+					{
+						return true;
+					}
+				}
+			}
+			else if ("DefenceTrait".equals(name))
+			{
+				for (TraitType trait : TraitType.values())
+				{
+					// A resistance to a state (Courage: fear) always counts; one to a weapon only against that weapon.
+					if ((effect.getDefenceTraitFactor(trait) != 1) && ((trait.getType() != 1) || (trait == weapon)))
+					{
+						return true;
+					}
+				}
+			}
+			else
+			{
+				return true;
 			}
 		}
 		return false;
