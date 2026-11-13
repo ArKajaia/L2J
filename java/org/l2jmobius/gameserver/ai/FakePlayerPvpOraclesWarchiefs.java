@@ -54,6 +54,10 @@ final class FakePlayerPvpOraclesWarchiefs
 	static final int FLAME_TOTEM_SKILL_ID = 27559;
 	/** Doom Strike: what Prophecy of Doom comes true with, at the prophecy's level. */
 	private static final int DOOM_STRIKE_SKILL_ID = 27531;
+	/** Turn to Stone: below this share of HP, over a Salvation that heals at least this share of its max HP. */
+	private static final int TURN_TO_STONE_SKILL_ID = 1540;
+	private static final double STONE_HP = 0.3;
+	private static final double STONE_SALVATION_SHARE = 0.3;
 	/** Prophecy of Salvation is kept up against a player that has it as its target within this distance. */
 	private static final int SALVATION_THREAT_RANGE = 1200;
 	/** Spell Turning (Hierophant): cancels a spell, only worth it while the target casts. */
@@ -168,7 +172,30 @@ final class FakePlayerPvpOraclesWarchiefs
 	 */
 	static boolean isWorthReflex(Attackable npc, Creature target, Skill skill)
 	{
-		return (skill.getId() != Prophecies.UNWRITTEN_SKILL_ID) || !hasHealingSalvation(npc);
+		switch (skill.getId())
+		{
+			case Prophecies.UNWRITTEN_SKILL_ID:
+			{
+				return !hasHealingSalvation(npc);
+			}
+			case TURN_TO_STONE_SKILL_ID:
+			{
+				return isStoneWorth(npc);
+			}
+			default:
+			{
+				return true;
+			}
+		}
+	}
+	
+	/**
+	 * Turn to Stone (8 s of stone: nothing gets through, nothing can be done) for an Oracle that is about to die with a big Salvation on it: its prophecies keep running, so the Salvation comes true while
+	 * the enemy can't touch it, and it comes back to the fight with the HP it heals.
+	 */
+	private static boolean isStoneWorth(Attackable npc)
+	{
+		return ((npc.getCurrentHp() / npc.getMaxHp()) < STONE_HP) && (Prophecies.getSalvationDamage(npc, npc) >= (npc.getMaxHp() * STONE_SALVATION_SHARE));
 	}
 	
 	/**
@@ -242,6 +269,10 @@ final class FakePlayerPvpOraclesWarchiefs
 			case Totems.GREAT_TOTEM_SKILL_ID:
 			{
 				break;
+			}
+			case TURN_TO_STONE_SKILL_ID:
+			{
+				return isStoneWorth(npc);
 			}
 			default:
 			{
