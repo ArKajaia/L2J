@@ -503,18 +503,26 @@ public class AugmentationData
 			}
 			default:
 			{
-				return generateRandomWeaponAugmentation(lifeStoneLevel, lifeStoneGrade, lifeStoneId, targetItem);
+				return generateRandomWeaponAugmentation(lifeStoneLevel, lifeStoneGrade, lifeStoneId, targetItem.getTemplate().isMagicWeapon());
 			}
 		}
 	}
 	
-	private Augmentation generateRandomWeaponAugmentation(int level, int lifeStoneGrade, int lifeStoneId, Item item)
+	/**
+	 * Generates a random weapon augmentation without an item, as a life stone would give it (fake players).
+	 * @param level the life stone level (as in AbstractRefinePacket)
+	 * @param lifeStoneGrade the life stone grade (AbstractRefinePacket.GRADE_*)
+	 * @param lifeStoneId the life stone item id
+	 * @param magicWeapon {@code true} for a magic weapon
+	 * @return the augmentation
+	 */
+	public Augmentation generateRandomWeaponAugmentation(int level, int lifeStoneGrade, int lifeStoneId, boolean magicWeapon)
 	{
 		int stat12 = 0;
 		int stat34 = 0;
 		if (PlayerConfig.RETAIL_LIKE_AUGMENTATION)
 		{
-			if (item.getTemplate().isMagicWeapon())
+			if (magicWeapon)
 			{
 				final List<AugmentationChance> selectedChances12 = new ArrayList<>();
 				final List<AugmentationChance> selectedChances34 = new ArrayList<>();

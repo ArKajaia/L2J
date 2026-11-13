@@ -110,9 +110,11 @@ public class FakePlayerInfo extends ServerPacket
 		buffer.writeInt(0); // Inventory.PAPERDOLL_DECO5
 		buffer.writeInt(0); // Inventory.PAPERDOLL_DECO6
 		buffer.writeInt(_fpcHolder.getEquipBelt()); // Inventory.PAPERDOLL_BELT
+		// Augmentation ids by paperdoll slot, in the order above: its weapon's (right hand and dual hand) for the glow of an augment.
+		final int augmentationId = _fpcHolder.getWeaponAugmentationId();
 		for (int i = 0; i < 21; i++)
 		{
-			buffer.writeInt(0);
+			buffer.writeInt(((i == 2) || (i == 9)) ? augmentationId : 0);
 		}
 		
 		buffer.writeInt(0); // getTalismanSlots

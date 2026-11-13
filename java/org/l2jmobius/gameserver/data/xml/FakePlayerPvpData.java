@@ -24,9 +24,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -43,6 +45,8 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpGearTier;
+import org.l2jmobius.gameserver.model.item.ItemTemplate;
+import org.l2jmobius.gameserver.model.item.enums.BodyPart;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 
 /**
@@ -55,6 +59,8 @@ public class FakePlayerPvpData implements IXmlReader
 	private final Map<String, List<FakePlayerPvpGearTier>> _kits = new HashMap<>();
 	/** The cloaks fake players wear once their armor set opens the cloak slot. */
 	private final List<Cloak> _cloaks = new ArrayList<>();
+	/** The raid boss jewels rich fake players may wear. */
+	private final List<EpicJewel> _epicJewels = new ArrayList<>();
 	private final List<FakePlayerPvpBuild> _builds = new ArrayList<>();
 	/** Buff list name -> (tier min level -> buffs), tiers sorted by level. */
 	private final Map<String, List<Map.Entry<Integer, List<SkillHolder>>>> _buffs = new HashMap<>();
@@ -70,6 +76,7 @@ public class FakePlayerPvpData implements IXmlReader
 	{
 		_kits.clear();
 		_cloaks.clear();
+		_epicJewels.clear();
 		_builds.clear();
 		_buffs.clear();
 		_totalWeight = 0;
@@ -117,7 +124,7 @@ public class FakePlayerPvpData implements IXmlReader
 			_totalWeight += build.getWeight();
 		}
 		
-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _kits.size() + " gear kits, " + _cloaks.size() + " cloaks, " + _buffs.size() + " buff lists and " + _builds.size() + " builds.");
+		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _kits.size() + " gear kits, " + _cloaks.size() + " cloaks, " + _epicJewels.size() + " raid boss jewels, " + _buffs.size() + " buff lists and " + _builds.size() + " builds.");
 	}
 	
 	@Override
@@ -144,6 +151,33 @@ public class FakePlayerPvpData implements IXmlReader
 					return;
 				}
 				_cloaks.add(cloak);
+			});
+			
+			forEach(listNode, "epicJewel", jewelNode ->
+			{
+				final NamedNodeMap attrs = jewelNode.getAttributes();
+				final int itemId = parseInteger(attrs, "id");
+				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
+				if ((item == null) || ((item.getBodyPart() != BodyPart.LR_EAR) && (item.getBodyPart() != BodyPart.NECK) && (item.getBodyPart() != BodyPart.LR_FINGER)))
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": Raid boss jewel " + itemId + " is not an earring, a necklace or a ring.");
+					return;
+				}
+				
+				final Set<Role> roles = EnumSet.noneOf(Role.class);
+				for (String role : parseString(attrs, "roles").split(","))
+				{
+					try
+					{
+						roles.add(Role.valueOf(role.trim()));
+					}
+					catch (IllegalArgumentException e)
+					{
+						LOGGER.warning(getClass().getSimpleName() + ": Unknown role " + role + " for raid boss jewel " + itemId + ".");
+					}
+				}
+				
+				_epicJewels.add(new EpicJewel(itemId, item.getBodyPart(), roles, Math.max(0, Math.min(100, parseInteger(attrs, "chance"))), parseInteger(attrs, "minLevel", 1)));
 			});
 			
 			forEach(listNode, "buffs", buffsNode ->
@@ -184,6 +218,7 @@ public class FakePlayerPvpData implements IXmlReader
 				build.setMageRange(Math.max(0, parseInteger(attrs, "range", 0)));
 				build.setOutrunner(parseBoolean(attrs, "outrun", false));
 				build.setCaughtMain(parseBoolean(attrs, "caughtMain", false));
+				build.setRichWeaponKit(parseString(attrs, "richWeapon", null));
 				final List<NamedNodeMap> variants = new ArrayList<>();
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
@@ -193,6 +228,39 @@ public class FakePlayerPvpData implements IXmlReader
 						continue;
 					}
 
+					if ("enchant".equalsIgnoreCase(skillsNode.getNodeName()))
+					{
+						for (String entry : skillsNode.getTextContent().split(","))
+						{
+							entry = entry.trim();
+							if (entry.isEmpty())
+							{
+								continue;
+							}
+							
+							try
+							{
+								final String[] alternatives = entry.split("\\|");
+								final int[][] enchant = new int[alternatives.length][];
+								for (int i = 0; i < alternatives.length; i++)
+								{
+									final String[] skillAndRoute = alternatives[i].split(":");
+									enchant[i] = new int[]
+									{
+										Integer.parseInt(skillAndRoute[0].trim()),
+										Integer.parseInt(skillAndRoute[1].trim())
+									};
+								}
+								build.addEnchant(enchant);
+							}
+							catch (RuntimeException e)
+							{
+								LOGGER.warning(getClass().getSimpleName() + ": Build " + name + " has a bad enchant entry \"" + entry + "\" (skillId:route|skillId:route).");
+							}
+						}
+						continue;
+					}
+					
 					if ("combo".equalsIgnoreCase(skillsNode.getNodeName()))
 					{
 						final NamedNodeMap comboAttrs = skillsNode.getAttributes();
@@ -467,6 +535,43 @@ public class FakePlayerPvpData implements IXmlReader
 	public List<FakePlayerPvpBuild> getBuilds()
 	{
 		return Collections.unmodifiableList(_builds);
+	}
+	
+	/**
+	 * @param role the role of a build
+	 * @param level a character level
+	 * @param slot {@link BodyPart#LR_EAR}, {@link BodyPart#NECK} or {@link BodyPart#LR_FINGER}
+	 * @return the raid boss jewels of that slot useful to a fake player of {@code role} at {@code level}, in a random order
+	 */
+	public List<EpicJewel> getEpicJewels(Role role, int level, BodyPart slot)
+	{
+		final List<EpicJewel> jewels = new ArrayList<>();
+		for (EpicJewel jewel : _epicJewels)
+		{
+			if ((jewel.slot() == slot) && (jewel.minLevel() <= level) && jewel.roles().contains(role))
+			{
+				jewels.add(jewel);
+			}
+		}
+		
+		// Shuffled with Rnd, so a seeded fake player (the mirrored teams of a simulation) gets the same ones.
+		for (int i = jewels.size() - 1; i > 0; i--)
+		{
+			Collections.swap(jewels, i, Rnd.get(i + 1));
+		}
+		return jewels;
+	}
+	
+	/**
+	 * A raid boss jewel rich fake players may wear (see data/FakePlayerPvp.xml).
+	 * @param itemId the jewel
+	 * @param slot its slot: {@link BodyPart#LR_EAR}, {@link BodyPart#NECK} or {@link BodyPart#LR_FINGER}
+	 * @param roles the roles it is useful to
+	 * @param chance the chance (in %) a rich fake player of one of those roles owns it, grown by its wealth
+	 * @param minLevel the lowest level that wears it
+	 */
+	public record EpicJewel(int itemId, BodyPart slot, Set<Role> roles, int chance, int minLevel)
+	{
 	}
 	
 	/**

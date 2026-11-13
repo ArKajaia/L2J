@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.FakeBrain;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpRefine;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
@@ -130,6 +131,12 @@ public class FakePlayerPvpProfile
 	// The PvP spot it came to fight in (see PvpSpotManager), 0 for none; whether it is one of the stronger ones; until when it stays; who killed it there last and until when it looks for them.
 	private volatile int _pvpSpotId;
 	private volatile boolean _elite;
+	/** How rich it is (see FakePlayerPvpEnchant#getWealth). */
+	private double _wealth = 1;
+	/** The skills it enchanted (id -> enchanted level), see FakePlayerPvpSkillEnchant. */
+	private Map<Integer, Integer> _skillEnchants = Collections.emptyMap();
+	/** The raid boss jewels it wears (item ids), see FakePlayerPvpFactory#rollEpicJewels. */
+	private List<Integer> _epicJewels = Collections.emptyList();
 	private volatile long _spotStayUntil;
 	private volatile int _grudgeObjectId;
 	private volatile long _grudgeUntil;
@@ -1005,6 +1012,63 @@ public class FakePlayerPvpProfile
 	public void setElite(boolean elite)
 	{
 		_elite = elite;
+	}
+	
+	/**
+	 * @return how rich it is: its gear enchants, its skill enchants and whether it holds the weapon of the rich of its build come from it
+	 */
+	public double getWealth()
+	{
+		return _wealth;
+	}
+	
+	public void setWealth(double wealth)
+	{
+		_wealth = wealth;
+	}
+	
+	/**
+	 * @return the skills it enchanted (id -> enchanted level, e.g. 358 -> 112 for Bluff +12 Chance), empty for none
+	 */
+	public Map<Integer, Integer> getSkillEnchants()
+	{
+		return _skillEnchants;
+	}
+	
+	public void setSkillEnchants(Map<Integer, Integer> skillEnchants)
+	{
+		_skillEnchants = skillEnchants;
+	}
+	
+	/**
+	 * @return its weapon and armor attributes and its weapon augment, {@code null} for none (made before level 76 or by an older factory)
+	 */
+	public FakePlayerPvpRefine getRefine()
+	{
+		return _refine;
+	}
+	
+	public void setRefine(FakePlayerPvpRefine refine)
+	{
+		_refine = refine;
+	}
+	
+	/**
+	 * @return the augmentation id of its main weapon, 0 for none
+	 */
+	public int getAugmentationId()
+	{
+		return _refine != null ? _refine.getAugmentationId() : 0;
+	 * @return the raid boss jewels it wears (item ids), empty for none
+	 */
+	public List<Integer> getEpicJewels()
+	{
+		return _epicJewels;
+	}
+	
+	public void setEpicJewels(List<Integer> epicJewels)
+	{
+		_epicJewels = epicJewels;
 	}
 	
 	/**

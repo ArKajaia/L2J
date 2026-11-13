@@ -53,6 +53,9 @@ public class FakePlayerHolder
 	private final int _equipHair2;
 	private final int _agathionId;
 	private int _weaponEnchantLevel;
+	// The weapon its augment is on and that augment (packet id), for its glow while it holds that weapon.
+	private final int _augmentedWeaponId;
+	private final int _weaponAugmentationId;
 	private final int _armorEnchantLevel;
 	// The enchant of each armor piece, shield, shirt and belt by paperdoll slot, for a fake player made by FakePlayerPvpFactory (it enchants every piece on its own). Without one, a piece has the armor enchant level.
 	private final Map<Integer, Integer> _slotEnchantLevels;
@@ -100,6 +103,8 @@ public class FakePlayerHolder
 		_equipHair2 = set.getInt("equipHair2", 0);
 		_agathionId = set.getInt("agathionId", 0);
 		_weaponEnchantLevel = set.getInt("weaponEnchantLevel", 0);
+		_weaponAugmentationId = set.getInt("weaponAugmentationId", 0);
+		_augmentedWeaponId = _equipRHand;
 		_armorEnchantLevel = set.getInt("armorEnchantLevel", 0);
 		final Map<Integer, Integer> slotEnchantLevels = set.getMap("slotEnchantLevels", Integer.class, Integer.class);
 		_slotEnchantLevels = slotEnchantLevels != null ? slotEnchantLevels : Collections.emptyMap();
@@ -235,6 +240,14 @@ public class FakePlayerHolder
 	public int getWeaponEnchantLevel()
 	{
 		return _weaponEnchantLevel;
+	}
+	
+	/**
+	 * @return the augmentation id of the weapon it holds (its glow), 0 when it isn't holding its augmented weapon
+	 */
+	public int getWeaponAugmentationId()
+	{
+		return (_equipRHand != 0) && (_equipRHand == _augmentedWeaponId) ? _weaponAugmentationId : 0;
 	}
 	
 	/**
