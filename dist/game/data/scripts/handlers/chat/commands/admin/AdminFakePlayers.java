@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.managers.FakeCastleManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpRefine;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpSkillEnchant;
 import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
@@ -185,6 +186,7 @@ public class AdminFakePlayers implements IAdminCommandHandler
 				}
 				activeChar.sendSysMessage("Raid boss jewels: " + (epicJewels.length() > 0 ? epicJewels : "none"));
 				activeChar.sendSysMessage("Wealth " + String.format("%.2f", targetProfile.getWealth()) + ", weapon " + (targetProfile.getMainWeapon() != null ? targetProfile.getMainWeapon().getWeaponId() + " +" + targetProfile.getMainWeapon().getEnchant() : "none") + ", skill enchants: " + FakePlayerPvpSkillEnchant.describe(targetProfile.getSkillEnchants()));
+				activeChar.sendSysMessage("Attributes: " + (targetProfile.getRefine() != null ? targetProfile.getRefine().describeAttributes() : "none") + ", augment: " + FakePlayerPvpRefine.describeAugment(targetProfile.getAugmentationId()));
 				activeChar.sendSysMessage("PvP taunt " + personality.getPokeChance(1) + "%-" + personality.getPokeChance(FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF) + "%, refuse to hit back " + personality.getRefuseChance(1) + "%-" + personality.getRefuseChance(FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF) + "% (1-" + FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF + "/" + FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF + " levels)");
 			}
 		}

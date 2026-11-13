@@ -59,6 +59,7 @@ import org.l2jmobius.gameserver.model.item.Armor;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.enums.BodyPart;
+import org.l2jmobius.gameserver.model.item.holders.Elementals;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
@@ -300,6 +301,9 @@ public class FakePlayerPvpFactory
 		final int leftRingEnchant = enchanter.roll(leftRing, Kind.JEWEL);
 		final int rightRingEnchant = enchanter.roll(rightRing, Kind.JEWEL);
 		
+		// From 76, an attribute on its weapon, attribute resistances on its armor and an augmented weapon, each on its own as its wealth allows (see FakePlayerPvpRefine).
+		final FakePlayerPvpRefine refine = FakePlayerPvpRefine.roll(enchanter, weapon, chest, legs, head, gloves, feet);
+		
 		// Base stats.
 		int str = classTemplate.getBaseSTR();
 		int dex = classTemplate.getBaseDEX();
@@ -511,12 +515,46 @@ public class FakePlayerPvpFactory
 			belt,
 			cloak
 		};
-		set.set("baseFireRes", (int) sumStat(Stat.FIRE_RES, worn));
-		set.set("baseWaterRes", (int) sumStat(Stat.WATER_RES, worn));
-		set.set("baseWindRes", (int) sumStat(Stat.WIND_RES, worn));
-		set.set("baseEarthRes", (int) sumStat(Stat.EARTH_RES, worn));
-		set.set("baseHolyRes", (int) sumStat(Stat.HOLY_RES, worn));
-		set.set("baseDarkRes", (int) sumStat(Stat.DARK_RES, worn));
+		set.set("baseFireRes", (int) sumStat(Stat.FIRE_RES, worn) + refine.getDefence(Elementals.FIRE));
+		set.set("baseWaterRes", (int) sumStat(Stat.WATER_RES, worn) + refine.getDefence(Elementals.WATER));
+		set.set("baseWindRes", (int) sumStat(Stat.WIND_RES, worn) + refine.getDefence(Elementals.WIND));
+		set.set("baseEarthRes", (int) sumStat(Stat.EARTH_RES, worn) + refine.getDefence(Elementals.EARTH));
+		set.set("baseHolyRes", (int) sumStat(Stat.HOLY_RES, worn) + refine.getDefence(Elementals.HOLY));
+		set.set("baseDarkRes", (int) sumStat(Stat.DARK_RES, worn) + refine.getDefence(Elementals.DARK));
+		// Its weapon's attribute (the attack attribute of a monster).
+		switch (refine.getAttackElement())
+		{
+			case Elementals.FIRE:
+			{
+				set.set("baseFire", refine.getAttackValue());
+				break;
+			}
+			case Elementals.WATER:
+			{
+				set.set("baseWater", refine.getAttackValue());
+				break;
+			}
+			case Elementals.WIND:
+			{
+				set.set("baseWind", refine.getAttackValue());
+				break;
+			}
+			case Elementals.EARTH:
+			{
+				set.set("baseEarth", refine.getAttackValue());
+				break;
+			}
+			case Elementals.HOLY:
+			{
+				set.set("baseHoly", refine.getAttackValue());
+				break;
+			}
+			case Elementals.DARK:
+			{
+				set.set("baseDark", refine.getAttackValue());
+				break;
+			}
+		}
 		set.set("basePAtkSpd", mainWeapon.getPAtkSpd());
 		set.set("baseMAtkSpd", classTemplate.getBaseMAtkSpd());
 		set.set("baseCritRate", mainWeapon.getCritRate());
@@ -564,6 +602,7 @@ public class FakePlayerPvpFactory
 		set.set("equipShirt", getId(shirt));
 		set.set("equipBelt", getId(belt));
 		set.set("weaponEnchantLevel", weaponEnchant);
+		set.set("weaponAugmentationId", refine.getAugmentationId()); // The glow of its augment while it holds that weapon.
 		set.set("armorEnchantLevel", chestEnchant);
 		set.set("slotEnchantLevels", slotEnchantLevels(shieldEnchant, headEnchant, chestEnchant, legsEnchant, glovesEnchant, feetEnchant, shirtEnchant, beltEnchant));
 		set.set("recommends", Rnd.get(0, 30));
@@ -594,6 +633,12 @@ public class FakePlayerPvpFactory
 		}
 
 		for (Skill skill : mainWeapon.getSkills())
+		{
+			skills.put(skill.getId(), skill);
+		}
+		
+		// The passive skill of its augment (its stats and chance skill are given as it spawns, see FakePlayerPvpRefine#applyToFakePlayer).
+		for (Skill skill : FakePlayerPvpRefine.getPassiveSkills(refine.getAugmentationId()))
 		{
 			skills.put(skill.getId(), skill);
 		}

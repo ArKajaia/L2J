@@ -2192,6 +2192,7 @@ public class FakePlayerPvpManager
 
 		PassiveTreeManager.getInstance().applyToFakePlayer(fake, profile.getPassives()); // Before the HP is filled up: the tree raises max HP.
 		DwarvenTrades.applyToFakePlayer(fake); // A dwarven crafter's Forged Gear.
+		FakePlayerPvpRefine.applyToFakePlayer(fake, profile.getAugmentationId()); // The stats and chance skill of its augment.
 		profile.setTransform(0, null);
 		profile.setDisarmedWeapon(null);
 		template.getFakePlayerInfo().setTransformDisplayId(0);
