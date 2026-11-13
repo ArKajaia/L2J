@@ -231,8 +231,19 @@ public class FakePlayerPvpFactory
 		
 		// Like players, not everyone wears the best gear for their level: weapon, armor and jewels each lag behind on their own.
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
+		// Like players, its wealth decides how much it enchanted (its gear and, from 76, its skills), what else it wears (a shirt, a belt, a cloak) and whether it holds the weapon of the rich of its build (dual daggers).
+		final FakePlayerPvpEnchant enchanter = new FakePlayerPvpEnchant(level, elite);
 		// The strong ones wear the best of their level.
-		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), elite ? level : rollGearLevel(level), elite);
+		FakePlayerPvpGearTier weapons = null;
+		if ((build.getRichWeaponKit() != null) && (enchanter.getWealth() >= FakePlayerPvpConfig.RICH_WEAPON_WEALTH))
+		{
+			// The rich don't lag behind on it: the weapon of their level.
+			weapons = data.getGear(build.getRichWeaponKit(), level, elite);
+		}
+		if ((weapons == null) || !(getItem(weapons.getRHand()) instanceof Weapon))
+		{
+			weapons = data.getGear(build.getWeaponKit(), elite ? level : rollGearLevel(level), elite);
+		}
 		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, elite ? level : rollGearLevel(level), elite);
 		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), elite ? level : rollGearLevel(level), elite);
 		final FakePlayerPvpGearTier accessories = data.getGear(ACCESSORY_KIT, elite ? level : rollGearLevel(level), elite);
@@ -255,8 +266,7 @@ public class FakePlayerPvpFactory
 		final ArmorSet armorSet = chest != null ? ArmorSetData.getInstance().getSet(chest.getId()) : null;
 		final boolean fullSet = (armorSet != null) && armorSet.containAll(getId(chest), getId(legs), getId(head), getId(gloves), getId(feet));
 		
-		// Like players, its wealth decides how much it enchanted and what else it wears: a shirt and a belt, and a cloak once its armor set opens the cloak slot.
-		final FakePlayerPvpEnchant enchanter = new FakePlayerPvpEnchant(level, elite);
+		// A shirt and a belt, and a cloak once its armor set opens the cloak slot, as its wealth allows.
 		final ItemTemplate shirt = (accessories != null) && enchanter.roll(FakePlayerPvpConfig.SHIRT_CHANCE) ? getItem(accessories.rollShirt()) : null;
 		final ItemTemplate belt = (accessories != null) && enchanter.roll(FakePlayerPvpConfig.BELT_CHANCE) ? getItem(accessories.rollBelt()) : null;
 		final ItemTemplate cloak = fullSet && opensCloakSlot(armorSet) && enchanter.roll(FakePlayerPvpConfig.CLOAK_CHANCE) ? getItem(data.getRandomCloak(level)) : null;
@@ -544,8 +554,14 @@ public class FakePlayerPvpFactory
 		
 		// Every skill the class has learned by this level (id -> level), like a character that learned all its skills.
 		final Map<Integer, Integer> learned = getLearnedSkills(playerClass, level);
+		
+		// From 76, the skills it enchanted as far as its wealth paid for (see FakePlayerPvpSkillEnchant): it uses them at their enchanted level.
+		final Map<Integer, Integer> enchanted = FakePlayerPvpSkillEnchant.roll(build, level, enchanter.getWealth(), learned);
+		final Map<Integer, Integer> known = new HashMap<>(learned);
+		known.putAll(enchanted);
+		
 		final Map<Integer, Skill> skills = new HashMap<>();
-		for (Map.Entry<Integer, Integer> entry : learned.entrySet())
+		for (Map.Entry<Integer, Integer> entry : known.entrySet())
 		{
 			final Skill skill = SkillData.getInstance().getSkill(entry.getKey(), entry.getValue());
 			if ((skill != null) && skill.isPassive())
@@ -610,6 +626,8 @@ public class FakePlayerPvpFactory
 		
 		profile.setPassives(passives);
 		profile.setElite(elite);
+		profile.setWealth(enchanter.getWealth());
+		profile.setSkillEnchants(enchanted);
 		
 		// The top of its HP pool is its CP, which CP potions refill (see FakePlayerPvpManager#tryCpPotion).
 		profile.setCpShare(FakePlayerPvpConfig.INCLUDE_CP_IN_HP && (hp > 0) ? classTemplate.getBaseCpMax(level) / hp : 0);
@@ -624,7 +642,7 @@ public class FakePlayerPvpFactory
 			{
 				for (int skillId : alternatives)
 				{
-					final Integer skillLevel = learned.get(skillId);
+					final Integer skillLevel = known.get(skillId);
 					if (skillLevel == null)
 					{
 						continue;
@@ -645,7 +663,7 @@ public class FakePlayerPvpFactory
 		// The combos it has the skills for at this level.
 		for (FakePlayerPvpCombo combo : build.getCombos())
 		{
-			final FakePlayerPvpCombo.Chain chain = combo.resolve(learned);
+			final FakePlayerPvpCombo.Chain chain = combo.resolve(known);
 			if (chain != null)
 			{
 				profile.addCombo(chain);

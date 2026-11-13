@@ -72,6 +72,7 @@
 							<xs:element name="partyBuff" type="xs:string" minOccurs="0" />
 							<xs:element name="recharge" type="xs:string" minOccurs="0" />
 							<xs:element name="resurrect" type="xs:string" minOccurs="0" />
+							<xs:element name="enchant" type="xs:string" minOccurs="0" />
 							<xs:element name="combo" maxOccurs="unbounded" minOccurs="0">
 								<xs:complexType>
 									<xs:sequence>
@@ -133,6 +134,7 @@
 						<xs:attribute type="xs:string" name="bow" />
 						<xs:attribute type="xs:string" name="polearm" />
 						<xs:attribute type="xs:string" name="caster" />
+						<xs:attribute type="xs:string" name="richWeapon" />
 						<xs:attribute type="xs:string" name="buffs" />
 						<xs:attribute type="xs:int" name="weight" />
 						<xs:attribute type="xs:boolean" name="skillFighter" />
