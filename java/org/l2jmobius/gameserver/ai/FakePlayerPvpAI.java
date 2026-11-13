@@ -1325,6 +1325,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 		
+		// An archer opens on a melee walking at it with a slow (Hamstring Shot) while the melee is still too far to stop the cast: slowed, it can be kept at the edge of the bow's reach.
+		if (pvp && (role == Role.ARCHER) && !bowHeld && (_combo == null) && useSlowOpener(npc, profile, target, distance, collision, safeCast))
+		{
+			trace(Reason.CAST, target, npc.getLastSkillCast(), "SLOW_OPENER");
+			return;
+		}
+		
 		// #29: an archer in a PvP shoots plain arrows while they land, buffed archers deal most of their damage that way; its skills are for a target its arrows miss (peeling with Stun Shot is above, in the step back).
 		final boolean arrowsFirst = pvp && (role == Role.ARCHER) && (getHitChance(npc, target) >= ARCHER_ARROW_HIT_CHANCE);
 
@@ -5870,6 +5877,69 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		return true;
 	}
 
+	/**
+	 * An archer's slow on a melee coming at it, cast from beyond {@link #ARCHER_KITE_DISTANCE} while the melee can't reach it before the cast is off.
+	 * @param npc the archer
+	 * @param profile its profile
+	 * @param target its target
+	 * @param distance the distance to it
+	 * @param collision both collision radii
+	 * @param safeCast how long it may cast before the melee reaches it
+	 * @return {@code true} if it cast one
+	 */
+	private boolean useSlowOpener(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision, long safeCast)
+	{
+		if ((target.getTarget() != npc) || !isMeleeThreat(target) || isDisabled(target) || target.isMovementDisabled() || ((distance - collision) < ARCHER_KITE_DISTANCE))
+		{
+			return false;
+		}
+		for (SkillCategory category : new SkillCategory[]
+		{
+			SkillCategory.DEBUFF,
+			SkillCategory.PEEL
+		})
+		{
+			for (Skill skill : profile.getSkills(category))
+			{
+				if (!isSlow(skill) || target.isAffectedBySkill(skill.getId()) || ((getCastTime(npc, skill) + CAST_MARGIN) >= safeCast) || ((skill.getCastRange() + collision) < distance) || !canCast(npc, skill, target))
+				{
+					continue;
+				}
+				return useSkill(npc, target, skill, distance, collision, false);
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if it multiplies its target's speed by less than 1 (Hamstring Shot, Entangle)
+	 */
+	private static boolean isSlow(Skill skill)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects == null)
+		{
+			return false;
+		}
+		for (AbstractEffect effect : effects)
+		{
+			final List<FuncTemplate> funcs = effect.getFuncTemplates();
+			if (funcs == null)
+			{
+				continue;
+			}
+			for (FuncTemplate func : funcs)
+			{
+				if ((func.getStat() == Stat.MOVE_SPEED) && func.isMultiplier() && (func.getValue() < 1))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * @param skill a skill
 	 * @return {@code true} if it multiplies its user's attack range by less than 1 (Rapid Fire halves it)
