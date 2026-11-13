@@ -757,8 +757,7 @@ public class FakeSimulationManager
 				line.put("wealth", Math.round(profile.getWealth() * 100) / 100.0);
 				line.put("weaponId", profile.getMainWeapon() != null ? profile.getMainWeapon().getWeaponId() : 0);
 				line.put("skillEnchants", FakePlayerPvpSkillEnchant.describe(profile.getSkillEnchants()));
-				line.put("attributes", profile.getRefine() != null ? profile.getRefine().toMap() : Map.of());
-				line.put("augment", FakePlayerPvpRefine.describeAugment(profile.getAugmentationId()));
+				line.put("epicJewels", profile.getEpicJewels());
 				final FakePlayerPvpPassives passives = profile.getPassives();
 				if (passives != null)
 				{

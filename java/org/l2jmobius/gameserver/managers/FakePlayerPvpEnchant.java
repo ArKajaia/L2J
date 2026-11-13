@@ -100,30 +100,14 @@ public class FakePlayerPvpEnchant
 	}
 
 	/**
-	 * @param chance a chance (in %) for a fake player of wealth 1
-	 * @return {@code true} with that chance grown by its wealth
+	 * @param chance a chance (in %)
+	 * @return {@code true} with that chance, grown by its wealth
 	 */
 	public boolean roll(double chance)
 	{
 		return Rnd.get(100.0) < scale(chance);
 	}
-
-	/**
-	 * @return {@code true} for one of the strong fake players of the PvP spots
-	 */
-	public boolean isElite()
-	{
-		return _elite;
-	}
-
-	/**
-	 * @return the fake player's level
-	 */
-	public int getLevel()
-	{
-		return _level;
-	}
-
+	
 	/**
 	 * @param item a piece of gear, {@code null} for none
 	 * @param kind what it is

@@ -135,8 +135,8 @@ public class FakePlayerPvpProfile
 	private double _wealth = 1;
 	/** The skills it enchanted (id -> enchanted level), see FakePlayerPvpSkillEnchant. */
 	private Map<Integer, Integer> _skillEnchants = Collections.emptyMap();
-	/** Its attributes and augment, see FakePlayerPvpRefine; {@code null} for none. */
-	private FakePlayerPvpRefine _refine;
+	/** The raid boss jewels it wears (item ids), see FakePlayerPvpFactory#rollEpicJewels. */
+	private List<Integer> _epicJewels = Collections.emptyList();
 	private volatile long _spotStayUntil;
 	private volatile int _grudgeObjectId;
 	private volatile long _grudgeUntil;
@@ -1059,6 +1059,16 @@ public class FakePlayerPvpProfile
 	public int getAugmentationId()
 	{
 		return _refine != null ? _refine.getAugmentationId() : 0;
+	 * @return the raid boss jewels it wears (item ids), empty for none
+	 */
+	public List<Integer> getEpicJewels()
+	{
+		return _epicJewels;
+	}
+	
+	public void setEpicJewels(List<Integer> epicJewels)
+	{
+		_epicJewels = epicJewels;
 	}
 	
 	/**

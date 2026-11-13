@@ -519,41 +519,64 @@
 	<cloak id="21721" minLevel="80" weight="4" /> <!-- Soul Cloak of Frintezza -->
 	<cloak id="21720" minLevel="82" weight="3" /> <!-- Soul Cloak of Freya -->
 
+	<!-- Raid boss jewels: a rich fake player (FakePvpEpicJewel* in config/Custom/FakePlayerPvp.ini, from level 80) wears some of them in place
+	     of the jewels of its kit. Each one useful to its role is rolled on its own with its chance (grown by its wealth), in a random order,
+	     until the slot is full: two earrings, one necklace, two rings. Two jewels with the same effect (both Zaken earrings) are never worn
+	     together, since only one of them would count. Their effects come from their item skills (data/stats/skills).
+	     Only the ones still worth wearing at 80 and up are listed: the Earring of Orfen and the Ring of Core (A grade, 1 Accuracy or a 6%
+	     heal bonus) have less M. Def. than the Dynasty and Vesper jewels and nearly nothing else.
+	     roles    - the roles (FIGHTER, TANK, DAGGER, ARCHER, MAGE) it is useful to. The Ring of Queen Ant gives Critical Damage and Accuracy,
+	                which a mage doesn't use (Critical Damage doesn't grow magic critical hits) and a tank barely does; the Ring of Beleth gives
+	                M. Def. +12%, HP and MP, for the ones that take the hits; the Necklace of Freya cuts only the reuse of magic.
+	     chance   - % a rich fake player of one of those roles owns it, before its wealth: the rarer the boss, the lower.
+	     minLevel - the lowest level that wears it (the Freya and Daytime Zaken jewels drop in instances for 82 and up). -->
+	<epicJewel id="6660" roles="FIGHTER,DAGGER,ARCHER" chance="45" /> <!-- Ring of Queen Ant: Critical Damage +15%, Accuracy +2 -->
+	<epicJewel id="6658" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="15" /> <!-- Ring of Baium: Critical Damage +15%, Atk. Spd./Casting Spd. +4%, Accuracy +2 -->
+	<epicJewel id="10314" roles="TANK,MAGE" chance="25" /> <!-- Ring of Beleth: M. Def. +12%, HP +105, MP +38 -->
+	<epicJewel id="6659" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="35" /> <!-- Earring of Zaken: vampiric 4%, heals received +10%, bleed/shock/mental resistance -->
+	<epicJewel id="21712" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="12" minLevel="82" /> <!-- Blessed Earring of Zaken: the same, stronger, and Dark resistance -->
+	<epicJewel id="6656" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="12" /> <!-- Earring of Antharas: vampiric 4%, MP cost -5%, heals received +10%, bleed/shock/mental resistance -->
+	<epicJewel id="6657" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="10" /> <!-- Necklace of Valakas: HP +445, P. Atk. +4%, M. Atk. +8%, reuse -10%, reflect 5% -->
+	<epicJewel id="8191" roles="FIGHTER,TANK,DAGGER,ARCHER,MAGE" chance="30" /> <!-- Necklace of Frintezza: reuse -5%, reflect 4%, many resistances -->
+	<epicJewel id="16025" roles="MAGE" chance="25" minLevel="82" /> <!-- Necklace of Freya: magic reuse -5%, MP regeneration, resistances -->
+	<epicJewel id="16026" roles="MAGE" chance="8" minLevel="82" /> <!-- Blessed Necklace of Freya: the same, stronger, magic MP cost -5% -->
+
 	<!-- Buffs -->
 	<buffs name="FIGHTER">
+		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2;1087,3</tier> <!-- Might, Shield, Wind Walk, Haste, Bless the Body/Soul, Mental Shield, Magic Barrier, Agility -->
+		<tier minLevel="20">1077,3;1242,3;1364,1;1268,4;1062,2;1397,3;1284,3;271,1;275,1;274,1;310,1;272,1;264,1;267,1;268,1;269,1;304,1;364,1;349,1;305,1</tier> <!-- Focus, Death Whisper, Eye of Pa'agrio (accuracy, fewer crits taken), Vampiric Rage, Berserker Spirit, Clarity, Chant of Revenge, Dance of the Warrior/Fury/Fire/Vampire/Inspiration, Song of Earth/Warding/Wind/Hunter/Vitality/Champion/Renewal/Vengeance -->
+		<tier minLevel="31">1388,3;1259,4;1461,1;1354,1;1352,1;529,1</tier> <!-- Greater Might, Resist Shock, Chant of Protection, Arcane Protection, Elemental Protection, Song of Elemental -->
+		<tier minLevel="46">1363,1</tier> <!-- Chant of Victory -->
+	</buffs>
+	<buffs name="TANK"> <!-- The fighter buffs for a tank: Greater Shield instead of Greater Might, the shield buffs, no Berserker Spirit (it lowers P. Def., M. Def. and evasion), Agility or Clarity (room for its own buffs). -->
 		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Bless the Body/Soul, Mental Shield, Magic Barrier -->
-		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;275,1;264,1;268,1;304,1</tier> <!-- Focus, Death Whisper, Guidance, Vampiric Rage, Berserker Spirit, Dance of the Warrior/Fury, Song of Earth/Wind/Vitality -->
-		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier> <!-- Greater Might, Dance of the Vampire, Song of Hunter/Warding, Resist Shock, Chant of Protection -->
-		<tier minLevel="76">1363,1;364,1;915,1;765,1;764,1;1542,1</tier> <!-- Chant of Victory, Song of Champion, Dance of Berserker/Blade Storm, Song of Wind Storm, Counter Critical -->
-		<tier minLevel="80">1499,1;1501,1;1502,1;1519,1;1504,1</tier> <!-- Improved Combat/Condition/Critical Attack/Movement, Chant of Blood Awakening -->
+		<tier minLevel="20">1077,3;1242,3;1364,1;1268,4;1284,3;1250,3;1304,3;271,1;275,1;274,1;310,1;272,1;264,1;267,1;268,1;269,1;304,1;364,1;349,1;305,1</tier> <!-- Focus, Death Whisper, Eye of Pa'agrio, Vampiric Rage, Chant of Revenge, Shield of Pa'agrio (block rate), Advanced Block (shield defense), the fighter songs and dances -->
+		<tier minLevel="31">1389,3;1259,4;1461,1;1354,1;1352,1;529,1</tier> <!-- Greater Shield, Resist Shock, Chant of Protection, Arcane Protection, Elemental Protection, Song of Elemental -->
+		<tier minLevel="46">1363,1</tier> <!-- Chant of Victory -->
 	</buffs>
-	<buffs name="TANK"> <!-- Fighter buffs without Dance of Blade Storm, which would cripple the tanks' magic skills. -->
-		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2</tier>
-		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;275,1;264,1;268,1;304,1</tier>
-		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier>
-		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier>
-		<tier minLevel="80">1499,1;1501,1;1502,1;1519,1;1504,1</tier>
+	<buffs name="BATTLEMAGE"> <!-- A mage that fights with its weapon (Battlemage keystone): the fighter buffs, with Empower (Soul of Pa'agrio from 40) and Dance of the Mystic for the M. Atk. that goes into its P. Atk. No Song of Water: room for a party's songs. -->
+		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1059,3;1045,6;1048,6;1035,4;1036,2;1087,3</tier> <!-- Might, Shield, Wind Walk, Haste, Empower, Bless the Body/Soul, Mental Shield, Magic Barrier, Agility -->
+		<tier minLevel="20">1077,3;1242,3;1364,1;1365,1;1268,4;1062,2;1397,3;1284,3;271,1;275,1;274,1;310,1;273,1;264,1;267,1;268,1;269,1;304,1;364,1;349,1;305,1</tier> <!-- Focus, Death Whisper, Eye of Pa'agrio, Soul of Pa'agrio (Empower and Magic Barrier in one), Vampiric Rage, Berserker Spirit, Clarity, Chant of Revenge, Dance of the Warrior/Fury/Fire/Vampire/Mystic, Song of Earth/Warding/Wind/Hunter/Vitality/Champion/Renewal/Vengeance -->
+		<tier minLevel="31">1388,3;1259,4;1461,1;1354,1;1352,1;529,1</tier> <!-- Greater Might, Resist Shock, Chant of Protection, Arcane Protection, Elemental Protection, Song of Elemental -->
+		<tier minLevel="46">1363,1</tier> <!-- Chant of Victory -->
 	</buffs>
-	<buffs name="BATTLEMAGE"> <!-- A mage that fights with its weapon (Battlemage keystone): the fighter buffs, with Empower and Dance of the Mystic for the M. Atk. that goes into its P. Atk. -->
-		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1059,3;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Empower, Bless the Body/Soul, Mental Shield, Magic Barrier -->
-		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;273,1;264,1;268,1;304,1</tier> <!-- Focus, Death Whisper, Guidance, Vampiric Rage, Berserker Spirit, Dance of the Warrior/Mystic, Song of Earth/Wind/Vitality -->
-		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier> <!-- Greater Might, Dance of the Vampire, Song of Hunter/Warding, Resist Shock, Chant of Protection -->
-		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier> <!-- Chant of Victory, Song of Champion, Dance of Berserker, Song of Wind Storm, Counter Critical -->
-		<tier minLevel="80">1499,1;1501,1;1502,1;1504,1</tier> <!-- Improved Combat/Condition/Critical Attack/Movement -->
-	</buffs>
-	<buffs name="SOUL_HYBRID"> <!-- A Soul Hound that fights with its rapier and its soul nukes: the battlemage buffs (fighter buffs with Empower), and Acumen and Concentration for the casts. -->
-		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1059,3;1085,3;1078,6;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Empower, Acumen, Concentration, Bless the Body/Soul, Mental Shield, Magic Barrier -->
-		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;273,1;264,1;268,1;304,1</tier> <!-- Focus, Death Whisper, Guidance, Vampiric Rage, Berserker Spirit, Dance of the Warrior/Mystic, Song of Earth/Wind/Vitality -->
-		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier> <!-- Greater Might, Dance of the Vampire, Song of Hunter/Warding, Resist Shock, Chant of Protection -->
-		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier> <!-- Chant of Victory, Song of Champion, Dance of Berserker, Song of Wind Storm, Counter Critical -->
-		<tier minLevel="80">1499,1;1501,1;1502,1;1504,1</tier> <!-- Improved Combat/Condition/Critical Attack/Movement -->
+	<buffs name="SOUL_HYBRID"> <!-- A Soul Hound that fights with its rapier and its soul nukes: the battlemage buffs, and Acumen and Concentration for the casts. -->
+		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1059,3;1085,3;1078,6;1045,6;1048,6;1035,4;1036,2;1087,3</tier> <!-- Might, Shield, Wind Walk, Haste, Empower, Acumen, Concentration, Bless the Body/Soul, Mental Shield, Magic Barrier, Agility -->
+		<tier minLevel="20">1077,3;1242,3;1364,1;1365,1;1268,4;1062,2;1397,3;1284,3;271,1;275,1;274,1;310,1;273,1;264,1;267,1;268,1;269,1;304,1;364,1;349,1;305,1</tier> <!-- Focus, Death Whisper, Eye of Pa'agrio, Soul of Pa'agrio, Vampiric Rage, Berserker Spirit, Clarity, Chant of Revenge, Dance of the Warrior/Fury/Fire/Vampire/Mystic, Song of Earth/Warding/Wind/Hunter/Vitality/Champion/Renewal/Vengeance -->
+		<tier minLevel="31">1388,3;1259,4;1461,1;1354,1;1352,1;529,1</tier> <!-- Greater Might, Resist Shock, Chant of Protection, Arcane Protection, Elemental Protection, Song of Elemental -->
+		<tier minLevel="46">1363,1</tier> <!-- Chant of Victory -->
 	</buffs>
 	<buffs name="MAGE">
-		<tier minLevel="1">1040,3;1204,2;1045,6;1048,6;1035,4;1036,2;1059,3;1085,3;1078,6</tier> <!-- Shield, Wind Walk, Bless the Body/Soul, Mental Shield, Magic Barrier, Empower, Acumen, Concentration -->
-		<tier minLevel="40">1303,2;1062,2;1397,3;273,1;276,1;264,1;268,1;304,1;363,1</tier> <!-- Wild Magic, Berserker Spirit, Clarity, Dance of the Mystic/Concentration, Song of Earth/Wind/Vitality/Meditation -->
-		<tier minLevel="61">1389,3;365,1;267,1;529,1;1259,4;1461,1</tier> <!-- Greater Shield, Dance of Siren, Song of Warding/Elemental, Resist Shock, Chant of Protection -->
-		<tier minLevel="76">1413,1;915,1;764,1;1542,1</tier> <!-- Magnus' Chant, Dance of Berserker, Song of Wind Storm, Counter Critical -->
-		<tier minLevel="80">1500,1;1501,1;1504,1</tier> <!-- Improved Magic/Condition/Movement -->
+		<tier minLevel="1">1040,3;1204,2;1045,6;1048,6;1035,4;1036,2;1059,3;1085,3;1078,6;1087,3</tier> <!-- Shield, Wind Walk, Bless the Body/Soul, Mental Shield, Magic Barrier, Empower, Acumen, Concentration, Agility -->
+		<tier minLevel="20">1365,1;1303,2;1062,2;1397,3;1364,1;1284,3;273,1;276,1;365,1;264,1;267,1;268,1;304,1;363,1;349,1;266,1;305,1</tier> <!-- Soul of Pa'agrio (Empower and Magic Barrier in one), Wild Magic, Berserker Spirit, Clarity, Eye of Pa'agrio (fewer crits taken), Chant of Revenge, Dance of the Mystic/Concentration/Siren, Song of Earth/Warding/Wind/Vitality/Meditation/Renewal/Water/Vengeance -->
+		<tier minLevel="31">1389,3;1259,4;1461,1;1354,1;1352,1;529,1</tier> <!-- Greater Shield, Resist Shock, Chant of Protection, Arcane Protection, Elemental Protection, Song of Elemental -->
+		<tier minLevel="46">1413,1</tier> <!-- Magnus' Chant -->
+	</buffs>
+	<buffs name="HEALER"> <!-- The mage buffs for a healer: no Berserker Spirit (it lowers P. Def., M. Def. and evasion) or Dance of Siren (magic damage), Prayer for its heals on itself. -->
+		<tier minLevel="1">1040,3;1204,2;1045,6;1048,6;1035,4;1036,2;1059,3;1085,3;1078,6;1087,3</tier> <!-- Shield, Wind Walk, Bless the Body/Soul, Mental Shield, Magic Barrier, Empower, Acumen, Concentration, Agility -->
+		<tier minLevel="20">1365,1;1303,2;1397,3;1364,1;1284,3;1307,3;273,1;276,1;264,1;267,1;268,1;304,1;363,1;349,1;266,1;305,1</tier> <!-- Soul of Pa'agrio, Wild Magic, Clarity, Eye of Pa'agrio, Chant of Revenge, Prayer, Dance of the Mystic/Concentration, Song of Earth/Warding/Wind/Vitality/Meditation/Renewal/Water/Vengeance -->
+		<tier minLevel="31">1389,3;1259,4;1461,1;1354,1;1352,1;529,1</tier> <!-- Greater Shield, Resist Shock, Chant of Protection, Arcane Protection, Elemental Protection, Song of Elemental -->
+		<tier minLevel="46">1413,1</tier> <!-- Magnus' Chant -->
 	</buffs>
 
 	<!-- Mages -->
@@ -1359,7 +1382,7 @@
 	<build name="Battle Bard" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Swordsinger line -->
 		<attack>98,3</attack> <!-- Sword Symphony, Power Strike -->
 		<debuff>102,402,437</debuff> <!-- Entangle, Arrest, Song of Silence -->
-		<buff>112,123</buff> <!-- Deflect Arrow, Spirit Barrier -->
+		<buff>112,123,764</buff> <!-- Deflect Arrow, Spirit Barrier, Song of Wind Storm (its own song) -->
 		<heal>58</heal> <!-- Elemental Heal -->
 		<emergency>27508,110</emergency> <!-- Sanctuary Chorus, Ultimate Defense -->
 		<toggle>27506</toggle> <!-- Battle Hymn: its attacks may heal it and its party -->
@@ -1376,7 +1399,7 @@
 	</build>
 	<build name="War Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="2"> <!-- Bladedancer line. docs/class-clinic/war-dancer.md -->
 		<attack>27528,986,408,223</attack> <!-- Danse Macabre, Deadly Strike (power 4,640, its single-target hit), Demonic Blade Dance, Sting -->
-		<buff>989,274,913,112</buff> <!-- Defense Motion (P. Def +25%, M. Def +10%), Dance of Fire (crit damage +35%), Deflect Magic, Deflect Arrow -->
+		<buff>989,913,112,915</buff> <!-- Defense Motion (P. Def +25%, M. Def +10%), Deflect Magic, Deflect Arrow, Dance of Berserker (its own, saved for players). Dance of Fire comes with the FIGHTER buff list -->
 		<toggle>27526</toggle> <!-- Blade Waltz: its dual sword attacks may slash every enemy around -->
 		<perform>27520,27522|27520</perform> <!-- Hunting: Dance of Ruin. PvP: Dance of Torment / Dance of Ruin -->
 		<peel>402</peel> <!-- Arrest -->
@@ -1470,7 +1493,7 @@
 	                 or only mages (Acumen, Empower...) are only cast on members that need them.
 	     recharge  - MP given to a party member running low.
 	     resurrect - used on a dead party member. -->
-	<build name="Cardinal" classId="97" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Bishop line -->
+	<build name="Cardinal" classId="97" role="MAGE" weapon="MAGE" armor="ROBE" buffs="HEALER" weight="0" support="true"> <!-- Bishop line -->
 		<attack>1028,1177,1184</attack> <!-- Might of Heaven, Wind Strike, Ice Bolt -->
 		<debuff>1394,1069</debuff> <!-- Trance, Sleep -->
 		<heal>1218|1015</heal>
@@ -1484,7 +1507,7 @@
 		<enchant>1028:1,1394:2,1069:1,1201:1,1218:1</enchant>
 		<variant name="Cardinal Legacy" armor="ROBE_LEGACY" weight="0" />
 	</build>
-	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Prophet line: an Oracle, it casts prophecies instead of buffs (config/Custom/OraclesWarchiefs.ini) -->
+	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" buffs="HEALER" weight="0" support="true"> <!-- Prophet line: an Oracle, it casts prophecies instead of buffs (config/Custom/OraclesWarchiefs.ini) -->
 		<attack>27530,1177,1184</attack> <!-- Prophecy of Doom, Wind Strike, Ice Bolt -->
 		<debuff>27533,27536,1272</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Word of Fear -->
 		<buff>27538,27532</buff> <!-- Fulfilment, Prophecy of Salvation on itself (only when they pay off, see the Oracles above) -->
@@ -1498,7 +1521,7 @@
 		<enchant>1201:1</enchant>
 		<variant name="Hierophant Tallum" armor="ROBE_TALLUM" weight="0" />
 	</build>
-	<build name="Eva's Saint" classId="105" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Elven Elder line -->
+	<build name="Eva's Saint" classId="105" role="MAGE" weapon="MAGE" armor="ROBE" buffs="HEALER" weight="0" support="true"> <!-- Elven Elder line -->
 		<attack>1177,1184</attack>
 		<debuff>1206</debuff> <!-- Wind Shackle -->
 		<heal>1015</heal>
@@ -1513,7 +1536,7 @@
 		<enchant>1206:1,1201:1</enchant>
 		<variant name="Eva's Saint Legacy" armor="ROBE_LEGACY" weight="0" />
 	</build>
-	<build name="Shillien Saint" classId="112" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Shillien Elder line -->
+	<build name="Shillien Saint" classId="112" role="MAGE" weapon="MAGE" armor="ROBE" buffs="HEALER" weight="0" support="true"> <!-- Shillien Elder line -->
 		<attack>1147,1177,1184</attack> <!-- Vampiric Touch, Wind Strike, Ice Bolt -->
 		<debuff>1206</debuff>
 		<heal>1015</heal>
@@ -1541,7 +1564,7 @@
 	<build name="Sword Muse" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="0" support="true"> <!-- Swordsinger line -->
 		<attack>98,3</attack> <!-- Sword Symphony, Power Strike -->
 		<debuff>102,402,437</debuff> <!-- Entangle, Arrest, Song of Silence -->
-		<buff>112,123</buff> <!-- Deflect Arrow, Spirit Barrier -->
+		<buff>112,123,764</buff> <!-- Deflect Arrow, Spirit Barrier, Song of Wind Storm (its own song) -->
 		<heal>58</heal> <!-- Elemental Heal -->
 		<emergency>27508,110</emergency> <!-- Sanctuary Chorus, Ultimate Defense -->
 		<toggle>27506</toggle> <!-- Battle Hymn: its attacks may heal the party -->
@@ -1556,6 +1579,7 @@
 	<build name="Spectral Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="0" support="true"> <!-- Bladedancer line -->
 		<attack>27528,408,84,223,70</attack> <!-- Danse Macabre, Demonic Blade Dance, Poison Blade Dance, Sting, Drain Health -->
 		<debuff>122,115,105,402</debuff> <!-- Hex, Power Break, Freezing Strike, Arrest -->
+		<buff>915</buff> <!-- Dance of Berserker (its own, saved for players) -->
 		<toggle>27526</toggle> <!-- Blade Waltz -->
 		<perform>27524|27520,27520</perform> <!-- Hunting: Dance of Frenzy / Dance of Ruin. PvP: Dance of Ruin -->
 		<peel>402,105</peel>
