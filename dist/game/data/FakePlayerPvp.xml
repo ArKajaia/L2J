@@ -1111,13 +1111,13 @@
 		</combo>
 		<variant name="Female Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Male Soul Hound Hybrid" classId="132" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, male: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
-		<attack>1436,504,505,1516,478,1469,1433,939,1512,1439</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage, Soul Vortex, Curse of Divinity (the rapier skills are left out while the mace is out) -->
+	<build name="Male Soul Hound Hybrid" classId="132" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1" range="500" outrun="true"> <!-- Kamael, male: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
+		<attack>1469,1513,1554,1555,1516,1512,1439,1436,504,505,478,1433,939</attack> <!-- As the nuker build (docs/class-clinic/female-soul-hound.md): Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain; then the rapier skills Triple Thrust, Shining Edge, Double Thrust (left out while the mace is out); then Abyssal Blaze and Soul Rage -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
-		<toggle>481,480</toggle>
-		<peel>1448,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Shadow Bind roots -->
+		<toggle>481,480,479</toggle> <!-- Dark Armor, Dark Blade, Hard March (+20 Speed) -->
+		<peel>1448,791,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Lightning Shock halves the Speed of those around it and then paralyzes them, Shadow Bind roots -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
 		<combo name="Soul vortex" pvp="true" weapon="MAIN">
@@ -1143,6 +1143,7 @@
 			<step skill="1440" optional="true" /> <!-- Steal Divinity -->
 			<step skill="1447" optional="true" mageTarget="true" /> <!-- Voice Bind -->
 			<step skill="1512" /> <!-- Soul Vortex -->
+			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
 			<step skill="1516" optional="true" /> <!-- Soul Strike -->
 			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
 		</combo>
@@ -1154,13 +1155,14 @@
 		</combo>
 		<variant name="Male Soul Hound Hybrid Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Female Soul Hound Hybrid" classId="133" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, female: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
-		<attack>1436,504,505,1516,478,1469,1433,939,1512,1439</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage, Soul Vortex, Curse of Divinity (the rapier skills are left out while the mace is out) -->
+	<build name="Female Soul Hound Hybrid" classId="133" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1" range="500" outrun="true"> <!-- Kamael, female: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
+		<attack>1469,1513,1554,1555,1516,1512,1439,1436,504,505,478,1433,939</attack> <!-- As the nuker build (docs/class-clinic/female-soul-hound.md): Leopold, Soul Vortex Extinction (only on a target under Soul Vortex), Aura Blast, Aura Cannon (reaches 150: for a melee on it), Soul Strike, Soul Vortex, Curse of Divinity, Soul of Pain; then the rapier skills Triple Thrust, Shining Edge, Double Thrust (left out while the mace is out); then Abyssal Blaze and Soul Rage -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
-		<toggle>481,480</toggle>
-		<peel>1448,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Shadow Bind roots -->
+		<toggle>481,480,479</toggle> <!-- Dark Armor, Dark Blade, Hard March (+20 Speed) -->
+		<move>628,622</move> <!-- Warp (a jump of 500 the way it faces, every 10 s) and Ultimate Escape (+66 Speed for 20 s): to get away from a melee it runs from (outrun, with the mace out) or flees -->
+		<peel>1448,791,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Lightning Shock halves the Speed of those around it and then paralyzes them, Shadow Bind roots -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
 		<combo name="Soul vortex" pvp="true" weapon="MAIN">
@@ -1186,6 +1188,7 @@
 			<step skill="1440" optional="true" /> <!-- Steal Divinity -->
 			<step skill="1447" optional="true" mageTarget="true" /> <!-- Voice Bind -->
 			<step skill="1512" /> <!-- Soul Vortex -->
+			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
 			<step skill="1516" optional="true" /> <!-- Soul Strike -->
 			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
 		</combo>
