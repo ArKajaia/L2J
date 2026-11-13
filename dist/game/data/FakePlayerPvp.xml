@@ -589,7 +589,7 @@
 		<attack>1296,1292,1289,1554,1288,1339,1451,1230,1555,1231,1275,1220,1274,1177,1147</attack> <!-- Aura Blast (1554): power 199 (141 against a player) from 900 on a 15 s reuse; no Ice Bolt (landed its slow 11% of the time for 85 damage) -->
 		<debuff>1083,1160,1056,1452,1338</debuff>
 		<buff>1285,1532</buff>
-		<heal>1216,1011</heal>
+		<heal>1011</heal> <!-- No Self Heal: about 450 HP for a cast, a third of a nuke -->
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
 		<peel>1417</peel> <!-- No Curse Fear: it landed 10% of the time on a melee at 74 -->
@@ -615,7 +615,7 @@
 		<attack>1295,1293,1290,1554,1288,1340,1453,1342,1235,1555,1236,1237,1265,1275,1175,1274,1177</attack> <!-- Aura Blast (1554): power 199 (141 against a player) from 900 on a 15 s reuse; no Ice Bolt -->
 		<debuff>1071,1164,1056,1455,1338</debuff>
 		<buff>1286,1532,1047</buff>
-		<heal>1216,1011</heal>
+		<heal>1011</heal> <!-- No Self Heal: about 450 HP for a cast, a third of a nuke -->
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
 		<peel>1417</peel> <!-- No Curse Fear: it landed 10% of the time on a melee at 74 -->
@@ -637,7 +637,7 @@
 		<attack>1176,1294,1291,1554,1288,1343,1341,1456,1239,1555,1148,1234,1267,1159,1178,1177,1147</attack> <!-- Aura Blast (1554): power 199 (141 against a player) from 900 on a 15 s reuse; no Ice Bolt -->
 		<debuff>1074,1160,1064,1458,1338</debuff>
 		<buff>1287,1532,1457</buff>
-		<heal>1216,1011</heal>
+		<heal>1011</heal> <!-- No Self Heal: about 450 HP for a cast, a third of a nuke -->
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
 		<peel>1417</peel> <!-- No Curse Fear: it landed 10% of the time on a melee at 74 -->
