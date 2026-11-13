@@ -82,6 +82,15 @@ public class FakePlayerPvpEnchant
 	}
 
 	/**
+	 * @return how rich it is (FakePvpGearWealthMin to FakePvpGearWealthMax, the highest for a strong fake player of the PvP spots): its enchant odds, and also how far it enchanted its skills and whether it holds the weapon of the rich (see
+	 *         {@link FakePlayerPvpSkillEnchant})
+	 */
+	public double getWealth()
+	{
+		return _wealth;
+	}
+
+	/**
 	 * @param chances {minLevel, chance} rows (FakePvpShirtChance, FakePvpBeltChance...)
 	 * @return {@code true} with the chance of the fake player's level, grown by its wealth
 	 */
@@ -90,6 +99,15 @@ public class FakePlayerPvpEnchant
 		return Rnd.get(100.0) < scale(FakePlayerPvpConfig.getTierChance(chances, _level));
 	}
 
+	/**
+	 * @param chance a chance (in %)
+	 * @return {@code true} with that chance, grown by its wealth
+	 */
+	public boolean roll(double chance)
+	{
+		return Rnd.get(100.0) < scale(chance);
+	}
+	
 	/**
 	 * @param item a piece of gear, {@code null} for none
 	 * @param kind what it is
