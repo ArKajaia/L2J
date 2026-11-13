@@ -1332,9 +1332,8 @@
 		<variant name="Battle Bard Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
 	<build name="War Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="2"> <!-- Bladedancer line. docs/class-clinic/war-dancer.md -->
-		<attack>27528,986,408,223,84</attack> <!-- Danse Macabre, Deadly Strike (power 4,640, its single-target hit), Demonic Blade Dance, Sting, Poison Blade Dance -->
-		<debuff>122</debuff> <!-- Hex -->
-		<buff>989,913,112</buff> <!-- Defense Motion (P. Def +25%, M. Def +10%), Deflect Magic, Deflect Arrow -->
+		<attack>27528,986,408,223</attack> <!-- Danse Macabre, Deadly Strike (power 4,640, its single-target hit), Demonic Blade Dance, Sting -->
+		<buff>989,274,913,112</buff> <!-- Defense Motion (P. Def +25%, M. Def +10%), Dance of Fire (crit damage +35%), Deflect Magic, Deflect Arrow -->
 		<toggle>27526</toggle> <!-- Blade Waltz: its dual sword attacks may slash every enemy around -->
 		<perform>27520,27522|27520</perform> <!-- Hunting: Dance of Ruin. PvP: Dance of Torment / Dance of Ruin -->
 		<peel>402</peel> <!-- Arrest -->
