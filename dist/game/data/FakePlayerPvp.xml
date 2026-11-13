@@ -1398,9 +1398,9 @@
 		<variant name="Battle Oracle Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Flame Warchief" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="2"> <!-- Warcryer line: the Totem of Flames and Steal Essence are its damage -->
-		<attack>1245,1090,1107</attack> <!-- Steal Essence, Life Drain, Frost Flame (Orc Shaman) -->
+		<attack>1245</attack> <!-- Steal Essence. Life Drain (power 44) and Frost Flame (magic level 30, lands 9%, the same slot as Freezing Flame) took 88 s of casting a battle for 8% of its damage -->
 		<debuff>1244|1100</debuff> <!-- Freezing Flame / Chill Flame -->
-		<buff>27559,27548,27545,27547,27550,27553,27558</buff> <!-- Totems of Flames, Frost-Teeth, Blood, the Horde and Ancestors where they work, Shatter, Great Totem of the Horde-Father -->
+		<buff>27559,27548,27545,27547,27550,27553,27558,1533</buff> <!-- Totems of Flames, Frost-Teeth, Blood, the Horde and Ancestors where they work, Shatter, Great Totem of the Horde-Father, Enlightenment (+50% cast speed for 20 s: its spells take 4 s) -->
 		<emergency>27554,27561,27558</emergency> <!-- Spirit Walk away from a player on it, Spirit Trance, Great Totem -->
 		<toggle>27551</toggle> <!-- War Drums: its hits bring the totems back sooner -->
 		<peel>260|100,1097</peel> <!-- Hammer Crush / Stun Attack on what reached it, Dreaming Spirit -->

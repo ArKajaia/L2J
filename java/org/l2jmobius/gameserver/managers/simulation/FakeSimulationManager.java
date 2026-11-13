@@ -84,6 +84,7 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.network.serverpackets.ExServerPrimitive;
@@ -3813,7 +3814,7 @@ public class FakeSimulationManager
 
 	/**
 	 * @param skill a skill
-	 * @return {@code true} if it moves its caster with a Blink or TeleportToTarget effect (Blink, Shadow Step), which calls abortCast on a cast that already landed
+	 * @return {@code true} if it moves its caster with a Blink, TeleportToTarget or SpiritWalk effect (Blink, Shadow Step, Spirit Walk) or paralyzes itself (Spirit Trance), which calls abortCast on a cast that already landed
 	 */
 	private static boolean jumpsBack(Skill skill)
 	{
@@ -3829,7 +3830,8 @@ public class FakeSimulationManager
 				for (AbstractEffect effect : effects)
 				{
 					final String name = effect.getClass().getSimpleName();
-					if ("Blink".equals(name) || "TeleportToTarget".equals(name))
+					// The Warchief's Spirit Walk (it swaps places with a totem) and Spirit Trance (it paralyzes itself) end their own cast the same way.
+					if ("Blink".equals(name) || "TeleportToTarget".equals(name) || "SpiritWalk".equals(name) || ("Paralyze".equals(name) && (skill.getTargetType() == TargetType.SELF)))
 					{
 						return true;
 					}
