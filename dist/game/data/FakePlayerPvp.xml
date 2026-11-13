@@ -1362,20 +1362,16 @@
 	     hybrid    - a melee build whose M. Atk. counts too (Battlemage adds part of it to its P. Atk.): its passive tree
 	                 wants the magic stats as much as the physical ones. -->
 	<build name="Doom Oracle" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="1"> <!-- Prophet line: Prophecy of Doom is its damage -->
-		<attack>27530,1398,1177,1184</attack> <!-- Prophecy of Doom (stacked and spread by Inevitable Doom), Mana Burn, Wind Strike, Ice Bolt -->
-		<debuff>27533,27536,1201</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Dryad Root (a Doom on a target that stays put deals x1.5) -->
+		<attack>27530,1177,1184</attack> <!-- Prophecy of Doom (stacked and spread by Inevitable Doom), Wind Strike, Ice Bolt. Mana Burn burns MP only: no damage to a fake player, which casts for free (docs/class-clinic/doom-oracle.md) -->
+		<debuff>27533,27536</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning. Dryad Root lands 13% on a level 85 player: only a peel, against what reaches it (docs/class-clinic/doom-oracle.md) -->
 		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->
 		<heal>27532,1015</heal> <!-- Prophecy of Salvation, Battle Heal -->
-		<emergency>27540,27532,1015</emergency> <!-- Unwritten, Prophecy of Salvation, Battle Heal -->
+		<emergency>27532,27540,1015</emergency> <!-- Prophecy of Salvation, Unwritten (never over a Salvation, which it would replace), Battle Heal -->
 		<toggle>27539</toggle> <!-- Glimpse -->
-		<peel>1201,1272</peel> <!-- Dryad Root, Word of Fear -->
+		<peel>1201,1272</peel> <!-- Dryad Root (a rooted dagger can't get behind it), Word of Fear -->
 		<combo name="Ruin and doom" pvp="true">
 			<step skill="27533" /> <!-- Prophecy of Ruin: a stun if the player casts meanwhile, a silence if not -->
 			<step skill="27530" /> <!-- Prophecy of Doom -->
-		</combo>
-		<combo name="Rooted doom" pvp="true" chance="50">
-			<step skill="1201" /> <!-- Dryad Root: the player can't run from where the Doom finds it -->
-			<step skill="27530" /> <!-- Prophecy of Doom, x1.5 -->
 		</combo>
 		<variant name="Doom Oracle Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>

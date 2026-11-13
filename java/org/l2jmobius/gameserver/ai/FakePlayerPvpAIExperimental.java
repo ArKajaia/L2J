@@ -7540,8 +7540,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		final boolean ranged = role.isRanged();
 		final boolean dagger = profile.getRole() == Role.DAGGER;
-		addScoredOptions(npc, target, profile.getSkills(SkillCategory.DEBUFF), affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, reach, defenses, dagger, options, skills);
-		addScoredOptions(npc, target, profile.getSkills(SkillCategory.ATTACK), affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, reach, defenses, dagger, options, skills);
+		final double incomingDps = _fightRead != null ? _fightRead.read().damageTakenPerSecond(now) : 0;
+		addScoredOptions(npc, target, profile.getSkills(SkillCategory.DEBUFF), affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, reach, defenses, dagger, incomingDps, options, skills);
+		addScoredOptions(npc, target, profile.getSkills(SkillCategory.ATTACK), affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, reach, defenses, dagger, incomingDps, options, skills);
 		// An archer or mage uses what reaches its target from where it stands, and only walks in when nothing does (like pickSkill). A build with a range of its own (data/FakePlayerPvp.xml) also keeps what reaches from there: it steps in for its
 		// best quick nuke (the scorer counts the walk) instead of falling back on a weak one that reaches (the Soul Hounds cast Abyssal Blaze from 660 with Curse of Divinity, five times the damage, 60 short).
 		if (ranged && options.stream().anyMatch(SkillOption::inReach))
@@ -7615,7 +7616,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			{
 				final SkillFacts facts = SkillFactsReader.of(skill);
 				final EnumSet<SkillMeaning> meanings = SkillMeanings.classify(facts);
-				if ((meanings.contains(SkillMeaning.DEFENSIVE) || meanings.contains(SkillMeaning.CLEANSE) || (category == SkillCategory.EMERGENCY)) && selfSkills.add(skill) && !npc.isAffectedBySkill(skill.getId()) && canCast(npc, skill, npc))
+				if ((meanings.contains(SkillMeaning.DEFENSIVE) || meanings.contains(SkillMeaning.CLEANSE) || (category == SkillCategory.EMERGENCY)) && selfSkills.add(skill) && !npc.isAffectedBySkill(skill.getId()) && canCast(npc, skill, npc) && FakePlayerPvpOraclesWarchiefs.isWorthReflex(npc, target, skill))
 				{
 					final SkillFacts asDefensive = meanings.contains(SkillMeaning.CLEANSE) || meanings.contains(SkillMeaning.DEFENSIVE) ? facts : new SkillFacts(facts.id(), facts.level(), false, true, facts.castRange(), facts.hitTimeMs(), facts.coolTimeMs(), facts.reuseMs(), facts.abnormalTimeMs(), "INVINCIBILITY", facts.effectTypes(), false, 0, 0, facts.magicLevel(), facts.basicProperty());
 					final SkillOption option = new SkillOption(SkillOption.Kind.SKILL, asDefensive, 0, true, FightReadFeed.castTime(npc, skill));
@@ -7715,7 +7716,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param ordered the build's whole list, in its order
 	 * @param list the skills of it to consider
 	 */
-	private static void addScoredOptions(Attackable npc, Creature target, List<Skill> ordered, List<Skill> list, boolean debuff, double reach, int defenses, boolean dagger, List<SkillOption> options, Map<SkillOption, Skill> skills)
+	private static void addScoredOptions(Attackable npc, Creature target, List<Skill> ordered, List<Skill> list, boolean debuff, double reach, int defenses, boolean dagger, double incomingDps, List<SkillOption> options, Map<SkillOption, Skill> skills)
 	{
 		double top = 0;
 		if (!debuff)
@@ -7738,6 +7739,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			final int range = skill.getCastRange() > 0 ? skill.getCastRange() : skill.getAffectRange();
 			final SkillFacts facts = SkillFactsReader.of(skill);
 			double damage = SkillMeanings.classify(facts).contains(SkillMeaning.NUKE) ? estimateDamage(npc, target, skill, dagger) : 0;
+			// A prophecy's damage comes from the skill it comes true with (Doom), or from the target's own (Reckoning).
+			damage = Math.max(damage, FakePlayerPvpOraclesWarchiefs.estimateDamage(npc, target, skill, incomingDps));
 			// A dagger's blow is worth what the estimate says (its damage and the chance it lands are both known): the list's floor would lift Mortal Blow, a fifth of Lethal Blow, over its normal attack.
 			if (!debuff && !(dagger && isBlow(skill)))
 			{
