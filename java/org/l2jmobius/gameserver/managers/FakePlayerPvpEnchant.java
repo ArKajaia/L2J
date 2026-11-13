@@ -100,6 +100,15 @@ public class FakePlayerPvpEnchant
 	}
 
 	/**
+	 * @param chance a chance (in %)
+	 * @return {@code true} with that chance, grown by its wealth
+	 */
+	public boolean roll(double chance)
+	{
+		return Rnd.get(100.0) < scale(chance);
+	}
+	
+	/**
 	 * @param item a piece of gear, {@code null} for none
 	 * @param kind what it is
 	 * @return its enchant level

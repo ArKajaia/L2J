@@ -78,6 +78,10 @@ public class FakePlayerPvpConfig
 	public static List<int[]> SKILL_ENCHANT_ATTEMPTS = new ArrayList<>();
 	/** The wealth from which a fake player holds the weapon of the rich of its build (the richWeapon kit of data/FakePlayerPvp.xml: dual daggers for daggers) instead of its weapon. */
 	public static double RICH_WEAPON_WEALTH;
+	/** Raid boss jewels (the epicJewel elements of data/FakePlayerPvp.xml): the lowest level that wears them, the wealth from which a fake player owns some and how far that line moves up or down for each fake player. */
+	public static int EPIC_JEWEL_MIN_LEVEL;
+	public static double EPIC_JEWEL_WEALTH;
+	public static double EPIC_JEWEL_WEALTH_JITTER;
 	/** {minLevel, chance} rows sorted by level: the chance (in %) a fake player wears a shirt, a belt, and a cloak when its armor set opens the cloak slot. */
 	public static List<int[]> SHIRT_CHANCE = new ArrayList<>();
 	public static List<int[]> BELT_CHANCE = new ArrayList<>();
@@ -265,6 +269,9 @@ public class FakePlayerPvpConfig
 		SKILL_ENCHANT_MIN_WEALTH = Math.max(0, Math.min(0.99, config.getDouble("FakePvpSkillEnchantMinWealth", 0.5)));
 		SKILL_ENCHANT_ATTEMPTS = parseTiers(config.getString("FakePvpSkillEnchantAttempts", "76:6;78:15;80:30;82:50;84:75;85:90"), "FakePvpSkillEnchantAttempts", 1);
 		RICH_WEAPON_WEALTH = Math.max(0, config.getDouble("FakePvpRichWeaponWealth", 1.3));
+		EPIC_JEWEL_MIN_LEVEL = Math.max(1, config.getInt("FakePvpEpicJewelMinLevel", 80));
+		EPIC_JEWEL_WEALTH = Math.max(0, config.getDouble("FakePvpEpicJewelWealth", 1.2));
+		EPIC_JEWEL_WEALTH_JITTER = Math.max(0, config.getDouble("FakePvpEpicJewelWealthJitter", 0.1));
 		SHIRT_CHANCE = parseTiers(config.getString("FakePvpShirtChance", "1:0;20:10;40:25;52:35;61:50;76:65;80:75;84:80"), "FakePvpShirtChance", 1);
 		BELT_CHANCE = parseTiers(config.getString("FakePvpBeltChance", "1:0;40:10;52:25;61:40;76:55;80:70;84:80"), "FakePvpBeltChance", 1);
 		CLOAK_CHANCE = parseTiers(config.getString("FakePvpCloakChance", "1:0;80:50;82:60;84:70"), "FakePvpCloakChance", 1);
