@@ -1,6 +1,6 @@
 # Class clinic: Flame Warchief (the Warcryer line)
 
-Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 1,170 battles a run (about 10 minutes: its fights are long). **Result: 35.5% → 38.5% (+3.1, 95% -0.8 to +7.0).** Clearly better against tanks (81% → 93%), daggers (2% → 23%) and archers (6% → 21%); melee (23%) and nukers (17%) unchanged.
+Taken through `docs/class-clinic.md` on 2026-11-13. Level 85, brain A, seed 4040, 1,170 battles a run (about 10 minutes: its fights are long). **Result: 35.5% → 41.7% (+6.2, 95% +2.3 to +10.2).** Clearly better against tanks (81% → 94%), daggers (2% → 32%) and archers (6% → 23%); melee (25%) and nukers (23%) about where they were.
 
 A custom class: its totems (275xx) have no retail counterpart, so there was no retail play to hold the logs against. `docs/class-balance-85.md` ("Flame Warchief") had already named two of its faults: it walks to its target to plant the Totem of Flames, and it should plant Frost-Teeth before a melee arrives.
 
@@ -32,6 +32,7 @@ Time on TOTEM_APPROACH: 22% of a fight against archers, 9% against daggers.
 | 2 | Enlightenment (+50% cast speed for 20 s) not in the build | `skill_cards.py`, "LEARNED BUT NOT IN THE BUILD"; every damage spell takes 4 s | Build data | Build data | In `buff` (its 10 min reuse makes it PvP-only). Batch 1 |
 | 3 | It walks into a melee's reach, and after kiting archers, to plant the Totem of Flames | `battles/000635-WindRider-vs-FlameWarchief`: TOTEM_APPROACH from 859 to 9, dead from a Backstab at 22 s; 22% of an archer fight on TOTEM_APPROACH | `wantsCloserForFlames` walks up to any target out of the flames' reach | Class AI (`FakePlayerPvpOraclesWarchiefs`, only Totem Warchiefs) | In a PvP only up to a target that stands and casts (role MAGE, a mystic player). Batch 2 |
 | 4 | Its totems go down once the melee is already on it | `matrix-20261113-062328`, `battles/000406-Duelist-vs-FlameWarchief`: Totem of Flames at gap -16, Frost-Teeth 2.5 s later | `isTotemWorth`: Frost-Teeth within 400, Flames within 250; a melee with Rush covers that during one Steal Essence | Class AI | Against a melee: Frost-Teeth within 600, Flames within 550. Tried in batch 3, taken out (no effect) |
+| 6 | It plants the Totem of Blood when anything hits it, an archer 700 away included | Reported from play; `matrix-20261113-062328`: 278 Blood totems against archers at a median gap of 714, 1,311 against nukers | `isTotemWorth`: Blood below 95% HP in a PvP. Blood gives life steal on normal hits (absorbDam), and the Warchief fights with spells | Class AI | Only with party members around. Batch 4 |
 | 5 | Spirit Walk and Spirit Trance logged as aborted 99-100% | 000406: "Spirit Walk ABORTED" at 31.2 s, and the gap jumps from 0 to 1,367: the swap worked | Their own effects end the cast (the swap, the self paralysis) | Harness | `FakeSimulationManager.jumpsBack` covers SpiritWalk and a self Paralyze |
 
 ## 4. The batches
@@ -50,7 +51,20 @@ Both batches against the baseline: 35.5% → 38.5% (+3.1, 95% -0.8 to +7.0); tan
 
 38.5% → 39.3% (+0.8, 95% -3.2 to +4.7), no kind clearly better or worse; melee 22.8% → 23.9%. Frost-Teeth and Flames went down 0.3 times a battle more and the Flames dealt 287 more a battle: a melee with a gap closer is on the Warchief within a second of coming into 600 either way. Taken back out. The harness fix (fault 5) built with it stays: Spirit Walk and Spirit Trance aborted 99-100% → 0%.
 
+### Batch 4: Totem of Blood only for a party (`matrix-20261113-065253`): kept
+
+38.5% → 41.7% (+3.2, 95% -0.8 to +7.1), no kind clearly worse; daggers +8.9, nukers +6.7. Blood 3.5 → 0 casts a battle; the time went to Steal Essence (+1.0) and the Totem of Flames (+0.5). Baseline to here: 35.5% → 41.7% (+6.2, 95% +2.3 to +10.2), clearly better.
+
+### Batch 5: Shatter on a player caught by two explosions (`matrix-20261113-070438`): taken out
+
+The play suggested: when a melee comes in among its totems, Shatter. 41.7% → 39.9% (-1.8, 95% -5.8 to +2.2), no clear change. Shatter only +0.1 casts a battle: it needs three totems up (the Totem Circle), and without the Totem of Blood (batch 4) three are rarely up at once; what it added (+302 damage a battle) the Totems of Flames lost (-627), their burn cut short.
+
+### Batch 6: Spirit Walk onto a totem by the player, then Flames (`matrix-20261113-071606`): taken out
+
+The play suggested: a totem left behind that the player ran past, or one near a player at range, is a way back in: swap with it and plant Flames there. 41.7% → 40.7% (-1.0, 95% -5.0 to +3.0), no clear change. It ran 616 times (Spirit Walk 0.6 → 1.1 casts a battle) and works as meant (`battles/000009-ShillienTemplar-vs-FlameWarchief`: the swap at a gap of 835, the Totem of Flames 0.8 s later at 172), but the Flames planted that way didn't move the fights, and the swap spends Spirit Walk's 30 s reuse, which is also its escape.
+
 ## 5. Not fixed here, and next
 
+- **Shatter and the Totem Circle.** Shatter needs three totems up; Blood was the cheap third one. A Shatter plan (plant Blood or Frost-Teeth as the third totem when a melee comes in among Flames, then Shatter) would need the two together; not tried.
 - **Melee (24%)**: it loses the race standing (it deals 494 a second, takes 622). Damage per second is Steal Essence on a 2 s reuse after a 4 s cast; the Totem of Flames is the only other damage. What is left is a balance question (`docs/class-balance-85.md`), or making it keep out of reach longer (a root: it has none; Dreaming Spirit lands 11%).
 - **Nukers (18%)**: out-damaged at range; Steal Essence's 900 reach is its edge and is already used.
