@@ -6114,6 +6114,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return true;
 		}
 		final boolean magic = castsMagic(target);
+		// A mage's damage is its spells: P. Def (Guts) only meets its staff. Against a hybrid (Soul Hound with its rapier out) it still counts.
+		final boolean spellsOnly = isMage(target);
 		final TraitType weapon = target.getAttackType().getTraitType();
 		for (AbstractEffect effect : effects)
 		{
@@ -6127,7 +6129,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				}
 				for (FuncTemplate func : funcs)
 				{
-					if ((func.getStat() != Stat.MAGIC_DEFENCE) || magic)
+					if (((func.getStat() != Stat.MAGIC_DEFENCE) || magic) && ((func.getStat() != Stat.POWER_DEFENCE) || !spellsOnly))
 					{
 						return true;
 					}
@@ -8505,6 +8507,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final StringBuilder note = new StringBuilder(best.option().kind() == SkillOption.Kind.SKILL ? skills.get(best.option()).getName() + " (" + best.option().skill().id() + ")" : best.option().kind().name());
 		note.append(";value=").append(String.format(Locale.ROOT, "%.2f", best.value()));
 		best.terms().entrySet().stream().sorted((a, b) -> Double.compare(Math.abs(b.getValue()), Math.abs(a.getValue()))).limit(3).forEach(term -> note.append(';').append(term.getKey()).append('=').append(String.format(Locale.ROOT, "%.2f", term.getValue())));
+		// What the value stands on: the damage it expects from the skill and its cast time, against its normal attack's damage a second.
+		if (best.option().kind() == SkillOption.Kind.SKILL)
+		{
+			note.append(";est=").append(Math.round(best.option().expectedDamage())).append('/').append(best.option().castMs()).append("ms");
+		}
+		note.append(";auto=").append(Math.round(ctx.autoAttackDps())).append("/s");
 		if (scored.size() > 1)
 		{
 			final Scored second = scored.get(1);
