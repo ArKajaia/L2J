@@ -269,6 +269,15 @@ public abstract class AbstractEffect
 	}
 	
 	/**
+	 * For an effect that summons a cubic (SummonCubic): which one, so a fake player knows whether it already has it out.
+	 * @return the cubic ID, -1 for the others
+	 */
+	public int getCubicId()
+	{
+		return -1;
+	}
+	
+	/**
 	 * For an effect that changes its effected's defence against a trait (DefenceTrait: Real Target leaves its target 40% weaker against crossbows).
 	 * @param trait a trait
 	 * @return the factor it puts on that defence (below 1: more damage taken), 1 for an effect that doesn't touch it

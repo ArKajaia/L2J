@@ -80,6 +80,8 @@ import org.l2jmobius.gameserver.model.actor.transform.TransformTemplate;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
@@ -1926,6 +1928,11 @@ public class FakePlayerPvpManager
 	 */
 	private static boolean isPreFightBuff(Skill skill)
 	{
+		// Its cubics are out before the fight, like a player's (summoning one takes 6 s).
+		if (getCubicId(skill) >= 0)
+		{
+			return true;
+		}
 		if (!skill.isContinuous() || skill.isDebuff() || skill.isToggle() || (skill.getAbnormalTime() <= 0))
 		{
 			return false;
@@ -3852,8 +3859,35 @@ public class FakePlayerPvpManager
 	 * @param skill a buff
 	 * @return {@code true} if {@code skill}, or another buff taking its place, is already on {@code creature}
 	 */
+	/**
+	 * @param skill a skill
+	 * @return the cubic it summons (Summon Storm Cubic...), -1 for a skill that summons none
+	 */
+	public static int getCubicId(Skill skill)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects != null)
+		{
+			for (AbstractEffect effect : effects)
+			{
+				if (effect.getCubicId() >= 0)
+				{
+					return effect.getCubicId();
+				}
+			}
+		}
+		return -1;
+	}
+	
 	public static boolean isBuffActive(Creature creature, Skill skill)
 	{
+		// A cubic summon is "on" while that cubic is out.
+		final int cubicId = getCubicId(skill);
+		if (cubicId >= 0)
+		{
+			return creature.getCubicById(cubicId) != null;
+		}
+		
 		if (creature.isAffectedBySkill(skill.getId()))
 		{
 			return true;

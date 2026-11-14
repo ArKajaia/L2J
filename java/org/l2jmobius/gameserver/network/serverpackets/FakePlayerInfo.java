@@ -162,9 +162,11 @@ public class FakePlayerInfo extends ServerPacket
 		buffer.writeByte(_npc.isInvisible());
 		buffer.writeByte(0); // 1-on Strider, 2-on Wyvern, 3-on Great Wolf, 0-no mount
 		buffer.writeByte(_fpcHolder.getPrivateStoreType());
-		buffer.writeShort(0); // getCubics().size()
-		
-		// getCubics().keySet().forEach(packet::writeH);
+		buffer.writeShort(_npc.getCubics().size());
+		for (int cubicId : _npc.getCubics().keySet())
+		{
+			buffer.writeShort(cubicId);
+		}
 		buffer.writeByte(0); // isInPartyMatchRoom
 		buffer.writeInt(_npc.getAbnormalVisualEffects());
 		buffer.writeByte(_npc.isInsideZone(ZoneId.WATER));

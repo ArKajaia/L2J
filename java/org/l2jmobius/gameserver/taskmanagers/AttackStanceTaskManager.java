@@ -111,9 +111,11 @@ public class AttackStanceTaskManager implements Runnable
 			return;
 		}
 		
-		if (creature.isPlayable())
+		// A player's cubics act while it (or its summon) fights; a fake player's while it does.
+		final Creature cubicOwner = creature.isPlayable() ? creature.asPlayer() : creature;
+		if (cubicOwner != null)
 		{
-			for (Cubic cubic : creature.asPlayer().getCubics().values())
+			for (Cubic cubic : cubicOwner.getCubics().values())
 			{
 				if (cubic.getId() != Cubic.LIFE_CUBIC)
 				{

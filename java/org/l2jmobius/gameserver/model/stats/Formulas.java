@@ -1295,7 +1295,7 @@ public class Formulas
 		double damage = 91 * ((mAtk + skill.getPower(isPvP, isPvE)) / mDef);
 		
 		// Failure calculation
-		final Player owner = attacker.getOwner();
+		final Creature owner = attacker.getOwner();
 		if (PlayerConfig.ALT_GAME_MAGICFAILURES && !calcMagicSuccess(owner, target, skill))
 		{
 			if (calcMagicSuccess(owner, target, skill) && ((target.getLevel() - skill.getMagicLevel()) <= 9))
@@ -1343,10 +1343,14 @@ public class Formulas
 		
 		damage *= calcAttributeBonus(owner, target, skill);
 		
-		if (target.isAttackable())
+		// Against a monster: the PvE bonuses (not against a fake player, which counts as a player's side, see isPve).
+		if (isPvE)
 		{
 			damage *= owner.calcStat(Stat.PVE_MAGICAL_DMG, 1, null, null);
-			damage *= ClassBalanceConfig.PVE_MAGICAL_SKILL_DAMAGE_MULTIPLIERS[owner.getPlayerClass().getId()];
+			if (owner.isPlayer())
+			{
+				damage *= ClassBalanceConfig.PVE_MAGICAL_SKILL_DAMAGE_MULTIPLIERS[owner.asPlayer().getPlayerClass().getId()];
+			}
 			
 			if (!target.isRaid() && !target.isRaidMinion() && (target.getLevel() >= NpcConfig.MIN_NPC_LEVEL_DMG_PENALTY) && ((target.getLevel() - owner.getLevel()) >= 2))
 			{

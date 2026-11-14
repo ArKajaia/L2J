@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -91,6 +92,7 @@ import org.l2jmobius.gameserver.model.actor.holders.creature.InvulSkillHolder;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
 import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
+import org.l2jmobius.gameserver.model.actor.instance.Cubic;
 import org.l2jmobius.gameserver.model.actor.instance.GrandBoss;
 import org.l2jmobius.gameserver.model.actor.instance.QuestGuard;
 import org.l2jmobius.gameserver.model.actor.stat.CreatureStat;
@@ -5973,6 +5975,43 @@ public abstract class Creature extends WorldObject
 	{
 		final WorldRegion region = getWorldRegion();
 		return ((region != null) && (region.isActive()));
+	}
+	
+	/** Its cubics: a player's, or a fake player's (Eva's and Shillien Templars). */
+	private final Map<Integer, Cubic> _cubics = new ConcurrentSkipListMap<>();
+	
+	/**
+	 * Adds a cubic to it.
+	 * @param cubicId the cubic ID
+	 * @param level the cubic's skill level
+	 * @param cubicPower its power
+	 * @param cubicDelay seconds between its actions
+	 * @param cubicSkillChance the chance of an action
+	 * @param cubicMaxCount its actions before it goes idle, -1 for no limit
+	 * @param cubicDuration its lifetime in seconds
+	 * @param givenByOther summoned by another
+	 * @return the cubic of the same ID it replaces, {@code null} for none
+	 */
+	public Cubic addCubic(int cubicId, int level, double cubicPower, int cubicDelay, int cubicSkillChance, int cubicMaxCount, int cubicDuration, boolean givenByOther)
+	{
+		return _cubics.put(cubicId, new Cubic(this, cubicId, level, (int) cubicPower, cubicDelay, cubicSkillChance, cubicMaxCount, cubicDuration, givenByOther));
+	}
+	
+	/**
+	 * @return its cubics by cubic ID
+	 */
+	public Map<Integer, Cubic> getCubics()
+	{
+		return _cubics;
+	}
+	
+	/**
+	 * @param cubicId a cubic ID
+	 * @return its cubic of that ID, {@code null} for none
+	 */
+	public Cubic getCubicById(int cubicId)
+	{
+		return _cubics.get(cubicId);
 	}
 	
 	/**

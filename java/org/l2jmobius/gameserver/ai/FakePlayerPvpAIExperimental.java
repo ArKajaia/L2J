@@ -210,6 +210,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final int IMMOBILE_BUFF_THREAT = 900;
 	/** It casts an immobilizing buff only with its target within its bow's reach plus this (centre to centre). */
 	private static final int IMMOBILE_BUFF_REACH_SLACK = 30;
+	/** Seconds an immobilizing defence (Ultimate Defense) is kept at least: the burst it was cast against. */
+	private static final int IMMOBILE_DEFENSE_HOLD = 3;
+	/** It takes an immobilizing defence off only when it would live at least this long at the damage it takes now. */
+	private static final double IMMOBILE_DEFENSE_SAFE_TTD = 10;
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
 	
@@ -1193,6 +1197,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		// angle where the way straight back is blocked. So it keeps the melee near the edge of its reach instead of letting it in.
 		// An archer standing in an immobilizing buff (Snipe) takes it off (a player clicks it away) when a melee comes at it or its target leaves its reach: it has to move again.
 		if (pvp && (role == Role.ARCHER) && !bowHeld && dropImmobileBuff(npc, profile, target, distance, collision))
+		{
+			return;
+		}
+		
+		// A tank standing in its Ultimate Defense (or Vengeance) takes it off (a player clicks it away) once it holds nothing back: its target is out of its reach (it waits it out, or shoots
+		// from afar) and it is no longer about to die. Rooted, it can neither reach nor hit, and the enemy only waits for the 30 s to run out.
+		if (pvp && dropImmobileDefense(npc, profile, target, distance, collision, now))
 		{
 			return;
 		}
@@ -5161,6 +5172,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				continue;
 			}
 			
+			// A cubic is summoned before a fight (6 s to cast): one lost in a fight comes back after it.
+			if ((FakePlayerPvpManager.getCubicId(skill) >= 0) && (target != null) && (target != npc) && isPvpEnemy(target))
+			{
+				continue;
+			}
+			
 			final TargetType targetType = skill.getTargetType();
 			if ((targetType != TargetType.SELF) && (targetType != TargetType.ONE) && (targetType != TargetType.PARTY) && (targetType != TargetType.AURA))
 			{
@@ -5755,6 +5772,40 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			{
 				return true;
 			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Takes off the immobilizing defence of its {@code emergency} list it stands in (Ultimate Defense, Vengeance) when its target is out of its reach and it is no longer about to die, after
+	 * the first {@link #IMMOBILE_DEFENSE_HOLD} seconds (the burst it was cast against).
+	 * @return {@code true} if it took one off
+	 */
+	private boolean dropImmobileDefense(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision, long now)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.EMERGENCY))
+		{
+			if (!hasEffect(skill, "ImmobileBuff"))
+			{
+				continue;
+			}
+			final BuffInfo info = npc.getEffectList().getBuffInfoBySkillId(skill.getId());
+			if ((info == null) || ((info.getAbnormalTime() - info.getTime()) < IMMOBILE_DEFENSE_HOLD))
+			{
+				continue;
+			}
+			if ((distance - collision) <= (npc.getPhysicalAttackRange() + IMMOBILE_BUFF_REACH_SLACK))
+			{
+				return false;
+			}
+			final double timeToDie = _fightRead != null ? _fightRead.read().timeToDie(now, 0) : Double.POSITIVE_INFINITY;
+			if (timeToDie < IMMOBILE_DEFENSE_SAFE_TTD)
+			{
+				return false;
+			}
+			npc.stopSkillEffects(SkillFinishType.REMOVED, skill.getId());
+			trace(Reason.SELF_SKILL, target, skill, "DROP_IMMOBILE_DEFENSE");
+			return true;
 		}
 		return false;
 	}
