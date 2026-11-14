@@ -5496,6 +5496,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				continue;
 			}
 			
+			// A cubic is summoned before a fight (6 s to cast): one lost in a fight comes back after it.
+			if ((FakePlayerPvpManager.getCubicId(skill) >= 0) && (target != null) && (target != npc) && isPvpEnemy(target))
+			{
+				continue;
+			}
+			
 			final TargetType targetType = skill.getTargetType();
 			if ((targetType != TargetType.SELF) && (targetType != TargetType.ONE) && (targetType != TargetType.PARTY) && (targetType != TargetType.AURA))
 			{

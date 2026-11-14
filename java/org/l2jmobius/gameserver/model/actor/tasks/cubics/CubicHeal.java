@@ -47,11 +47,11 @@ public class CubicHeal implements Runnable
 			return;
 		}
 		
-		if (_cubic.getOwner().isDead() || !_cubic.getOwner().isOnline())
+		if (_cubic.isOwnerGone())
 		{
 			_cubic.stopAction();
 			_cubic.getOwner().getCubics().remove(_cubic.getId());
-			_cubic.getOwner().broadcastUserInfo();
+			_cubic.refreshOwner();
 			_cubic.cancelDisappear();
 			return;
 		}

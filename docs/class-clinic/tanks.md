@@ -85,6 +85,19 @@ The build attribute `weights` at ×1.25 on PDEF_PCT, MDEF_PCT, SHIELD_RATE_PCT, 
 
 No clear change for any of them, overall or against any kind. The points the trees moved into defence came out of damage: dealt fell 5 to 10%, taken 0 to 3%. Every tank did worse against nukers (−7 to −11, none clearly). Taken out.
 
+### Batch 3: from the Eva's Templar guide, kept (`matrix-20261114-100730`, against `matrix-20261114-093250`, short form)
+
+The seed skills and the icons they open, in the `buff` lists (cast as soon as they are up, as the guide says for a long fight): Eva's Will then Touch of Eva (50% HP, 50 HP a second, heals received +30% for 60 s), Spirit of Phoenix then Flame Icon (P. Def and M. Def ×1.5, Atk. Spd ×1.3), Pain of Shilen then Spirit of Shilen (P. Atk ×1.3, Atk. Spd ×1.3, 40% of its damage back as HP). Vengeance (P. Def +5,400) before Ultimate Defense in every tank's `emergency`: two 30 s defences a fight instead of one.
+
+| Build | Before | After | Difference (95%) | Clearly better against |
+|---|---|---|---|---|
+| Phoenix Knight | 70.3% | 77.4% | +7.0 (+2.0 to +12.0) | melee, archer |
+| Hell Knight | 73.2% | 75.0% | +1.8 (-3.2 to +6.8) | - (it only had Vengeance) |
+| Eva's Templar | 50.4% | 63.1% | +12.6 (+7.0 to +18.3) | melee, healer (19% → 63%), buffer |
+| Shillien Templar | 60.1% | 70.9% | +10.8 (+5.4 to +16.2) | melee, healer (60% → 92%) |
+
+No kind clearly worse. Touch of Eva, Flame Icon and Spirit of Shilen are cast 0.8 to 0.9 times a battle; the seeds (2.5 s) are aborted 39% of the time. Fault 8 (Eva's Templar worn down by healers) is answered the way the guide plays it.
+
 ## 5. Not fixed here
 
 - **Archers and nukers outrange them.** Speed 175 against 222 for an archer, no gap closer, a bow that hits for a third of what it takes. What the root and the stun can win is measured in batch 2.

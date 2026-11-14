@@ -38,7 +38,7 @@ public class CubicDisappear implements Runnable
 		{
 			_cubic.stopAction();
 			_cubic.getOwner().getCubics().remove(_cubic.getId());
-			_cubic.getOwner().broadcastUserInfo();
+			_cubic.refreshOwner();
 		}
 	}
 }

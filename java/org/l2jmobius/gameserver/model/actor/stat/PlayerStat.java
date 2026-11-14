@@ -65,7 +65,6 @@ public class PlayerStat extends PlayableStat
 	private byte _vitalityLevel = 0;
 	private long _startingXp;
 	/** Player's maximum cubic count. */
-	private int _maxCubicCount = 1;
 	/** Player's maximum talisman count. */
 	private final AtomicInteger _talismanSlots = new AtomicInteger();
 	private boolean _cloakSlot = false;
@@ -434,24 +433,6 @@ public class PlayerStat extends PlayableStat
 	public long getStartingExp()
 	{
 		return _startingXp;
-	}
-	
-	/**
-	 * Gets the maximum cubic count.
-	 * @return the maximum cubic count
-	 */
-	public int getMaxCubicCount()
-	{
-		return _maxCubicCount;
-	}
-	
-	/**
-	 * Sets the maximum cubic count.
-	 * @param cubicCount the maximum cubic count
-	 */
-	public void setMaxCubicCount(int cubicCount)
-	{
-		_maxCubicCount = cubicCount;
 	}
 	
 	/**

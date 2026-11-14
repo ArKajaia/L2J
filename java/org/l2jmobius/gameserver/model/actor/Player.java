@@ -819,7 +819,6 @@ public class Player extends Playable
 	
 	protected boolean _inventoryDisable = false;
 	/** Player's cubics. */
-	private final Map<Integer, Cubic> _cubics = new ConcurrentSkipListMap<>(); // TODO(Zoey76): This should be sorted in insert order.
 	/** Active shots. */
 	protected Set<Integer> _activeSoulShots = ConcurrentHashMap.newKeySet(1);
 	
@@ -5550,15 +5549,15 @@ public class Player extends Playable
 		}
 		
 		// Unsummon Cubics
-		if (!_cubics.isEmpty())
+		if (!getCubics().isEmpty())
 		{
-			for (Cubic cubic : _cubics.values())
+			for (Cubic cubic : getCubics().values())
 			{
 				cubic.stopAction();
 				cubic.cancelDisappear();
 			}
 			
-			_cubics.clear();
+			getCubics().clear();
 		}
 		
 		if (isChannelized())
@@ -9775,36 +9774,36 @@ public class Player extends Playable
 	
 	public void stopCubics()
 	{
-		if (_cubics.isEmpty())
+		if (getCubics().isEmpty())
 		{
 			return;
 		}
 		
-		for (Cubic cubic : _cubics.values())
+		for (Cubic cubic : getCubics().values())
 		{
 			cubic.stopAction();
 			cubic.cancelDisappear();
 		}
 		
-		_cubics.clear();
+		getCubics().clear();
 		broadcastUserInfo();
 	}
 	
 	public void stopCubicsByOthers()
 	{
-		if (_cubics.isEmpty())
+		if (getCubics().isEmpty())
 		{
 			return;
 		}
 		
 		boolean broadcast = false;
-		for (Cubic cubic : _cubics.values())
+		for (Cubic cubic : getCubics().values())
 		{
 			if (cubic.givenByOther())
 			{
 				cubic.stopAction();
 				cubic.cancelDisappear();
-				_cubics.remove(cubic.getId());
+				getCubics().remove(cubic.getId());
 				broadcast = true;
 			}
 		}
@@ -9845,41 +9844,6 @@ public class Player extends Playable
 		return _inventoryDisable;
 	}
 	
-	/**
-	 * Add a cubic to this player.
-	 * @param cubicId the cubic ID
-	 * @param level
-	 * @param cubicPower
-	 * @param cubicDelay
-	 * @param cubicSkillChance
-	 * @param cubicMaxCount
-	 * @param cubicDuration
-	 * @param givenByOther
-	 * @return the old cubic for this cubic ID if any, otherwise {@code null}
-	 */
-	public Cubic addCubic(int cubicId, int level, double cubicPower, int cubicDelay, int cubicSkillChance, int cubicMaxCount, int cubicDuration, boolean givenByOther)
-	{
-		return _cubics.put(cubicId, new Cubic(this, cubicId, level, (int) cubicPower, cubicDelay, cubicSkillChance, cubicMaxCount, cubicDuration, givenByOther));
-	}
-	
-	/**
-	 * Get the player's cubics.
-	 * @return the cubics
-	 */
-	public Map<Integer, Cubic> getCubics()
-	{
-		return _cubics;
-	}
-	
-	/**
-	 * Get the player cubic by cubic ID, if any.
-	 * @param cubicId the cubic ID
-	 * @return the cubic with the given cubic ID, {@code null} otherwise
-	 */
-	public Cubic getCubicById(int cubicId)
-	{
-		return _cubics.get(cubicId);
-	}
 	
 	/**
 	 * @return the modifier corresponding to the Enchant Effect of the Active Weapon (Min : 127).
@@ -10164,15 +10128,15 @@ public class Player extends Playable
 		
 		// Remove Hide.
 		getEffectList().stopSkillEffects(SkillFinishType.REMOVED, AbnormalType.HIDE);
-		if (!_cubics.isEmpty())
+		if (!getCubics().isEmpty())
 		{
-			for (Cubic cubic : _cubics.values())
+			for (Cubic cubic : getCubics().values())
 			{
 				cubic.stopAction();
 				cubic.cancelDisappear();
 			}
 			
-			_cubics.clear();
+			getCubics().clear();
 		}
 		
 		if (_party != null)
