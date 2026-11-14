@@ -31,6 +31,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.l2jmobius.gameserver.ai.fight.ReflexEvent.Kind;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -215,7 +216,7 @@ public class Reflexes
 					{
 						// A defence that roots its caster (Ultimate Defense, Vengeance: 30 s, 15 min reuse) only when it is about to die: cast on the first burst at full HP it stood
 						// rooted while an archer or a mage shot it from afar, and had nothing left for the end of the fight (docs/class-clinic/tanks.md).
-						if (!dying && (option.skill() != null) && rootsCaster(option.skill()))
+						if (!dying && (option.skill() != null) && rootsCaster(SkillData.getInstance().getSkill(option.skill().id(), option.skill().level())))
 						{
 							continue;
 						}
@@ -309,6 +310,10 @@ public class Reflexes
 	 */
 	private static boolean rootsCaster(Skill skill)
 	{
+		if (skill == null)
+		{
+			return false;
+		}
 		for (EffectScope scope : new EffectScope[]
 		{
 			EffectScope.GENERAL,

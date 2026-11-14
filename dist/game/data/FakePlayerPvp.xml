@@ -731,23 +731,18 @@
 		<variant name="Phoenix Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
 	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
-		<attack>984,3</attack>
-		<debuff>352,402,102</debuff>
-		<buff>351,916,112,123,230,527,760</buff>
-		<heal>58</heal>
-		<emergency>110</emergency>
+		<attack>984,400</attack> <!-- Shield Strike (1,021 per cast second), Tribunal (power 1,841, and the target takes +20% from swords): learned and never in the build. docs/class-clinic/tanks.md: no Power Strike (529, less than its normal attack) -->
+		<debuff>352,402</debuff> <!-- Shield Bash, Arrest. No Entangle: a 3 s magic cast, 38% aborted, lands 15% -->
+		<buff>351,916,112,123,230,527,760,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
+		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster). No Elemental Heal: a 5 s cast, aborted 45% of the time -->
 		<toggle>322,335</toggle>
-		<peel>352,402,102</peel>
+		<peel>352,402</peel>
 		<cleanse>21</cleanse>
-		<enchant>352:1,402:2,102:1,110:1|110:2,58:1,123:1</enchant>
+		<enchant>352:1,402:2,400:1,110:1|110:2,123:1</enchant>
 		<combo name="Shield bash" pvp="true">
 			<step skill="352" /> <!-- Shield Bash -->
 			<step skill="984" /> <!-- Shield Strike -->
-			<step skill="3" optional="true" />
-		</combo>
-		<combo name="Hold" pvp="true" chance="50">
-			<step skill="102" /> <!-- Entangle -->
-			<step skill="402" optional="true" /> <!-- Arrest -->
+			<step skill="400" optional="true" /> <!-- Tribunal -->
 		</combo>
 		<variant name="Eva's Templar Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
