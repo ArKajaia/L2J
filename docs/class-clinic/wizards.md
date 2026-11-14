@@ -6,7 +6,7 @@ A case of `docs/class-clinic.md`, 2026-11-14. Level 85, brain A, seed 4040, 30 b
 
 | Build | Before | After | Difference (95%) |
 |---|---|---|---|
-| Archmage | 63.2% | 85.4% | +22.2 (+18.8 to +25.6), **better** |
+| Archmage | 63.2% | 85.4% (77.4% with PvP power, below) | +22.2 (+18.8 to +25.6), **better** |
 | Mystic Muse | 54.1% | 81.8% | +27.7 (+24.1 to +31.3), **better** |
 | Storm Screamer | 56.2% | 90.9% | +34.7 (+31.4 to +37.9), **better** |
 
@@ -139,7 +139,7 @@ The opponents in the "after" runs are the new wizards too, so part of the nuker 
 
 ## 5. Not fixed here
 
-- **PvP power.** A fake player's skill hits another fake player, and a real player, with its base power, not its PvP power: `Formulas` takes `isPvP` and `isPvE` from `attacker.isPlayable()`, and a fake player is an NPC. Aura Blast hits for power 199 instead of 141, Aura Cannon 302 instead of 178. It reaches every skill with a PvP power, every class: a general finding (`docs/class-clinic.md`), not tuned around here.
+- **PvP power: fixed after the clinic.** A fake player's skills hit with their base power (`Formulas` took `isPvP`/`isPvE` from `isPlayable()`, and a fake player is an NPC): Aura Blast 199 instead of 141, Aura Cannon 302 instead of 178, and a player's skills hit a fake player with their PvE power. `Formulas.isPvp` / `isPve` now count roaming fake players and their servitors as a player's side, for the power, the PvP damage and defence stats (PvP armour sets, weapon special abilities, Final Secret's +30%, Aura Flare's −50% on its caster) and the PvP and PvE effect scopes; the AI's damage estimate uses the same. Archmage with it (`matrix-20261114-045130`, against batch 3): 85.4% → 77.4% (−7.9, −11.1 to −4.8), worse against tanks (90.0 → 69.2, −20.8, its damage on them 575 → 452 a second) and melee (92.4 → 86.5); Aura Blast's damage a battle 8,799 → 6,517. A full matrix before and after was started and stopped at 639 of 7,800 battles (`matrix-20261114-045903`, resume it with `matrix.py --resume`); the change reaches every build through the PvP stats.
 - **Healers** (Archmage 57%, Mystic Muse 66% after batch 1): most fights go to the time limit with the healer healing back 95%. The Storm Screamer wins all of them (Demon Wind blocks heals for 2 minutes, Silence on a caster). The Archmage and Mystic Muse have no heal block or silence in their kit.
 - **Balance.** After the three batches the wizards win 82 to 91% of their duels, the strongest builds in the clinic so far (the next best finished classes are at 70 to 73%). That is the AI using the kit and a skill that now works; whether robe nukers should be this strong is a balance decision, written down in `docs/class-balance-85.md`. A 1v1 flatters them: nobody peels for the archer or heals the melee, and a real player's Arcane Shield costs MP that a fake player doesn't pay for its other casts.
 

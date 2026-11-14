@@ -674,3 +674,5 @@ Not a balance change: the AI and a game mechanic, recorded here because it moves
 - Their skills hit with base power, not PvP power (a fake player isn't playable in `Formulas`): Aura Blast 199 instead of 141. That reaches every class with PvP powers (a general finding in `docs/class-clinic.md`).
 
 They are now the strongest builds in the clinic (the other finished classes are at 41 to 73%). Options, if they are too strong: the PvP power fix first (it is a correction, and it lowers Aura Blast and Aura Cannon by 30 to 40%), then charging a fake player MP under Arcane Shield as a player pays it, before touching their stats.
+
+**PvP power done (same day):** fake players now use PvP power and the PvP stats against players and fake players (`Formulas.isPvp` / `isPve`). Archmage 85.4% → 77.4% (`matrix-20261114-045130`), tanks 90 → 69. It reaches every build through the PvP damage and defence stats (PvP armour sets, weapon special abilities, Final Secret): a full matrix before and after is still to do.
