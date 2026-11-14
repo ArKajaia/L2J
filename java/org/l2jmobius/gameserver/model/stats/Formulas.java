@@ -526,6 +526,49 @@ public class Formulas
 	}
 	
 	/**
+	 * Custom: a creature that fights on a player's side of PvP: a playable, a roaming fake player or a roaming fake player's servitor. A fake player is an NPC, so without this its skills hit with their
+	 * base power (Aura Blast 199 where a player's hits a player for 141) and a player's hit a fake player with their PvE power.
+	 * @param creature the creature
+	 * @return {@code true} if it is a player's side in PvP
+	 */
+	public static boolean isPvpSide(Creature creature)
+	{
+		return (creature != null) && (creature.isPlayable() || isFakePvpSide(creature));
+	}
+	
+	/**
+	 * @param creature the creature
+	 * @return {@code true} if it is a roaming fake player or a roaming fake player's servitor
+	 */
+	private static boolean isFakePvpSide(Creature creature)
+	{
+		final Creature fake = creature instanceof FakePlayerPvpServitor ? ((FakePlayerPvpServitor) creature).getOwner() : creature;
+		return (fake != null) && fake.isPvpFakePlayer();
+	}
+	
+	/**
+	 * Custom: a PvP hit (PvP power, PvP damage and defence stats): both sides are players, their summons, roaming fake players or their servitors.
+	 * @param attacker the attacker
+	 * @param target the target
+	 * @return {@code true} for a PvP hit
+	 */
+	public static boolean isPvp(Creature attacker, Creature target)
+	{
+		return isPvpSide(attacker) && isPvpSide(target);
+	}
+	
+	/**
+	 * Custom: a PvE hit (PvE power): a player's side against a monster, which a roaming fake player is not.
+	 * @param attacker the attacker
+	 * @param target the target
+	 * @return {@code true} for a PvE hit
+	 */
+	public static boolean isPve(Creature attacker, Creature target)
+	{
+		return isPvpSide(attacker) && target.isAttackable() && !isFakePvpSide(target);
+	}
+	
+	/**
 	 * Custom: the class balance PvP multipliers apply between players and roaming fake players alike (and their summons).
 	 * @param attacker the attacker
 	 * @param target the target
@@ -680,8 +723,8 @@ public class Formulas
 			}
 		}
 		
-		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
-		final boolean isPvE = attacker.isPlayable() && target.isAttackable();
+		final boolean isPvP = isPvp(attacker, target);
+		final boolean isPvE = isPve(attacker, target);
 		final double power = skill.getPower(isPvP, isPvE);
 		double damage = 0;
 		final double proximityBonus = attacker.isBehind(target) ? 1.2 : attacker.isInFrontOf(target) ? 1 : 1.1; // Behind: +20% - Side: +10% (TODO: values are unconfirmed, possibly custom, remove or update when confirmed);
@@ -778,8 +821,8 @@ public class Formulas
 			}
 		}
 		
-		final boolean isPvP = attacker.isPlayable() && target.isPlayer();
-		final boolean isPvE = attacker.isPlayable() && target.isAttackable();
+		final boolean isPvP = isPvpSide(attacker) && (target.isPlayer() || target.isPvpFakePlayer());
+		final boolean isPvE = isPve(attacker, target);
 		double damage = 0;
 		final double proximityBonus = attacker.isBehind(target) ? 1.2 : attacker.isInFrontOf(target) ? 1 : 1.1; // Behind: +20% - Side: +10%
 		final double ssboost = ss ? 1.458 : 1;
@@ -869,8 +912,8 @@ public class Formulas
 	 */
 	public static double calcPhysDam(Creature attacker, Creature target, Skill skill, byte shld, boolean crit, boolean ss)
 	{
-		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
-		final boolean isPvE = attacker.isPlayable() && target.isAttackable();
+		final boolean isPvP = isPvp(attacker, target);
+		final boolean isPvE = isPve(attacker, target);
 		final double proximityBonus = attacker.isBehind(target) ? 1.2 : attacker.isInFrontOf(target) ? 1 : 1.1; // Behind: +20% - Side: +10%
 		double damage = attacker.getPAtk(target);
 		double defence = target.getPDef(attacker);
@@ -1105,8 +1148,8 @@ public class Formulas
 		}
 		
 		double mAtk = attacker.getMAtk(target, skill);
-		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
-		final boolean isPvE = attacker.isPlayable() && target.isAttackable();
+		final boolean isPvP = isPvp(attacker, target);
+		final boolean isPvE = isPve(attacker, target);
 		
 		// PvP bonuses for defense
 		if (isPvP)
@@ -1245,8 +1288,8 @@ public class Formulas
 		}
 		
 		final int mAtk = attacker.getCubicPower();
-		final boolean isPvP = target.isPlayable();
-		final boolean isPvE = target.isAttackable();
+		final boolean isPvP = isPvpSide(target);
+		final boolean isPvE = target.isAttackable() && !isFakePvpSide(target);
 		
 		// Cubics MDAM Formula (similar to PDAM formula, but using 91 instead of 70, also resisted by mDef).
 		double damage = 91 * ((mAtk + skill.getPower(isPvP, isPvE)) / mDef);
@@ -1836,8 +1879,8 @@ public class Formulas
 		// Formula: (SQR(M.Atk)*Power*(Target Max MP/97))/M.Def
 		double mAtk = attacker.getMAtk(target, skill);
 		double mDef = target.getMDef(attacker, skill);
-		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
-		final boolean isPvE = attacker.isPlayable() && target.isAttackable();
+		final boolean isPvP = isPvp(attacker, target);
+		final boolean isPvE = isPve(attacker, target);
 		final double mp = target.getMaxMp();
 		
 		switch (shld)

@@ -352,7 +352,7 @@ public class Prophecies
 
 				final BuffInfo info = new BuffInfo(oracle, enemy, skill);
 				skill.applyEffectScope(EffectScope.GENERAL, info, true, true);
-				skill.applyEffectScope(oracle.isPlayable() && enemy.isAttackable() ? EffectScope.PVE : oracle.isPlayable() && enemy.isPlayable() ? EffectScope.PVP : null, info, true, true);
+				skill.applyEffectScope(Formulas.isPve(oracle, enemy) ? EffectScope.PVE : Formulas.isPvp(oracle, enemy) ? EffectScope.PVP : null, info, true, true);
 				enemy.getEffectList().add(info);
 				if (++landed >= OraclesWarchiefsConfig.DOOM_SPREAD_MAX_TARGETS)
 				{
