@@ -768,28 +768,22 @@
 		<variant name="Hell Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
 	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
-		<attack>279,223,289,105,984,70,3</attack>
-		<debuff>342,352,402,115,122,401,129</debuff>
-		<buff>351,916,112,527,760</buff>
-		<emergency>110</emergency>
+		<attack>984,401,223</attack> <!-- Shield Strike (1,209 per cast second), Judgment (986, and the target takes +20% from swords), Sting (926). docs/class-clinic/tanks.md: no Lightning Strike, Freezing Strike, Life Leech or Drain Health (3 s magic casts, 25 to 65 per cast second, 26 to 51% aborted) or Power Strike (663) -->
+		<debuff>352,402,342</debuff> <!-- Shield Bash, Arrest, Touch of Death. No Hex, Power Break or Poison: they land 9 to 12% -->
+		<buff>351,916,112,527,760,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
+		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster) -->
 		<toggle>322,335</toggle>
 		<peel>352,402</peel>
-		<enchant>279:1|279:3,352:1,402:2,342:2,115:1,122:1,223:1,105:1|105:3,289:1,110:1|110:2</enchant>
-		<combo name="Curse burst" pvp="true">
-			<step skill="122" /> <!-- Hex -->
-			<step skill="115" optional="true" /> <!-- Power Break -->
-			<step skill="279" /> <!-- Lightning Strike -->
-			<step skill="223" optional="true" /> <!-- Sting -->
-			<step skill="105" optional="true" /> <!-- Freezing Strike -->
-		</combo>
+		<enchant>352:1,402:2,342:2,223:1,401:1,110:1|110:2</enchant>
 		<combo name="Shield bash" pvp="true">
 			<step skill="352" /> <!-- Shield Bash -->
-			<step skill="223" /> <!-- Sting -->
-			<step skill="984" optional="true" />
+			<step skill="984" /> <!-- Shield Strike -->
+			<step skill="401" optional="true" /> <!-- Judgment -->
 		</combo>
-		<combo name="Drain" chance="40">
-			<step skill="223" /> <!-- Sting -->
-			<step skill="289" optional="true" /> <!-- Life Leech -->
+		<combo name="Touch of death" pvp="true">
+			<step skill="342" /> <!-- Touch of Death: burns CP and cancels buffs -->
+			<step skill="984" /> <!-- Shield Strike -->
+			<step skill="223" optional="true" /> <!-- Sting -->
 		</combo>
 		<variant name="Shillien Templar Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
