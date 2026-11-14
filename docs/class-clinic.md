@@ -211,6 +211,7 @@ These came out of a class's clinic but reach beyond it. Each needs brain B and a
 |---|---|---|---|---|
 | Female Soul Hound | `docs/class-clinic/female-soul-hound.md` | 50.6% | 70.1% (+19.5, 95% +15.6 to +23.4): tank 98, melee 80, dagger 94, archer 57, nuker 40, healer 51, buffer 80 | 2026-11-12 |
 | Duelist (Gladiator line) | `docs/class-clinic/duelist.md` | 48.7% | 69.2% (+20.6, 95% +16.7 to +24.5): tank 71, melee 52, dagger 67, archer 91, nuker 60, healer 100, buffer 89 | 2026-11-12 |
+| Wind Rider, Ghost Hunter, Adventurer | `docs/class-clinic/daggers.md` | 37.9%, 40.9%, 40.8% | 46.8% (+8.9, 95% +4.9 to +12.9), 54.4% (+13.4, +9.4 to +17.4), 43.1% (+2.3, −1.7 to +6.3, no clear change) | 2026-11-12 |
 | Grand Khavatari (Tyrant line) | `docs/class-clinic/grand-khavatari.md` | 71.1% (60.3% before the Duelist's shared fixes) | 72.7% (+1.6, 95% -2.0 to +5.3, no clear change): tank 65, melee 59, dagger 86, archer 76, nuker 70, healer 99, buffer 89 | 2026-11-13 |
 | Flame Warchief (Warcryer line) | `docs/class-clinic/flame-warchief.md` | 35.5% | 41.7% (+6.2, 95% +2.3 to +10.2): tank 94, melee 25, dagger 32, archer 23, nuker 23, healer 95, buffer 59 | 2026-11-13 |
 | Doom Oracle (Prophet line) | `docs/class-clinic/doom-oracle.md` | 59.4% | 73.2% (+13.9, 95% +10.1 to +17.7): tank 96, melee 68, dagger 88, archer 48, nuker 63, healer 83, buffer 91. The shared prophecy rules took the Battle Oracle from 28.5% to 41.2% (guard run) | 2026-11-13 |

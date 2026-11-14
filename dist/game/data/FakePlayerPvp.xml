@@ -1563,7 +1563,7 @@
 		<peel>102,402</peel>
 		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
 		<groupHeal>27508</groupHeal> <!-- Sanctuary Chorus -->
-		<partyBuff>364,267,268,269,264,304,363,349,529,764,265,266,270,305,306,308,914</partyBuff> <!-- Champion, Warding, Wind, Hunter, Earth, Vitality, Meditation, Renewal, Elemental, Wind Storm, Life, Water, Invocation, Vengeance, Flame Guard, Storm Guard, Purification -->
+		<partyBuff>364,267,268,269,264,304,363,349,529,764,305,914</partyBuff> <!-- Champion, Warding, Wind, Hunter, Earth, Vitality, Meditation, Renewal, Elemental, Wind Storm, Vengeance, Purification (not Life, Water, Invocation, Flame/Storm Guard: with the buff lists' songs and dances they would go over the 18 slots) -->
 		<enchant>102:1,402:2,437:1,110:1|110:2,58:1</enchant>
 		<variant name="Sword Muse Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="0" />
 	</build>
@@ -1574,7 +1574,7 @@
 		<toggle>27526</toggle> <!-- Blade Waltz -->
 		<perform>27524|27520,27520</perform> <!-- Hunting: Dance of Frenzy / Dance of Ruin. PvP: Dance of Ruin -->
 		<peel>402,105</peel>
-		<partyBuff>271,275,274,310,915,765,273,276,365,530,311,272,307,309,277</partyBuff> <!-- Warrior, Fury, Fire, Vampire, Berserker, Blade Storm, Mystic, Concentration, Siren, Alignment, Protection, Inspiration, Aqua/Earth Guard, Light -->
+		<partyBuff>271,275,274,310,915,273,276,365,272</partyBuff> <!-- Warrior, Fury, Fire, Vampire, Berserker, Mystic, Concentration, Siren, Inspiration (not Blade Storm, 15 s, nor Alignment, Protection, Aqua/Earth Guard, Light: with the buff lists' songs and dances they would go over the 18 slots) -->
 		<enchant>84:1,223:1,122:1,115:1,105:3,402:2</enchant>
 		<variant name="Spectral Dancer Light" armor="LIGHT_FIGHTER" weight="0" />
 	</build>
