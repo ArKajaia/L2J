@@ -92,7 +92,26 @@ The Archmage's "Slow and burn" combo (chance 50) now runs where "Surrender burst
 
 Its own measure moved: the fights it casts Arcane Shield in are won **48%** of the time (26% in batch 1, 15% in the baseline). It is cast 0.2 times a battle, as the HP crash reflex, at about 10% HP (`battles/000012-Archmage-vs-Sagittarius`: shield at 8.3 s, then a 1,689 hit moves its HP by 1%): too late to turn many fights. Kept, as a correction of the game's mechanics with no kind clearly worse (the exception in `docs/class-clinic.md`, step 5). The same fight shows Heal restoring 479 HP for a cast.
 
-BATCH3
+### Batch 3: Arcane Shield at the start, no heals, no Slow combo (`matrix-20261114-003156`, Archmage, against batch 2)
+
+Data only: Arcane Shield in the `buff` list after Enlightenment (both are cast as the fight starts, about 1.5 s in, at 985 from the target), the `heal` list taken out (Heal 1.6 casts a battle at 479 HP), the Archmage's "Slow and burn" combo taken out.
+
+| Against | Before | After | Difference (95%) | Verdict |
+|---|---|---|---|---|
+| **tank** | 85.0% | 90.0% | +5.0 (−3.3 to +13.3) | no clear change |
+| **melee** | 87.5% | 92.4% | +4.9 (+0.5 to +9.2) | **better** |
+| **dagger** | 91.1% | 95.6% | +4.4 (−2.8 to +11.7) | no clear change |
+| **archer** | 55.0% | 82.5% | +27.5 (+16.3 to +38.7) | **better** |
+| **nuker** | 63.3% | 72.1% | +8.8 (+0.4 to +17.1) | **better** |
+| **healer** | 53.3% | 62.8% | +9.4 (−4.9 to +23.8) | no clear change |
+| **buffer** | 95.3% | 96.0% | +0.7 (−3.9 to +5.3) | no clear change |
+| **all** | 77.6% | 85.4% | +7.8 (+4.6 to +10.9) | **better** |
+
+Arcane Shield 0.2 → 1.04 casts a battle, none aborted (8% before); Slow 2.0 → 0.05; Heal 1.6 → 0. The archer race is the gain: the archer's first 10 s of arrows cost MP instead of HP. This is what batch 2 was for: without batch 2 the shield in the buff list would do nothing.
+
+Batches 1 to 3 against the Archmage's baseline: 63.2% → 85.4% (+22.2, +18.8 to +25.6), better against every kind but tanks (82.5 → 90.0, no clear change): melee 65 → 92, dagger 68 → 96, archer 33 → 83, nuker 58 → 72, healer 44 → 63, buffer 85 → 96. Its worst opponents now are the Storm Screamer (27%) and the Doom Oracle (43%).
+
+FINAL
 
 ## 5. Not fixed here
 
