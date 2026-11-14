@@ -131,6 +131,14 @@ public class MapRun
 	private final Map<Integer, Long> _gravityCooldowns = new ConcurrentHashMap<>();
 	/** Gravity Well: monsters pulled so far. */
 	private final AtomicInteger _pulled = new AtomicInteger();
+	/** Waystones: the waystones of the field, in order (the entry is destination 0, these 1 and up). */
+	private final List<Npc> _waystoneNpcs = new CopyOnWriteArrayList<>();
+	/** Nests: nest index -> its heart's object id. */
+	private final Map<Integer, Integer> _nestHearts = new ConcurrentHashMap<>();
+	/** Nests: the nests whose heart is broken. */
+	private final Set<Integer> _brokenNests = ConcurrentHashMap.newKeySet();
+	/** Sealed Coffers: coffer npc object id -> its state. */
+	private final Map<Integer, Coffer> _cofferStates = new ConcurrentHashMap<>();
 	/** Chain Reaction: monsters slain by a burst. */
 	private final AtomicInteger _chainKills = new AtomicInteger();
 	/** A test run of the web API's map probe (no hideout, no portals): it keeps a log of what its map says. */
@@ -204,6 +212,9 @@ public class MapRun
 	private final boolean _momentum;
 	private final boolean _lens;
 	private final boolean _gravityWell;
+	private final boolean _waystones;
+	private final boolean _nests;
+	private final boolean _coffers;
 	private final int _portalCount;
 	private final double _xpMultiplier;
 	private final double _dropMultiplier;
@@ -270,6 +281,9 @@ public class MapRun
 		boolean momentum = false;
 		boolean lens = false;
 		boolean gravityWell = false;
+		boolean waystones = false;
+		boolean nests = false;
+		boolean coffers = false;
 		double playerMaxHp = 1;
 		double playerDef = 1;
 		double playerMpRegen = 1;
@@ -346,6 +360,9 @@ public class MapRun
 			momentum |= modifier.isMomentum();
 			lens |= modifier.isLens();
 			gravityWell |= modifier.isGravityWell();
+			waystones |= modifier.isWaystones();
+			nests |= modifier.isNests();
+			coffers |= modifier.isCoffers();
 			if (modifier.getSpeedrunMinutes() > 0)
 			{
 				speedrunMinutes = speedrunMinutes > 0 ? Math.min(speedrunMinutes, modifier.getSpeedrunMinutes()) : modifier.getSpeedrunMinutes();
@@ -443,6 +460,9 @@ public class MapRun
 		_momentum = momentum;
 		_lens = lens;
 		_gravityWell = gravityWell;
+		_waystones = waystones;
+		_nests = nests;
+		_coffers = coffers;
 		_playerMaxHp = playerMaxHp;
 		_playerDef = playerDef;
 		_playerMpRegen = playerMpRegen;
@@ -1214,6 +1234,104 @@ public class MapRun
 	public boolean isGravityWell()
 	{
 		return _gravityWell;
+	}
+
+	public boolean isWaystones()
+	{
+		return _waystones;
+	}
+
+	public List<Npc> getWaystones()
+	{
+		return _waystoneNpcs;
+	}
+
+	public boolean isNests()
+	{
+		return _nests;
+	}
+
+	public Map<Integer, Integer> getNestHearts()
+	{
+		return _nestHearts;
+	}
+
+	/**
+	 * @param nest a nest index
+	 * @return {@code true} if its heart is broken
+	 */
+	public boolean isNestBroken(int nest)
+	{
+		return _brokenNests.contains(nest);
+	}
+
+	/**
+	 * @param nest a nest index
+	 * @return {@code true} if this broke it, {@code false} if it was already broken
+	 */
+	public boolean breakNest(int nest)
+	{
+		return _brokenNests.add(nest);
+	}
+
+	public boolean isCoffers()
+	{
+		return _coffers;
+	}
+
+	public Map<Integer, Coffer> getCoffers()
+	{
+		return _cofferStates;
+	}
+
+	/**
+	 * Sealed Coffers: one coffer of a run, and the fight its seal started.
+	 */
+	public static class Coffer
+	{
+		private final Npc _npc;
+		/** 0 sealed, 1 and 2 its waves, 3 paid. */
+		private int _wave;
+		private int _openerId;
+		private final Set<Integer> _guards = ConcurrentHashMap.newKeySet();
+
+		public Coffer(Npc npc)
+		{
+			_npc = npc;
+		}
+
+		public Npc getNpc()
+		{
+			return _npc;
+		}
+
+		public synchronized int getWave()
+		{
+			return _wave;
+		}
+
+		public synchronized void setWave(int wave)
+		{
+			_wave = wave;
+		}
+
+		public synchronized int getOpenerId()
+		{
+			return _openerId;
+		}
+
+		public synchronized void setOpenerId(int openerId)
+		{
+			_openerId = openerId;
+		}
+
+		/**
+		 * @return the object ids of the guards of its wave still standing
+		 */
+		public Set<Integer> getGuards()
+		{
+			return _guards;
+		}
 	}
 
 	public Map<Integer, Long> getGravityCooldowns()

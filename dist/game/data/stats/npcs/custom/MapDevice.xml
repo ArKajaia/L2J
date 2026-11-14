@@ -531,4 +531,52 @@
 			<height normal="38.5" />
 		</collision>
 	</npc>
+	<!-- Waystones (the Waystones modifier, MapDeviceManager): touched, it takes a player to the entry or another waystone of the map. Based on the Obelisk (18776). -->
+	<npc id="900718" displayId="18776" level="85" type="Folk" name="Waystone" usingServerSideName="true" title="" usingServerSideTitle="true">
+		<race>CONSTRUCT</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+		</stats>
+		<status attackable="false" canMove="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="229" />
+			<height normal="177.5" />
+		</collision>
+	</npc>
+	<!-- Nests (the Nests modifier): the heart of a nest of a map. It lies still and never fights back; the map gives it 8 times the HP of its nest's average monster. Based on the Bizarre Cocoon (18793). -->
+	<npc id="900719" displayId="18793" level="84" type="Monster" name="Nest Heart" usingServerSideName="true" title="" usingServerSideTitle="true">
+		<race>CONSTRUCT</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="4039" hpRegen="0" mp="1812" mpRegen="3" />
+			<attack physical="1" magical="1" random="30" critical="4" accuracy="5" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="357.86723" magical="261.87171" />
+		</stats>
+		<status canMove="false" />
+		<ai type="CORPSE" aggroRange="0" clanHelpRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="24" />
+			<height normal="27" />
+		</collision>
+	</npc>
+	<!-- Sealed Coffers (the Sealed Coffers modifier): breaking its seal calls two waves of guards, then it pays out. Based on the Imperial Coffer (30765). -->
+	<npc id="900720" displayId="30765" level="85" type="Folk" name="Sealed Coffer" usingServerSideName="true" title="Sealed" usingServerSideTitle="true">
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+		</stats>
+		<status attackable="false" canMove="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="12" />
+			<height normal="9.5" />
+		</collision>
+	</npc>
 </list>

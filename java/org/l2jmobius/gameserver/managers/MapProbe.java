@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.data.xml.PlayerTemplateData;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.appearance.PlayerAppearance;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
@@ -46,7 +47,8 @@ import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
  * database), and has it slay the nearest monsters, hit by hit, at a set pace. It answers what the map did, as JSON: kills, chain kills, Rampage, Rising Stakes, Momentum, and everything the map said to the players inside.
  * <p>
  * Parameters: {@code arena} (an arena or event map, default the tier's first), {@code tier} (3), {@code mods} (MapModifier names, comma separated), {@code kills} (30), {@code seconds} (60, the most it runs), {@code pace} (ms between hits, 250), {@code hit} (the share of a monster's
- * max HP each hit deals, 0.3), {@code after} (seconds to wait once done, so timed effects can wear off, 0), {@code invul} (1: the probe takes no damage), {@code keep} (1: leave the map open).
+ * max HP each hit deals, 0.3), {@code after} (seconds to wait once done, so timed effects can wear off, 0), {@code invul} (1: the probe takes no damage), {@code keep} (1: leave the map open). Before it fights: {@code waystone=1} tries the waystones (from too far, then from beside one),
+ * {@code hearts=N} breaks N Nest Hearts, {@code coffer=1} opens the nearest Sealed Coffer and slays its two waves.
  * @author Mobius
  */
 public final class MapProbe
@@ -128,6 +130,107 @@ public final class MapProbe
 		teleport(probe, entry.getX(), entry.getY(), entry.getZ(), run.getInstanceId());
 
 		final int monstersAtStart = run.getMonsterTotal();
+		final StringBuilder extra = new StringBuilder();
+
+		// Waystones: from too far, then from beside the first, to the third.
+		if ("1".equals(params.get("waystone")) && (run.getWaystones().size() >= 3))
+		{
+			final Npc first = run.getWaystones().get(0);
+			final Npc third = run.getWaystones().get(2);
+			final String far = manager.useWaystone(probe, first, 3);
+			teleport(probe, first.getX() + 260, first.getY(), first.getZ(), run.getInstanceId());
+			final String near = manager.useWaystone(probe, first, 3);
+			if ((near == null) && (probe.getClient() == null))
+			{
+				probe.onTeleported();
+			}
+			extra.append(",\"waystones\":{\"names\":").append(quote(MapDeviceManager.getWaystoneNames(run).toString()));
+			extra.append(",\"fromFar\":").append(far == null ? "null" : quote(far));
+			extra.append(",\"fromNear\":").append(near == null ? "null" : quote(near));
+			extra.append(",\"distanceToTarget\":").append((int) probe.calculateDistance2D(third));
+			extra.append(",\"distanceFromStart\":").append((int) probe.calculateDistance2D(first)).append('}');
+		}
+
+		// Nests: break some hearts.
+		final int hearts = Math.max(0, parseInt(params.get("hearts"), 0));
+		int heartHits = 0;
+		int heartsBroken = 0;
+		for (Map.Entry<Integer, Integer> nestHeart : run.getNestHearts().entrySet())
+		{
+			if (heartsBroken >= hearts)
+			{
+				break;
+			}
+			if (!(World.getInstance().findObject(nestHeart.getValue()) instanceof Monster heart) || heart.isDead())
+			{
+				continue;
+			}
+			teleport(probe, heart.getX() + 60, heart.getY(), heart.getZ(), run.getInstanceId());
+			for (int i = 0; (i < 200) && !heart.isDead(); i++)
+			{
+				heart.reduceCurrentHp(heart.getMaxHp() * hit * 0.25, probe, true, false, null);
+				heartHits++;
+				Thread.sleep(Math.min(pace, 100));
+			}
+			heartsBroken++;
+		}
+
+		// Sealed Coffers: open the nearest, slay its waves.
+		if ("1".equals(params.get("coffer")) && !run.getCoffers().isEmpty())
+		{
+			MapRun.Coffer coffer = null;
+			for (MapRun.Coffer candidate : run.getCoffers().values())
+			{
+				if ((coffer == null) || (probe.calculateDistance2D(candidate.getNpc()) < probe.calculateDistance2D(coffer.getNpc())))
+				{
+					coffer = candidate;
+				}
+			}
+			final Npc npc = coffer.getNpc();
+			final String far = manager.openCoffer(probe, npc);
+			teleport(probe, npc.getX() + 80, npc.getY(), npc.getZ(), run.getInstanceId());
+			final String opened = manager.openCoffer(probe, npc);
+			final String again = manager.openCoffer(probe, npc);
+			int maxWave = coffer.getWave();
+			int guardKills = 0;
+			final long cofferDeadline = System.currentTimeMillis() + 120000;
+			while (run.getCoffers().containsValue(coffer) && (System.currentTimeMillis() < cofferDeadline))
+			{
+				maxWave = Math.max(maxWave, coffer.getWave());
+				Monster guard = null;
+				for (int objectId : coffer.getGuards())
+				{
+					if ((World.getInstance().findObject(objectId) instanceof Monster monster) && !monster.isDead())
+					{
+						guard = monster;
+						break;
+					}
+				}
+				if (guard == null)
+				{
+					Thread.sleep(200);
+					continue;
+				}
+				if (probe.calculateDistance2D(guard) > 150)
+				{
+					teleport(probe, guard.getX() + 60, guard.getY(), guard.getZ(), run.getInstanceId());
+				}
+				while (!guard.isDead())
+				{
+					guard.reduceCurrentHp(guard.getMaxHp() * hit, probe, true, false, null);
+					Thread.sleep(Math.min(pace, 100));
+				}
+				guardKills++;
+			}
+			extra.append(",\"coffer\":{\"fromFar\":").append(far == null ? "null" : quote(far));
+			extra.append(",\"opened\":").append(opened == null ? "null" : quote(opened));
+			extra.append(",\"again\":").append(again == null ? "null" : quote(again));
+			extra.append(",\"maxWave\":").append(maxWave);
+			extra.append(",\"guardKills\":").append(guardKills);
+			extra.append(",\"paid\":").append(!run.getCoffers().containsValue(coffer));
+			extra.append(",\"coffersLeft\":").append(run.getCoffers().size()).append('}');
+		}
+		final int killsBeforeFight = run.getKills();
 		int hits = 0;
 		int maxMomentum = 0;
 		double radarFirstAt = -1;
@@ -222,6 +325,46 @@ public final class MapProbe
 		json.append(",\"radarFirstAt\":").append(radarFirstAt);
 		json.append(",\"radarTargets\":").append(radarTargets.size());
 		json.append(",\"pulled\":").append(run.getPulled());
+		json.append(",\"killsBeforeFight\":").append(killsBeforeFight);
+		json.append(extra);
+		if (!run.getNestHearts().isEmpty())
+		{
+			json.append(",\"heartHits\":").append(heartHits);
+			json.append(",\"nests\":[");
+			boolean first = true;
+			for (Map.Entry<Integer, Integer> nestHeart : run.getNestHearts().entrySet())
+			{
+				final int nest = nestHeart.getKey();
+				final boolean heartAlive = (World.getInstance().findObject(nestHeart.getValue()) instanceof Monster heart) && !heart.isDead();
+				int monsters = 0;
+				Monster member = null;
+				for (int objectId : run.getMonsters())
+				{
+					if ((World.getInstance().findObject(objectId) instanceof Monster monster) && !monster.isDead() && (monster.getVariables().getInt("MAP_NEST", -1) == nest))
+					{
+						monsters++;
+						member = monster;
+					}
+				}
+				json.append(first ? "" : ",").append("{\"nest\":").append(nest).append(",\"broken\":").append(run.isNestBroken(nest)).append(",\"heartAlive\":").append(heartAlive).append(",\"monsters\":").append(monsters);
+				if (member != null)
+				{
+					json.append(",\"pAtkMultiplier\":").append(MapDeviceManager.getMonsterMultiplier(member, MapRun.MonsterStat.P_ATK)).append(",\"dropMultiplier\":").append(MapDeviceManager.getDropMultiplier(member));
+					json.append(",\"memberMaxHp\":").append(member.getMaxHp());
+					if (run.getModifiers().size() == 1)
+					{
+						json.append(",\"damageOf1000\":").append(Math.round(MapDeviceManager.onMonsterDamaged(member, 1000, probe, false, null))); // Nests alone: no side effect.
+					}
+				}
+				if (heartAlive && (World.getInstance().findObject(nestHeart.getValue()) instanceof Monster heart))
+				{
+					json.append(",\"heartMaxHp\":").append(heart.getMaxHp());
+				}
+				json.append('}');
+				first = false;
+			}
+			json.append(']');
+		}
 		if (sample != null)
 		{
 			json.append(",\"sample\":{\"name\":").append(quote(sample.getName()));

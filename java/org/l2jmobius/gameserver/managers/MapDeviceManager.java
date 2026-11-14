@@ -219,6 +219,32 @@ public class MapDeviceManager
 	private static final int GRAVITY_COOLDOWN = 6000;
 	private static final int GRAVITY_LAND_RANGE = 150;
 	private static final int GRAVITY_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
+	/** Waystones: a waystone, the Obelisk's model (data/stats/npcs/custom/MapDevice.xml). */
+	public static final int WAYSTONE_NPC_ID = 900718;
+	/** Nests: a Nest Heart, the Bizarre Cocoon's model, a monster that never moves. */
+	public static final int NEST_HEART_NPC_ID = 900719;
+	/** Sealed Coffers: a coffer, the Imperial Coffer's model. */
+	public static final int COFFER_NPC_ID = 900720;
+	private static final double WAYSTONE_SHARE = 0.8;
+	private static final int WAYSTONE_USE_RANGE = 400; // The Obelisk's model has a radius of 229.
+	private static final String NEST_VAR = "MAP_NEST";
+	private static final String NEST_HEART_VAR = "MAP_NEST_HEART";
+	private static final String HEART_HP_VAR = "MAP_HEART_HP";
+	private static final int NEST_COUNT = 6;
+	private static final int NEST_RADIUS = 700;
+	/** A Nest Heart has this many times the HP of its nest's average monster. */
+	private static final double NEST_HEART_HP = 8.0;
+	private static final double NEST_SHIELD = 0.8;
+	private static final double NEST_FRENZY = 1.3;
+	private static final double NEST_DROP = 2.0;
+	private static final String COFFER_VAR = "MAP_COFFER";
+	private static final int COFFER_COUNT = 3;
+	private static final int COFFER_SPACING = 2500;
+	private static final int COFFER_USE_RANGE = 250;
+	private static final int COFFER_FIRST_WAVE = 6;
+	private static final int COFFER_SECOND_WAVE = 8;
+	private static final int COFFER_MAP_CHANCE = 15;
+	private static final int GEMSTONE_S = 2134;
 	/** When this few monsters are left, they hunt the players down (none stays hidden in a corner of the field). */
 	private static final int LAST_HUNT_COUNT = 10;
 	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
@@ -331,6 +357,21 @@ public class MapDeviceManager
 				multiplier *= stat == MonsterStat.HP ? 0.5 : MINION_ATTACK;
 			}
 		}
+		if (run.isNests())
+		{
+			if (stat == MonsterStat.HP)
+			{
+				multiplier *= monster.getVariables().getDouble(HEART_HP_VAR, 1.0);
+			}
+			else if ((stat == MonsterStat.P_ATK) || (stat == MonsterStat.M_ATK))
+			{
+				final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+				if ((nest >= 0) && run.isNestBroken(nest))
+				{
+					multiplier *= NEST_FRENZY;
+				}
+			}
+		}
 		switch (stat)
 		{
 			case P_ATK, M_ATK ->
@@ -396,7 +437,17 @@ public class MapDeviceManager
 			return 1.0;
 		}
 		final double bounty = isBountyTarget(run, monster) ? BOUNTY_DROP : 1.0;
-		return run.getDropMultiplier() * getSpawnlingReward(run, monster) * bounty * getStakesReward(run);
+		final double nest = run.isNests() && isInBrokenNest(run, monster) ? NEST_DROP : 1.0;
+		return run.getDropMultiplier() * getSpawnlingReward(run, monster) * bounty * getStakesReward(run) * nest;
+	}
+
+	/**
+	 * @return {@code true} if the monster belongs to a nest whose heart is broken
+	 */
+	private static boolean isInBrokenNest(MapRun run, Monster monster)
+	{
+		final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+		return (nest >= 0) && run.isNestBroken(nest);
 	}
 
 	/**
@@ -459,6 +510,14 @@ public class MapDeviceManager
 			if (run.isRampaging())
 			{
 				damage *= RAMPAGE_DAMAGE;
+			}
+		}
+		if (run.isNests())
+		{
+			final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+			if ((nest >= 0) && !run.isNestBroken(nest))
+			{
+				damage *= NEST_SHIELD;
 			}
 		}
 		if (run.isUnique())
@@ -1598,6 +1657,10 @@ public class MapDeviceManager
 			}
 			spawnMonsters(run, pool);
 			spawnReturnPortal(run);
+			if (run.isWaystones())
+			{
+				spawnWaystones(run);
+			}
 			if (hideout != null)
 			{
 				spawnPortals(run, hideout);
@@ -1833,7 +1896,27 @@ public class MapDeviceManager
 
 		final int baseCount = run.isUnique() ? run.getUnique().monsterCount() : arena.monsterCount() > 0 ? arena.monsterCount() : MapDeviceConfig.MONSTER_COUNT;
 		final int count = Math.max(1, (int) Math.round(baseCount * run.getPackSize()));
-		final List<Location> spots = !arena.packs().isEmpty() ? arenaPackSpots(run, count) : run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
+		// Nests: the centres of the nests (on a map of the event map page, its first monster spots).
+		final List<Location> nestCenters = new ArrayList<>();
+		final List<Location> spots;
+		if (run.isNests() && arena.packs().isEmpty())
+		{
+			spots = nestSpots(run, count, nestCenters);
+		}
+		else
+		{
+			spots = !arena.packs().isEmpty() ? arenaPackSpots(run, count) : run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
+			if (run.isNests())
+			{
+				for (EventMapDevice.Pack pack : arena.packs())
+				{
+					if (nestCenters.size() < NEST_COUNT)
+					{
+						nestCenters.add(getGroundLocation(new Location(pack.x(), pack.y(), pack.z())));
+					}
+				}
+			}
+		}
 
 		// Gauntlet: which monsters are wave challenges.
 		final Set<Integer> waveIndexes = new HashSet<>();
@@ -1854,6 +1937,10 @@ public class MapDeviceManager
 			if (monster != null)
 			{
 				applyVariants(run, monster, waveIndexes.contains(i));
+				if (!nestCenters.isEmpty())
+				{
+					monster.getVariables().set(NEST_VAR, nearestIndex(nestCenters, monster));
+				}
 				if (twin)
 				{
 					run.getPartners().put(monster.getObjectId(), previous.getObjectId());
@@ -1871,6 +1958,16 @@ public class MapDeviceManager
 		}
 
 		run.setMonsterTotal(run.getMonsters().size());
+
+		// Nest Hearts and Sealed Coffers count for nothing: they come after the count.
+		if (!nestCenters.isEmpty())
+		{
+			spawnNestHearts(run, nestCenters);
+		}
+		if (run.isCoffers())
+		{
+			spawnCoffers(run);
+		}
 	}
 
 	/**
@@ -1910,6 +2007,135 @@ public class MapDeviceManager
 			spots.add(spacedSpot(() -> randomFieldSpot(run, 0.92, true), spots, MapDeviceConfig.MONSTER_SPACING));
 		}
 		return spots;
+	}
+
+	/**
+	 * Nests: {@value #NEST_COUNT} centres far apart on the field (fewer on a small map), the monsters shared out among them, each within {@value #NEST_RADIUS} of its centre.
+	 * @param centers filled with the nests' centres
+	 */
+	private static List<Location> nestSpots(MapRun run, int count, List<Location> centers)
+	{
+		final int nests = Math.max(1, Math.min(NEST_COUNT, count / 4));
+		final int gap = (2 * NEST_RADIUS) + MapDeviceConfig.MONSTER_SPACING;
+		for (int n = 0; n < nests; n++)
+		{
+			centers.add(spacedSpot(() -> randomFieldSpot(run, 0.8, true), centers, gap));
+		}
+		final GeoEngine geo = GeoEngine.getInstance();
+		final List<List<Location>> byNest = new ArrayList<>();
+		for (int n = 0; n < nests; n++)
+		{
+			byNest.add(new ArrayList<>());
+		}
+		final List<Location> spots = new ArrayList<>(count);
+		for (int i = 0; i < count; i++)
+		{
+			final Location center = centers.get(i % nests);
+			final List<Location> nest = byNest.get(i % nests);
+			final Location spot = spacedSpot(() ->
+			{
+				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+				final double distance = 150 + (Math.sqrt(Rnd.nextDouble()) * (NEST_RADIUS - 150)); // Room for the heart.
+				final int x = center.getX() + (int) (Math.cos(angle) * distance);
+				final int y = center.getY() + (int) (Math.sin(angle) * distance);
+				return geo.getValidLocation(center.getX(), center.getY(), center.getZ(), x, y, geo.getHeight(x, y, center.getZ()), run.getInstanceId());
+			}, nest, PACK_SPACING);
+			nest.add(spot);
+			spots.add(spot);
+		}
+		return spots;
+	}
+
+	/**
+	 * @return the index of the location nearest the creature
+	 */
+	private static int nearestIndex(List<Location> locations, Creature creature)
+	{
+		int nearest = 0;
+		double best = Double.MAX_VALUE;
+		for (int i = 0; i < locations.size(); i++)
+		{
+			final double distance = creature.calculateDistance2D(locations.get(i));
+			if (distance < best)
+			{
+				best = distance;
+				nearest = i;
+			}
+		}
+		return nearest;
+	}
+
+	/**
+	 * Nests: a Nest Heart in the middle of each nest, {@value #NEST_HEART_HP} times as tough as its nest's average monster. Hearts don't count for the map.
+	 */
+	private void spawnNestHearts(MapRun run, List<Location> centers)
+	{
+		final NpcTemplate template = NpcData.getInstance().getTemplate(NEST_HEART_NPC_ID);
+		if (template == null)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": No Nest Heart npc " + NEST_HEART_NPC_ID + " (data/stats/npcs/custom/MapDevice.xml).");
+			return;
+		}
+		final double[] hpSum = new double[centers.size()];
+		final int[] members = new int[centers.size()];
+		for (int objectId : run.getMonsters())
+		{
+			if ((World.getInstance().findObject(objectId) instanceof Monster monster))
+			{
+				final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+				if ((nest >= 0) && (nest < centers.size()))
+				{
+					hpSum[nest] += monster.getMaxHp();
+					members[nest]++;
+				}
+			}
+		}
+		for (int i = 0; i < centers.size(); i++)
+		{
+			if (members[i] == 0)
+			{
+				continue; // Nothing to guard.
+			}
+			final Monster heart = spawnMapMonster(run, template, getGroundLocation(centers.get(i)));
+			if (heart == null)
+			{
+				continue;
+			}
+			run.getMonsters().remove(heart.getObjectId());
+			heart.getVariables().set(NEST_HEART_VAR, i);
+			heart.getVariables().set(HEART_HP_VAR, Math.max(1.0, (NEST_HEART_HP * (hpSum[i] / members[i])) / Math.max(1, heart.getMaxHp())));
+			heart.setEventTitleTag("[Nest Heart]");
+			heart.setCurrentHpMp(heart.getMaxHp(), heart.getMaxMp());
+			heart.broadcastInfo();
+			run.getNestHearts().put(i, heart.getObjectId());
+		}
+	}
+
+	/**
+	 * Nests: a heart broke. Its nest frenzies, and comes for whoever broke it.
+	 */
+	private static void breakNest(MapRun run, int nest, Player breaker)
+	{
+		if (!run.breakNest(nest))
+		{
+			return;
+		}
+		final boolean inside = (breaker != null) && !breaker.isDead() && (breaker.getInstanceId() == run.getInstanceId());
+		int frenzied = 0;
+		for (int objectId : run.getMonsters())
+		{
+			if ((World.getInstance().findObject(objectId) instanceof Monster monster) && !monster.isDead() && (monster.getVariables().getInt(NEST_VAR, -1) == nest))
+			{
+				frenzied++;
+				monster.broadcastPacket(new MagicSkillUse(monster, monster, VOLATILE_SKILL_ID, 1, 0, 0));
+				if (inside)
+				{
+					monster.addDamageHate(breaker, 0, 300);
+					monster.getAI().setIntention(Intention.ATTACK, breaker);
+				}
+			}
+		}
+		sendScreenToMap(run, "A Nest Heart breaks! Its " + frenzied + " monsters frenzy (+" + Math.round((NEST_FRENZY - 1) * 100) + "% damage), but drop double.");
 	}
 
 	/**
@@ -2264,6 +2490,281 @@ public class MapDeviceManager
 		final Location entry = getGroundLocation(arena.entry());
 		final Npc portal = Quest.addSpawn(MapDeviceConfig.RETURN_PORTAL_NPC_ID, entry.getX(), entry.getY(), entry.getZ(), entry.getHeading(), false, 0, false, run.getInstanceId());
 		run.setReturnPortal(portal);
+	}
+
+	// =========================================================================
+	// Waystones
+	// =========================================================================
+
+	/**
+	 * Waystones: one in the middle of the field and three at the fence, a quarter turn apart from the entry.
+	 */
+	private static void spawnWaystones(MapRun run)
+	{
+		final MapArena arena = run.getArena();
+		final GeoEngine geo = GeoEngine.getInstance();
+		final int centerZ = geo.getHeight(arena.x(), arena.y(), arena.z());
+		final double entryAngle = Math.atan2((arena.getEntryY() - arena.y()) / (double) Math.max(1, arena.radiusY()), (arena.getEntryX() - arena.x()) / (double) Math.max(1, arena.radiusX()));
+		for (int i = 0; i < 4; i++)
+		{
+			int x = arena.x();
+			int y = arena.y();
+			if (i > 0)
+			{
+				final double angle = entryAngle + ((i * Math.PI) / 2);
+				x += (int) Math.round(Math.cos(angle) * arena.radiusX() * WAYSTONE_SHARE);
+				y += (int) Math.round(Math.sin(angle) * arena.radiusY() * WAYSTONE_SHARE);
+			}
+			final Location spot = geo.getValidLocation(arena.x(), arena.y(), centerZ, x, y, geo.getHeight(x, y, centerZ), run.getInstanceId());
+			final Npc waystone = Quest.addSpawn(WAYSTONE_NPC_ID, spot.getX(), spot.getY(), spot.getZ(), 0, false, 0, false, run.getInstanceId());
+			if (waystone != null)
+			{
+				waystone.setTitle(i == 0 ? "The Middle" : compass(spot.getX() - arena.x(), spot.getY() - arena.y()));
+				waystone.broadcastInfo();
+				run.getWaystones().add(waystone);
+			}
+		}
+	}
+
+	/**
+	 * @return the direction of a vector, e.g. "North-East"
+	 */
+	private static String compass(int dx, int dy)
+	{
+		final String[] directions =
+		{
+			"East",
+			"South-East",
+			"South",
+			"South-West",
+			"West",
+			"North-West",
+			"North",
+			"North-East"
+		};
+		return directions[(int) Math.round(Math.toDegrees(Math.atan2(dy, dx)) / 45.0) & 7]; // y grows to the south.
+	}
+
+	/**
+	 * @param run a run
+	 * @return the names of a run's waystone destinations: 0 the entry, then each waystone
+	 */
+	public static List<String> getWaystoneNames(MapRun run)
+	{
+		final List<String> names = new ArrayList<>();
+		names.add("The Entry");
+		for (Npc waystone : run.getWaystones())
+		{
+			names.add(waystone.getTitle());
+		}
+		return names;
+	}
+
+	/**
+	 * Waystones: a player beside a waystone travels to the entry (0) or another waystone (1 and up).
+	 * @param player the player
+	 * @param waystone the waystone they touched
+	 * @param destination where to
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String useWaystone(Player player, Npc waystone, int destination)
+	{
+		final MapRun run = getRun(player.getInstanceId());
+		if ((run == null) || run.isClosed() || !run.isWaystones() || !run.getWaystones().contains(waystone))
+		{
+			return "The waystone is silent.";
+		}
+		if (player.isDead())
+		{
+			return "You are dead.";
+		}
+		if (player.calculateDistance2D(waystone) > WAYSTONE_USE_RANGE)
+		{
+			return "Come closer to the waystone.";
+		}
+		final List<Npc> waystones = run.getWaystones();
+		if ((destination < 0) || (destination > waystones.size()))
+		{
+			return "The waystone knows no such place.";
+		}
+		final Location to;
+		if (destination == 0)
+		{
+			to = getGroundLocation(run.getArena().entry());
+		}
+		else
+		{
+			final Npc target = waystones.get(destination - 1);
+			if (target == waystone)
+			{
+				return "You are already here.";
+			}
+			to = new Location(target.getX(), target.getY(), target.getZ(), 0);
+		}
+		player.teleToLocation(to.getX(), to.getY(), to.getZ(), to.getHeading(), run.getInstanceId(), 60);
+		run.probeLog("Waystone: " + player.getName() + " travels to " + getWaystoneNames(run).get(destination) + ".");
+		return null;
+	}
+
+	// =========================================================================
+	// Sealed Coffers
+	// =========================================================================
+
+	/**
+	 * Sealed Coffers: {@value #COFFER_COUNT} coffers far apart on the field.
+	 */
+	private static void spawnCoffers(MapRun run)
+	{
+		final List<Location> taken = new ArrayList<>();
+		for (int i = 0; i < COFFER_COUNT; i++)
+		{
+			final Location spot = spacedSpot(() -> randomFieldSpot(run, 0.7, true), taken, COFFER_SPACING);
+			taken.add(spot);
+			final Npc npc = Quest.addSpawn(COFFER_NPC_ID, spot.getX(), spot.getY(), spot.getZ(), Rnd.get(65536), false, 0, false, run.getInstanceId());
+			if (npc != null)
+			{
+				npc.setTitle("Sealed");
+				npc.broadcastInfo();
+				run.getCoffers().put(npc.getObjectId(), new MapRun.Coffer(npc));
+			}
+		}
+	}
+
+	/**
+	 * @param npc a coffer
+	 * @return 0 sealed, 1 or 2 the wave its guards are on, -1 for no coffer (paid, or gone)
+	 */
+	public static int getCofferWave(Npc npc)
+	{
+		final MapRun run = getRun(npc.getInstanceId());
+		final MapRun.Coffer coffer = run != null ? run.getCoffers().get(npc.getObjectId()) : null;
+		return coffer != null ? coffer.getWave() : -1;
+	}
+
+	/**
+	 * Sealed Coffers: a player breaks a coffer's seal, and its first wave of guards wakes.
+	 * @param player the player
+	 * @param npc the coffer
+	 * @return why it didn't open, {@code null} if it did
+	 */
+	public String openCoffer(Player player, Npc npc)
+	{
+		final MapRun run = getRun(npc.getInstanceId());
+		final MapRun.Coffer coffer = run != null ? run.getCoffers().get(npc.getObjectId()) : null;
+		if ((coffer == null) || (run.getStatus() == Status.CLOSED))
+		{
+			return "The coffer is empty.";
+		}
+		if (player.isDead() || (player.getInstanceId() != run.getInstanceId()))
+		{
+			return "You can't reach the coffer.";
+		}
+		if (player.calculateDistance2D(npc) > COFFER_USE_RANGE)
+		{
+			return "Come closer to the coffer.";
+		}
+		synchronized (coffer)
+		{
+			if (coffer.getWave() != 0)
+			{
+				return "Its seal is already broken.";
+			}
+			coffer.setWave(1);
+			coffer.setOpenerId(player.getObjectId());
+		}
+		spawnCofferWave(run, coffer, player, COFFER_FIRST_WAVE, false);
+		npc.setTitle("Wave 1 of 2");
+		npc.broadcastInfo();
+		sendScreenToMap(run, player.getName() + " breaks the seal of a Sealed Coffer: its guards wake!");
+		return null;
+	}
+
+	/**
+	 * A wave of coffer guards: the map's kinds, round the coffer, after the player. They don't count for the map.
+	 * @param leader {@code true} to make the first a tier 2 Champion
+	 */
+	private void spawnCofferWave(MapRun run, MapRun.Coffer coffer, Player target, int size, boolean leader)
+	{
+		final List<NpcTemplate> pool = run.getMonsterKinds().isEmpty() ? getMonsterPool(run.getTier()) : run.getMonsterKinds();
+		if (pool.isEmpty())
+		{
+			return;
+		}
+		final Npc npc = coffer.getNpc();
+		final boolean chase = (target != null) && !target.isDead() && (target.getInstanceId() == run.getInstanceId());
+		for (int i = 0; i < size; i++)
+		{
+			final Monster guard = spawnMapMonster(run, pool.get(Rnd.get(pool.size())), nearSpot(run, npc, 400));
+			if (guard == null)
+			{
+				continue;
+			}
+			run.getMonsters().remove(guard.getObjectId());
+			guard.getVariables().set(COFFER_VAR, npc.getObjectId());
+			if (leader && (i == 0) && ChampionMonstersConfig.CHAMPION_ENABLE)
+			{
+				guard.setChampionTier(2);
+			}
+			guard.setEventTitleTag("[Coffer Guard]");
+			guard.setCurrentHpMp(guard.getMaxHp(), guard.getMaxMp());
+			guard.broadcastInfo();
+			coffer.getGuards().add(guard.getObjectId());
+			if (chase)
+			{
+				guard.addDamageHate(target, 0, 500);
+				guard.getAI().setIntention(Intention.ATTACK, target);
+			}
+		}
+	}
+
+	/**
+	 * Sealed Coffers: a guard fell. The last of the first wave calls the second; the last of the second opens the coffer.
+	 */
+	private void onCofferGuardDied(MapRun run, int cofferId, Monster victim, Player player)
+	{
+		final MapRun.Coffer coffer = run.getCoffers().get(cofferId);
+		if (coffer == null)
+		{
+			return;
+		}
+		final int wave;
+		synchronized (coffer)
+		{
+			coffer.getGuards().remove(victim.getObjectId());
+			if (!coffer.getGuards().isEmpty() || (coffer.getWave() < 1) || (coffer.getWave() > 2))
+			{
+				return;
+			}
+			wave = coffer.getWave();
+			coffer.setWave(wave + 1);
+		}
+		final Player opener = World.getInstance().getPlayer(coffer.getOpenerId());
+		final Player payee = player != null ? player : (opener != null) && (opener.getInstanceId() == run.getInstanceId()) ? opener : null;
+		final Npc npc = coffer.getNpc();
+		if (wave == 1)
+		{
+			spawnCofferWave(run, coffer, payee, COFFER_SECOND_WAVE, true);
+			npc.setTitle("Wave 2 of 2");
+			npc.broadcastInfo();
+			sendScreenToMap(run, "The coffer's second wave comes, led by a Champion!");
+			return;
+		}
+
+		// The coffer opens.
+		run.getCoffers().remove(cofferId);
+		npc.broadcastPacket(new MagicSkillUse(npc, npc, VOLATILE_SKILL_ID, 1, 0, 0));
+		npc.deleteMe();
+		if (payee == null)
+		{
+			sendToMap(run, "A Sealed Coffer opens, but nobody is there to take its spoils.");
+			return;
+		}
+		final int medals = Rnd.get(2, 4);
+		final int gems = Rnd.get(5, 15);
+		victim.dropOrAutoLoot(payee, new ItemHolder(MapDeviceConfig.MEDAL_ITEM_ID, medals));
+		victim.dropOrAutoLoot(payee, new ItemHolder(GEMSTONE_S, gems));
+		final boolean map = (Rnd.get(100) < COFFER_MAP_CHANCE) && dropRunMap(run, victim, payee, rollInMapTier(run));
+		sendScreenToMap(run, "A Sealed Coffer opens: " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s, " + gems + " " + getItemName(GEMSTONE_S) + (map ? " and a map!" : "!"));
 	}
 
 	/**
@@ -2749,6 +3250,19 @@ public class MapDeviceManager
 			run.getGravityCooldowns().remove(victim.getObjectId());
 		}
 		final boolean killerInside = (player != null) && (player.getInstanceId() == run.getInstanceId());
+		if (run.isNests())
+		{
+			final int heart = victim.getVariables().getInt(NEST_HEART_VAR, -1);
+			if (heart >= 0)
+			{
+				breakNest(run, heart, killerInside ? player : null);
+			}
+		}
+		final int cofferId = victim.getVariables().getInt(COFFER_VAR, 0);
+		if (cofferId != 0)
+		{
+			onCofferGuardDied(run, cofferId, victim, killerInside ? player : null);
+		}
 
 		final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
 		final boolean encounter = UniqueMapManager.isEncounterMonster(victim);
@@ -3019,7 +3533,7 @@ public class MapDeviceManager
 		final List<Monster> pulled = new ArrayList<>();
 		for (Monster monster : World.getInstance().getVisibleObjectsInRange(center, Monster.class, GRAVITY_RANGE))
 		{
-			if ((monster != center) && !monster.isDead() && (monster.getInstanceId() == run.getInstanceId()) && !monster.isFakePlayer() && !monster.isPvpFakePlayer() && !(monster instanceof Chest) && !monster.isMovementDisabled() && !monster.getVariables().getBoolean(GUARDIAN_VAR, false) && (monster.getAI().getIntention() != Intention.ATTACK))
+			if ((monster != center) && !monster.isDead() && (monster.getInstanceId() == run.getInstanceId()) && !monster.isFakePlayer() && !monster.isPvpFakePlayer() && !(monster instanceof Chest) && !monster.isMovementDisabled() && !monster.getVariables().getBoolean(GUARDIAN_VAR, false) && (monster.getVariables().getInt(NEST_HEART_VAR, -1) < 0) && (monster.getAI().getIntention() != Intention.ATTACK))
 			{
 				pulled.add(monster);
 			}
@@ -3906,6 +4420,15 @@ public class MapDeviceManager
 			{
 				run.getReturnPortal().deleteMe();
 			}
+			for (Npc waystone : run.getWaystones())
+			{
+				waystone.deleteMe();
+			}
+			for (MapRun.Coffer coffer : run.getCoffers().values())
+			{
+				coffer.getNpc().deleteMe();
+			}
+			run.getCoffers().clear();
 			TeamVsTeamBarrier.remove(run.getFences());
 		}
 		finally

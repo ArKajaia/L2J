@@ -540,6 +540,25 @@ public enum MapModifier
 		{
 			gravityWell = true;
 		}
+	},
+	WAYSTONES("Waystones", "4 waystones stand on the field: touch one to travel to another or to the entry. Monsters move 15% faster.")
+	{
+		{
+			waystones = true;
+			monsterMoveSpeed = 1.15;
+		}
+	},
+	NESTS("Nests", "The monsters stand in 6 nests round a Nest Heart. While its heart stands a nest takes 20% less damage; break the heart and the nest frenzies (+30% damage) but drops double.")
+	{
+		{
+			nests = true;
+		}
+	},
+	SEALED_COFFERS("Sealed Coffers", "3 Sealed Coffers stand on the field. Breaking a seal calls two waves of guards, the second led by a Champion; then the coffer pays Champion Medals, Gemstones and maybe a map.")
+	{
+		{
+			coffers = true;
+		}
 	};
 
 	/** How many of these only change numbers: the first ones of the enum. The rest change how the map plays. */
@@ -649,6 +668,9 @@ public enum MapModifier
 	// Less walking.
 	protected boolean lens = false;
 	protected boolean gravityWell = false;
+	protected boolean waystones = false;
+	protected boolean nests = false;
+	protected boolean coffers = false;
 
 	MapModifier(String displayName, String description)
 	{
@@ -1067,5 +1089,20 @@ public enum MapModifier
 	public boolean isGravityWell()
 	{
 		return gravityWell;
+	}
+
+	public boolean isWaystones()
+	{
+		return waystones;
+	}
+
+	public boolean isNests()
+	{
+		return nests;
+	}
+
+	public boolean isCoffers()
+	{
+		return coffers;
 	}
 }
