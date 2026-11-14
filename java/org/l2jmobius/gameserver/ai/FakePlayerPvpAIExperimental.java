@@ -1111,7 +1111,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 
-		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
+		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, selfHeals(npc, profile, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast), now), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "HEAL");
 			return;
@@ -4744,7 +4744,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 			
 			// Follow-ups that only make sense on a stunned/held target, or on one that casts (a silence).
-			if ((step.needsDisabledTarget() && !isDisabled(target)) || (step.needsMageTarget() && !castsMagic(target)))
+			if ((step.needsDisabledTarget() && !isDisabled(target)) || (step.needsMageTarget() && !castsMagic(target)) || (step.needsRangedTarget() && !isRangedClass(target)))
 			{
 				if (step.isOptional())
 				{
@@ -4838,7 +4838,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			if (!firstChecked)
 			{
 				firstChecked = true;
-				if (!step.isSelf() && ((step.needsDisabledTarget() && !isDisabled(target)) || (step.needsMageTarget() && !castsMagic(target)) || !canCast(npc, skill, target) || !FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill)))
+				if (!step.isSelf() && ((step.needsDisabledTarget() && !isDisabled(target)) || (step.needsMageTarget() && !castsMagic(target)) || (step.needsRangedTarget() && !isRangedClass(target)) || !canCast(npc, skill, target) || !FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill)))
 				{
 					return false;
 				}
@@ -7022,6 +7022,31 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final int MELEE_ON_ME_RANGE = 150;
 	private static final int LONG_HEAL_TIME = 2000;
 
+	/** A tank keeps a long self-heal with an enemy on it while the damage it takes over the heal's cast time stays under this share of its max HP (a healer's mace wears it down slowly). */
+	private static final double LOW_PRESSURE_HEAL_LOSS = 0.06;
+
+	/**
+	 * Its self-heals for now: {@link #quickHeals}, except that a tank keeps its long heals (Divine Heal, Elemental Heal) while the enemy on it deals little: without them a healer's mace wore it down
+	 * over two minutes (docs/class-clinic/tanks.md).
+	 */
+	private List<Skill> selfHeals(Attackable npc, FakePlayerPvpProfile profile, List<Skill> heals, long now)
+	{
+		if ((profile.getRole() != Role.TANK) || (_fightRead == null) || heals.isEmpty())
+		{
+			return quickHeals(npc, heals);
+		}
+		final double incoming = _fightRead.read().damageTakenPerSecond(now);
+		final List<Skill> result = new ArrayList<>(heals.size());
+		for (Skill heal : heals)
+		{
+			if ((heal.getHitTime() <= LONG_HEAL_TIME) || !isEnemyOnMe(npc, MELEE_ON_ME_RANGE) || ((incoming * heal.getHitTime()) / 1000.0) < (LOW_PRESSURE_HEAL_LOSS * npc.getMaxHp()))
+			{
+				result.add(heal);
+			}
+		}
+		return result;
+	}
+	
 	/**
 	 * #8: the heals it can cast on itself now: all of them, or only the quick ones while a melee enemy is on it.
 	 */

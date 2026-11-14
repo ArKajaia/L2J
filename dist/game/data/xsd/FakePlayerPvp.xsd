@@ -92,6 +92,7 @@
 												<xs:attribute type="xs:boolean" name="behind" />
 												<xs:attribute type="xs:boolean" name="disabledTarget" />
 												<xs:attribute type="xs:boolean" name="mageTarget" />
+												<xs:attribute type="xs:boolean" name="rangedTarget" />
 											</xs:complexType>
 										</xs:element>
 									</xs:sequence>

@@ -268,7 +268,7 @@ public class FakePlayerPvpData implements IXmlReader
 						forEach(skillsNode, "step", stepNode ->
 						{
 							final NamedNodeMap stepAttrs = stepNode.getAttributes();
-							combo.addStep(new FakePlayerPvpCombo.Step(parseIds(parseString(stepAttrs, "skill")), parseBoolean(stepAttrs, "optional", false), parseBoolean(stepAttrs, "self", false), parseBoolean(stepAttrs, "behind", false), parseBoolean(stepAttrs, "disabledTarget", false), parseBoolean(stepAttrs, "mageTarget", false)));
+							combo.addStep(new FakePlayerPvpCombo.Step(parseIds(parseString(stepAttrs, "skill")), parseBoolean(stepAttrs, "optional", false), parseBoolean(stepAttrs, "self", false), parseBoolean(stepAttrs, "behind", false), parseBoolean(stepAttrs, "disabledTarget", false), parseBoolean(stepAttrs, "mageTarget", false), parseBoolean(stepAttrs, "rangedTarget", false)));
 						});
 						
 						if (!combo.getSteps().isEmpty())
