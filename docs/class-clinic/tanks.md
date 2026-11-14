@@ -52,9 +52,16 @@ Retail play: no High Five PvP guide for these classes turned up (the search foun
 
 Skill use moved as meant: Ultimate Defense from the burst reflex 209 → 11 casts (the rest from `HP_CRASH`, about to die); time disabled fell by a third to two thirds (Eva's Templar 11% → 4%); Tribunal 0 → 17.5 casts a battle for Eva's Templar (10,388 damage a battle). Eva's Templar "worse against tanks" is against the three other tanks, all of them stronger in the same run.
 
-### Batch 2: faults 8 to 10 (`matrix-...`, against batch 1)
+### Batch 2: long heals under low pressure, root then stun, not kept (`matrix-20261114-085814`, against batch 1)
 
-(running)
+| Build | Before | After | Difference (95%) | Clearly worse against |
+|---|---|---|---|---|
+| Phoenix Knight | 71.0% | 51.6% | -19.4 (-23.2 to -15.5) | tank, melee, archer, nuker, buffer |
+| Hell Knight | 72.5% | 65.1% | -7.4 (-11.1 to -3.7) | melee, nuker |
+| Eva's Templar | 45.0% | 39.7% | -5.4 (-9.4 to -1.4) | melee, nuker (better against tanks) |
+| Shillien Templar | 59.9% | 61.3% | +1.4 (-2.6 to +5.3) | - (it only had the enchant order) |
+
+The heals came back as 6.4 casts a battle for the Phoenix Knight, 63% of them aborted, and didn't win back the healer fights (Eva's Templar 14% → 14%): the `selfHeals` rule let them in far more often than meant. The root-then-stun combo left Shield Stun at 4.6 casts a battle: no sign it did anything. Both reverted. The root first in the `enchant` lists (fault 10, an earlier commit) stays: no measurable effect, the intended behaviour. Fault 8 stays open: Eva's Templar against healers is 14%.
 
 ## 5. Not fixed here
 
