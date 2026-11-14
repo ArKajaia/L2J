@@ -1,6 +1,8 @@
 # Class clinic: the tanks (Phoenix Knight, Hell Knight, Eva's Templar, Shillien Templar)
 
-Taken through `docs/class-clinic.md` on 2026-11-14. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds. The four builds share the role TANK, the TANK buff list, the shield toggles and Ultimate Defense, so they were diagnosed together; each has a kit of its own (Shield Stun and Shackle for the knights, Shield Bash and Arrest for the Templars, Insane Crusher for the Hell Knight, Sting and Touch of Death for the Shillien Templar).
+Taken through `docs/class-clinic.md` on 2026-11-14.
+
+**Result:** batch 1 (full runs, 30 battles a pair, 300 s) took the Phoenix Knight from 49.8% to 71.0%, the Hell Knight from 57.4% to 72.5%, Eva's Templar from 26.3% to 45.0% and the Shillien Templar from 29.1% to 59.9%. Batches 3 to 5 (short runs, 15 battles a pair, 150 s, from `matrix-20261114-093250`: 70.3 / 73.2 / 50.4 / 60.1%) took them to 72.9 / 70.5 / 74.8 / 77.3% (the knights' last two batches didn't touch their builds; their figure moves with the Templars they meet). Eva's Templar against healers: 31% → 83%. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds. The four builds share the role TANK, the TANK buff list, the shield toggles and Ultimate Defense, so they were diagnosed together; each has a kit of its own (Shield Stun and Shackle for the knights, Shield Bash and Arrest for the Templars, Insane Crusher for the Hell Knight, Sting and Touch of Death for the Shillien Templar).
 
 The four ran in one matrix from batch 1 on (`class_clinic.py run "Phoenix Knight,Hell Knight,Eva's Templar,Shillien Templar"`): a battle's fighters come from the seed and the pair, not from the focus, so each tank meets the same fighters as in its own run, and the long healer fights of the four overlap (4,500 battles in about 20 minutes, against about 50 for four runs). The six pairs of two tanks are played once and count for both, with both sides changed.
 
@@ -110,6 +112,10 @@ Fake players couldn't have cubics (`SummonCubic` worked on a player only). Now a
 | Hell Knight | 75.0% | 70.5% | -4.5 (-9.6 to +0.6) | - (unchanged build) |
 
 In the run: 3,605 Cubic Heals, 2,489 Icy Air, 133 Phantom Cubic debuffs. The damage cubics (Storm, Vampiric, the Shillien Smart Cubic's drain) hit but weren't logged: a cubic's damage didn't go through `notifyDamageReceived`, for a player's cubic either. Fixed after the run (`Cubic.useCubicMdam`, `useCubicDrain`, as the totems and prophecies do): Storm Cubic about 80 a hit unenchanted, Vampiric Cubic about 200.
+
+### Batch 5: the Templars enchant their cubics, kept on its own measure (`matrix-20261114-105043`, against batch 4, short form)
+
+Life and Storm Cubic (Eva's Templar), Vampiric and Phantom Cubic (Shillien Templar) on the Power route, after the root and Shield Bash in the `enchant` lists. Eva's Templar 72.2% → 74.8% (+2.6, -2.5 to +7.6), Shillien Templar 75.2% → 77.3% (+2.1, -2.8 to +6.9): no clear change, no kind clearly worse. Its own measure moved as meant: the Storm Cubic hits for 155 instead of 81 (897 hits in the run), the Vampiric Cubic for 154. Kept for that.
 
 ## 5. Not fixed here
 
