@@ -586,46 +586,41 @@
 
 	<!-- Mages -->
 	<build name="Archmage" classId="94" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
-		<attack>1296,1292,1289,1288,1339,1451,1230,1555,1231,1275,1220,1274,1184,1177,1147</attack>
+		<attack>1296,1292,1289,1554,1288,1339,1451,1230,1555,1231,1275,1220,1274,1177,1147</attack> <!-- Aura Blast (1554): power 199 (141 against a player) from 900 on a 15 s reuse; no Ice Bolt (landed its slow 11% of the time for 85 damage) -->
 		<debuff>1083,1160,1056,1452,1338</debuff>
-		<buff>1285,1532</buff>
-		<heal>1216,1011</heal>
+		<buff>1285,1532,1556</buff> <!-- Arcane Shield (10 s, 5 min) with Enlightenment at the start: a duel against an archer or a nuker is a race lost in about 10 s; as the HP crash reflex it came at 10% HP -->
+		<!-- No heal list: Self Heal and Heal restore 450 to 480 HP for a cast, a third of a nuke -->
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
-		<peel>1417,1169</peel>
+		<peel>1417</peel> <!-- No Curse Fear: it landed 10% of the time on a melee at 74 -->
 		<enchant>1292:1|1292:3,1230:1,1339:1,1083:1,1451:1,1160:1,1417:2,1169:2,1338:1</enchant>
-		<combo name="Surrender burst" pvp="true">
-			<step skill="1083" /> <!-- Surrender To Fire -->
-			<step skill="1292|1289|1288" optional="true" /> <!-- Elemental Assault / Inferno / Aura Symphony -->
+		<combo name="Opening burst" pvp="true"> <!-- No Surrender To Fire first: it landed 30% of the time at 85 and held up the burst; it stays in the debuff list -->
+			<step skill="1292" /> <!-- Elemental Assault: once a fight (5 min) -->
+			<step skill="1554" optional="true" /> <!-- Aura Blast -->
+			<step skill="1289" optional="true" /> <!-- Inferno (Aura Symphony left out: it hits for less than a Prominence) -->
 			<step skill="1230" /> <!-- Prominence -->
-			<step skill="1230" />
 		</combo>
 		<combo name="Vortex" pvp="true">
 			<step skill="1339" /> <!-- Fire Vortex -->
 			<step skill="1451" optional="true" /> <!-- Fire Vortex Buster -->
 			<step skill="1230" optional="true" />
 		</combo>
-		<combo name="Slow and burn" pvp="true" chance="50">
-			<step skill="1160" /> <!-- Slow -->
-			<step skill="1230" />
-		</combo>
 		<variant name="Archmage Legacy" armor="ROBE_LEGACY" weight="1" />
 	</build>
 	<build name="Mystic Muse" classId="103" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
-		<attack>1295,1293,1290,1288,1340,1453,1342,1235,1555,1236,1237,1265,1275,1175,1274,1184,1177</attack>
+		<attack>1295,1293,1290,1554,1288,1340,1453,1342,1235,1555,1236,1237,1265,1275,1175,1274,1177</attack> <!-- Aura Blast (1554): power 199 (141 against a player) from 900 on a 15 s reuse; no Ice Bolt -->
 		<debuff>1071,1164,1056,1455,1338</debuff>
-		<buff>1286,1532,1047</buff>
-		<heal>1216,1011</heal>
+		<buff>1286,1532,1556,1047</buff>
+		<!-- No heal list: Self Heal and Heal restore 450 to 480 HP for a cast, a third of a nuke -->
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
-		<peel>1417,1169</peel>
+		<peel>1417</peel> <!-- No Curse Fear: it landed 10% of the time on a melee at 74 -->
 		<enchant>1293:1|1293:3,1235:1,1236:1,1340:1,1071:1,1453:1,1164:1,1417:2,1169:2,1338:1</enchant>
-		<combo name="Surrender burst" pvp="true">
-			<step skill="1071" /> <!-- Surrender To Water -->
-			<step skill="1293|1290|1288" optional="true" /> <!-- Elemental Symphony / Blizzard / Aura Symphony -->
+		<combo name="Opening burst" pvp="true"> <!-- No Surrender To Water first: it lands about 30% of the time at 85; it stays in the debuff list -->
+			<step skill="1293" /> <!-- Elemental Symphony: once a fight (5 min) -->
+			<step skill="1554" optional="true" /> <!-- Aura Blast -->
+			<step skill="1290" optional="true" /> <!-- Blizzard (Aura Symphony left out: no attribute, less than a Hydro Blast) -->
 			<step skill="1235" /> <!-- Hydro Blast -->
-			<step skill="1236" optional="true" /> <!-- Frost Bolt (slow) -->
-			<step skill="1235" />
 		</combo>
 		<combo name="Vortex" pvp="true">
 			<step skill="1340" /> <!-- Ice Vortex -->
@@ -635,18 +630,19 @@
 		<variant name="Mystic Muse Tallum" weapon="MAGE_ALT" armor="ROBE_TALLUM" weight="1" />
 	</build>
 	<build name="Storm Screamer" classId="110" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
-		<attack>1176,1294,1291,1288,1343,1341,1456,1239,1555,1148,1234,1267,1159,1178,1184,1177,1147</attack>
+		<attack>1176,1294,1291,1554,1288,1343,1341,1456,1239,1555,1148,1234,1267,1159,1178,1177,1147</attack> <!-- Aura Blast (1554): power 199 (141 against a player) from 900 on a 15 s reuse; no Ice Bolt -->
 		<debuff>1074,1160,1064,1458,1338</debuff>
-		<buff>1287,1532,1457</buff>
-		<heal>1216,1011</heal>
+		<buff>1287,1532,1556,1457</buff>
+		<!-- No heal list: Self Heal and Heal restore 450 to 480 HP for a cast, a third of a nuke -->
 		<emergency>1556</emergency>
 		<toggle>337</toggle>
-		<peel>1417,1169</peel>
+		<peel>1417</peel> <!-- No Curse Fear: it landed 10% of the time on a melee at 74 -->
 		<enchant>1294:1|1294:3,1148:1,1239:1,1341:1,1074:1,1064:1,1456:1,1160:1,1417:2,1169:2,1338:1</enchant>
-		<combo name="Silence and burst" pvp="true">
-			<step skill="1064" optional="true" /> <!-- Silence -->
-			<step skill="1074" /> <!-- Surrender To Wind -->
-			<step skill="1294|1291|1288" optional="true" /> <!-- Elemental Storm / Demon Wind / Aura Symphony -->
+		<combo name="Silence and burst" pvp="true"> <!-- No Surrender To Wind first: it lands about 30% of the time at 85; it stays in the debuff list -->
+			<step skill="1064" optional="true" mageTarget="true" /> <!-- Silence, on a target that fights with magic -->
+			<step skill="1294" /> <!-- Elemental Storm: once a fight (5 min) -->
+			<step skill="1554" optional="true" /> <!-- Aura Blast -->
+			<step skill="1291" optional="true" /> <!-- Demon Wind (Aura Symphony left out: no attribute, less than a Hurricane) -->
 			<step skill="1239" /> <!-- Hurricane -->
 			<step skill="1148" optional="true" /> <!-- Death Spike -->
 		</combo>

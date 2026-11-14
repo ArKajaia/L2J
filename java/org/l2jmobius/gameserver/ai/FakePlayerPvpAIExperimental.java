@@ -8207,7 +8207,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		if (skill.isMagic())
 		{
-			final double damage = ((91 * Math.sqrt(npc.getMAtk(target, skill) * 4)) / Math.max(1, target.getMDef(npc, skill))) * skill.getPower(npc, target, false, false);
+			final double damage = ((91 * Math.sqrt(npc.getMAtk(target, skill) * 4)) / Math.max(1, target.getMDef(npc, skill))) * skill.getPower(npc, target, Formulas.isPvp(npc, target), Formulas.isPve(npc, target));
 			// Curse of Divinity: +30% for every buff on the target (see the MagicalDamageByAbnormal effect), so on a fully buffed player it is the Soul Hound's best quick nuke.
 			return hasEffect(skill, "MagicalDamageByAbnormal") ? damage * (((target.getBuffCount() * 0.3) + 1.3) / 4) : damage;
 		}

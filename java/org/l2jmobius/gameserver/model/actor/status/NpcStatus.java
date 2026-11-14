@@ -25,9 +25,13 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.player.Duel;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
+import org.l2jmobius.gameserver.model.stats.Stat;
 
 public class NpcStatus extends CreatureStatus
 {
+	private static final int ARCANE_SHIELD = 1556;
+	
 	public NpcStatus(Npc activeChar)
 	{
 		super(activeChar);
@@ -60,8 +64,32 @@ public class NpcStatus extends CreatureStatus
 			npc.addAttackerToAttackByList(attacker);
 		}
 		
-		// Passive tree Mind Over Matter of a roaming fake player: part of the damage is taken from MP first, like a player's.
-		final double damage = npc.isPvpFakePlayer() && !isHpConsumption ? PassiveMechanics.absorbDamageWithMp(npc, value) : value;
+		double damage = value;
+		if (npc.isPvpFakePlayer() && !isHpConsumption)
+		{
+			// Arcane Shield of a fake player, like a player's (PlayerStatus): the hit costs 30% of its damage in MP and no HP, until MP runs out. Before, only a player's status read the stat and a fake wizard's shield did nothing.
+			if ((attacker != null) && (attacker != npc))
+			{
+				final int shield = (int) npc.getStat().calcStat(Stat.MANA_SHIELD_PERCENT, 0, null, null);
+				if (shield > 0)
+				{
+					final double mpDamage = damage - ((damage * shield) / 100);
+					if (mpDamage > npc.getCurrentMp())
+					{
+						npc.stopSkillEffects(SkillFinishType.REMOVED, ARCANE_SHIELD);
+						damage = mpDamage - npc.getCurrentMp();
+						npc.setCurrentMp(0);
+					}
+					else
+					{
+						npc.reduceCurrentMp(mpDamage);
+						return;
+					}
+				}
+			}
+			// Passive tree Mind Over Matter of a roaming fake player: part of the damage is taken from MP first, like a player's.
+			damage = PassiveMechanics.absorbDamageWithMp(npc, damage);
+		}
 		super.reduceHp(damage, attacker, awake, isDOT, isHpConsumption);
 	}
 	
