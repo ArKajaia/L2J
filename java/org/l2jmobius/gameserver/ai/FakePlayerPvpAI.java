@@ -315,6 +315,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static final Random REFLEX_RANDOM = new Random();
 	/** An attack skill is worth at least this to the power of its place in the build's list, times the best estimate of the list. */
 	private static final double LIST_RANK_FACTOR = 0.85;
+	/** From this physical skill reflect chance on the target (Physical Mirror, Riposte Stance) its physical debuffs and stuns are left aside; Magical Mirror's 10% is not enough. */
+	private static final double MIRROR_REFLECT_CHANCE = 20;
 	/** Most critical hit chance counted for normal attacks. */
 	private static final double MAX_CRIT_CHANCE = 0.8;
 	/** Within this gap a melee fake player counts its enemy as on it (its long casts risk an interrupt). */
@@ -4585,11 +4587,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		
 		// A stunned or rooted target doesn't need another stun or root yet, but it is the moment for the other debuffs (Hex, Cancel...).
 		final boolean disabled = debuff && isDisabled(target);
+		final boolean mirrored = FightReadFeed.physicalReflectChance(target) >= MIRROR_REFLECT_CHANCE;
 		final List<Skill> ready = new ArrayList<>(3);
 		Skill outOfReach = null;
 		for (Skill skill : skills)
 		{
-			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || (!pvp && isPvpOnly(skill)) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, pvp))
+			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || (!pvp && isPvpOnly(skill)) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, pvp) || (mirrored && FightReadFeed.isPhysicallyReflectable(skill)))
 			{
 				continue;
 			}
@@ -5085,8 +5088,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				return waitForStep(now);
 			}
 			
-			// The debuff is already on: nothing to do.
-			if (isAlreadyOn(skill, target))
+			// The debuff is already on: nothing to do. Under Physical Mirror a physical stun or debuff would come back on it: the combo goes on without it.
+			if (isAlreadyOn(skill, target) || (FightReadFeed.isPhysicallyReflectable(skill) && (FightReadFeed.physicalReflectChance(target) >= MIRROR_REFLECT_CHANCE)))
 			{
 				nextComboStep(now);
 				continue;
@@ -8735,9 +8738,15 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 		final boolean disabled = debuff && isDisabled(target);
+		// Under Physical Mirror (30%) a physical stun or debuff comes back on the caster: Armor Crush's damage lands, its 9 s stun is the Titan's.
+		final boolean mirrored = FightReadFeed.physicalReflectChance(target) >= MIRROR_REFLECT_CHANCE;
 		for (Skill skill : list)
 		{
 			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, true))
+			{
+				continue;
+			}
+			if (mirrored && FightReadFeed.isPhysicallyReflectable(skill))
 			{
 				continue;
 			}
