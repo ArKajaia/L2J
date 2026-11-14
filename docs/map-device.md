@@ -9,7 +9,7 @@ Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps, with
 1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 18101-18110; the Map Device's items are 18101-18119, inside the High Five client's retail id range: they were 50101-50119, which the client doesn't take, and the server moves items saved under the old ids at startup, `MapItemIds`). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 0.3%, +1% per champion tier, 20% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
 2. **`.hideout`** in a town (any peace zone) takes the player to their own hideout: a private copy of the Jinia Guild Hideout cabin with the **Map Device** in it. The whole hideout is a **peace zone** (`Instance.setPeace`): no fighting between the players who visit it, the peace zone icon, and whatever else a town allows (changing the passive tree template, the Titan Scroll...).
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
-4. **Each medal** rolls one **modifier** out of 72 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
+4. **Each medal** rolls one **modifier** out of 74 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
 5. **Eight portals** open in a ring round the device. Each takes one player into the map and is gone. The owner and the owner's party may take them (`.hideout party` brings party members to the hideout).
 6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random among the places that take its tier (the `<arena>`s of `data/MapDevice.xml` and your own maps from the map editor), with **100 monsters** of the tier's levels and strength, made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left to go (before completion, below) they come for the players, so none stays hidden, and each player's **radar** points at one of them, the nearest, following it as it moves; when it dies the radar moves on to the next nearest, one by one, with a line in chat saying how many are left and which way (regular maps only, not unique maps).
 7. **Dying** in a map: 3 seconds later the player wakes up in the hideout (full HP/MP/CP) and may take another portal. **No experience is lost** dying in a map (`DeathExpLoss = False`; the Death Penalty debuff still applies as anywhere). A **Return Portal** at the map's entry (or `.hideout back`) goes back to the hideout without dying.
@@ -53,9 +53,9 @@ A tier takes the monsters whose level is within `minLevel`-`maxLevel` and whose 
 
 What still varies inside a map, on purpose: the map's own Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters, the server's random passives (up to +100% HP at 20 passives) and the hot zone effect. In a live test of a tier 8 map the six kinds' plain monsters were within 1.5x of each other (3.8x before effective stats were scored), the median monster 1.7x the weakest, and the strongest single monster (a tier 2 Champion with 20 passives) 6.7x.
 
-## The 72 modifiers
+## The 74 modifiers
 
-The first 33 change numbers; the other 39 change how the map plays. The last ones (68 and up) are the big moments: they pay off a fast, aggressive clear, each with a price so that a medal never makes a map easier.
+The first 33 change numbers; the other 41 change how the map plays. The last ones (68 and up) make mapping less tedious: big moments that pay off a fast, aggressive clear, less walking and searching. Each has a price, so that a medal never makes a map easier.
 
 | # | Modifier | Kind | Effect |
 |---|---|---|---|
@@ -131,6 +131,8 @@ The first 33 change numbers; the other 39 change how the map plays. The last one
 | 70 | Rising Stakes | Gameplay | Every 10 kills: +4% experience and drops (up to +60%), but monsters deal 2% more damage (up to +30%). |
 | 71 | Rampage | Gameplay | Every 25 kills: 15 seconds of double damage and +50% run speed for everyone inside. Monsters have 20% more HP. |
 | 72 | Momentum | Gameplay | Each kill within 8 seconds of the last: +4% run speed and +3% attack and cast speed, up to 10 stacks. Monsters attack 10% faster. |
+| 73 | Cartographer's Lens | Gameplay | Your radar works from the start and points at the best pack nearby. Aggressive monsters notice you from 25% farther. |
+| 74 | Gravity Well | Gameplay | Hitting a monster pulls up to 6 monsters within 600 to its side, and they join the fight. |
 
 Modifiers that draw a kind of monster the server has switched off (Mage, Thief, Infused, wave challenge, Champion) are never rolled.
 
@@ -152,6 +154,8 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 - Culling Strike and Rampage's double damage: `onMonsterDamaged` (a player's hit that would leave the monster below 12% HP takes all of it). Rampage's run speed: a stat function owned by the run (`getRampageFuncOwner`), on everyone inside and anyone who comes in while it lasts; the run's clock ends it.
 - Rising Stakes: `MapRun.getStakesSteps` (kills / 10, at most 15) in `getXpMultiplier`, `getDropMultiplier` and the monsters' P./M. Atk. multiplier, like Rising Dread.
 - Momentum: per player `{stacks, last kill}` (`MapRun.getMomentum`), applied as stat functions like Death Curse; the run's clock breaks a chain 8 s after its last kill. Leaving the map clears it.
+- Cartographer's Lens: the last hunt radar (`updateLastHuntRadar`) runs from the start. Until the last 10 monsters, a new target is the best pack: the monster with the most others within 800, divided by 1 + its distance / 3,000, so a near pack beats a slightly bigger far one; the chat line names the pack's size and way. `getAggroRange` makes the range of the monsters that were aggressive anyway 25% longer.
+- Gravity Well: `onMonsterDamaged`, on a player's hit, at most once every 6 s per monster: up to 6 monsters within 600 (nearest first; not ones already attacking, the Map Guardian, or monsters that can't move) fly beside the one hit (`AreaTargets.flyTo`) and attack the hitter.
 - Splitters' copies and Summoners' minions have half HP (minions 70% damage) and give half the experience and drops; they count toward clearing the map.
 - Map monsters are spawned without a spawn point (so they never respawn) and skip the open world's random spawn rolls (`Spawn`); the map rolls Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters itself, at the open world's chances times the hot zone effect's multipliers, or at the modifier's share.
 
@@ -363,7 +367,7 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 curl -X POST http://127.0.0.1:8788/api/mapdevice/probe -d 'tier=3&mods=CHAIN_REACTION,PACK_HUNTERS&kills=30&seconds=60&pace=100'
 ```
 
-Parameters: `arena` (default the tier's first), `tier` (3), `mods`, `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0), `invul` (0 to let the probe take damage), `keep`.
+Parameters: `arena` (default the tier's first), `tier` (3), `mods`, `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0); the answer also has when the probe's radar first pointed somewhere (`radarFirstAt`) and how many monsters Gravity Well pulled (`pulled`), `invul` (0 to let the probe take damage), `keep`.
 
 ## Setup notes
 

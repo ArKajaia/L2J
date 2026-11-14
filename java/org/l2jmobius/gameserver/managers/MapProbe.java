@@ -130,6 +130,8 @@ public final class MapProbe
 		final int monstersAtStart = run.getMonsterTotal();
 		int hits = 0;
 		int maxMomentum = 0;
+		double radarFirstAt = -1;
+		final java.util.Set<Integer> radarTargets = new java.util.HashSet<>();
 		int deaths = 0;
 		final long deadline = start + (seconds * 1000L);
 		Monster target = null;
@@ -161,6 +163,15 @@ public final class MapProbe
 			}
 			target.reduceCurrentHp(target.getMaxHp() * hit, probe, true, false, null);
 			hits++;
+			final MapRun.RadarMark mark = run.getRadarMarks().get(probe.getObjectId());
+			if (mark != null)
+			{
+				if (radarFirstAt < 0)
+				{
+					radarFirstAt = (System.currentTimeMillis() - start) / 1000.0;
+				}
+				radarTargets.add(mark.monsterId());
+			}
 			final long[] momentum = run.getMomentum().get(probe.getObjectId());
 			if (momentum != null)
 			{
@@ -208,6 +219,9 @@ public final class MapProbe
 		json.append(",\"probeRunSpeed\":").append(probe.getRunSpeed());
 		json.append(",\"probePAtkSpd\":").append(probe.getPAtkSpd());
 		json.append(",\"mapsDropped\":").append(run.getMapsDropped());
+		json.append(",\"radarFirstAt\":").append(radarFirstAt);
+		json.append(",\"radarTargets\":").append(radarTargets.size());
+		json.append(",\"pulled\":").append(run.getPulled());
 		if (sample != null)
 		{
 			json.append(",\"sample\":{\"name\":").append(quote(sample.getName()));

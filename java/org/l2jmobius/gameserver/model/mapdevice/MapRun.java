@@ -127,6 +127,10 @@ public class MapRun
 	private final Map<Integer, long[]> _momentumStacks = new ConcurrentHashMap<>();
 	/** Owns Momentum's stat functions on the players. */
 	private final Object _momentumFuncOwner = new Object();
+	/** Gravity Well: monster object id -> when it may pull again (ms). */
+	private final Map<Integer, Long> _gravityCooldowns = new ConcurrentHashMap<>();
+	/** Gravity Well: monsters pulled so far. */
+	private final AtomicInteger _pulled = new AtomicInteger();
 	/** Chain Reaction: monsters slain by a burst. */
 	private final AtomicInteger _chainKills = new AtomicInteger();
 	/** A test run of the web API's map probe (no hideout, no portals): it keeps a log of what its map says. */
@@ -198,6 +202,8 @@ public class MapRun
 	private final boolean _risingStakes;
 	private final boolean _rampage;
 	private final boolean _momentum;
+	private final boolean _lens;
+	private final boolean _gravityWell;
 	private final int _portalCount;
 	private final double _xpMultiplier;
 	private final double _dropMultiplier;
@@ -262,6 +268,8 @@ public class MapRun
 		boolean risingStakes = false;
 		boolean rampage = false;
 		boolean momentum = false;
+		boolean lens = false;
+		boolean gravityWell = false;
 		double playerMaxHp = 1;
 		double playerDef = 1;
 		double playerMpRegen = 1;
@@ -336,6 +344,8 @@ public class MapRun
 			risingStakes |= modifier.isRisingStakes();
 			rampage |= modifier.isRampage();
 			momentum |= modifier.isMomentum();
+			lens |= modifier.isLens();
+			gravityWell |= modifier.isGravityWell();
 			if (modifier.getSpeedrunMinutes() > 0)
 			{
 				speedrunMinutes = speedrunMinutes > 0 ? Math.min(speedrunMinutes, modifier.getSpeedrunMinutes()) : modifier.getSpeedrunMinutes();
@@ -431,6 +441,8 @@ public class MapRun
 		_risingStakes = risingStakes;
 		_rampage = rampage;
 		_momentum = momentum;
+		_lens = lens;
+		_gravityWell = gravityWell;
 		_playerMaxHp = playerMaxHp;
 		_playerDef = playerDef;
 		_playerMpRegen = playerMpRegen;
@@ -1192,6 +1204,31 @@ public class MapRun
 	public Object getMomentumFuncOwner()
 	{
 		return _momentumFuncOwner;
+	}
+
+	public boolean isLens()
+	{
+		return _lens;
+	}
+
+	public boolean isGravityWell()
+	{
+		return _gravityWell;
+	}
+
+	public Map<Integer, Long> getGravityCooldowns()
+	{
+		return _gravityCooldowns;
+	}
+
+	public int getPulled()
+	{
+		return _pulled.get();
+	}
+
+	public void addPulled(int count)
+	{
+		_pulled.addAndGet(count);
 	}
 
 	public int getChainKills()

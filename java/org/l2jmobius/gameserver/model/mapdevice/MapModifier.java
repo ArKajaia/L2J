@@ -524,6 +524,22 @@ public enum MapModifier
 			momentum = true;
 			monsterAtkSpd = 1.10;
 		}
+	},
+
+	// =========================================================================
+	// Less walking, less searching
+	// =========================================================================
+	CARTOGRAPHERS_LENS("Cartographer's Lens", "Your radar works from the start and points at the best pack nearby. Aggressive monsters notice you from 25% farther.")
+	{
+		{
+			lens = true;
+		}
+	},
+	GRAVITY_WELL("Gravity Well", "Hitting a monster pulls up to 6 monsters within 600 to its side, and they join the fight.")
+	{
+		{
+			gravityWell = true;
+		}
 	};
 
 	/** How many of these only change numbers: the first ones of the enum. The rest change how the map plays. */
@@ -629,6 +645,10 @@ public enum MapModifier
 	protected boolean risingStakes = false;
 	protected boolean rampage = false;
 	protected boolean momentum = false;
+
+	// Less walking.
+	protected boolean lens = false;
+	protected boolean gravityWell = false;
 
 	MapModifier(String displayName, String description)
 	{
@@ -1037,5 +1057,15 @@ public enum MapModifier
 	public boolean isMomentum()
 	{
 		return momentum;
+	}
+
+	public boolean isLens()
+	{
+		return lens;
+	}
+
+	public boolean isGravityWell()
+	{
+		return gravityWell;
 	}
 }

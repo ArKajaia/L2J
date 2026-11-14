@@ -63,6 +63,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
 import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
+import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -208,6 +209,16 @@ public class MapDeviceManager
 	private static final int MOMENTUM_MAX_STACKS = 10;
 	private static final double MOMENTUM_SPEED_PER_STACK = 0.04;
 	private static final double MOMENTUM_ATTACK_SPEED_PER_STACK = 0.03;
+	private static final double LENS_AGGRO_MULT = 1.25;
+	/** Cartographer's Lens: how near two monsters stand to count as one pack. */
+	private static final int LENS_PACK_RANGE = 800;
+	/** Cartographer's Lens: a pack this far away counts half as much as one beside you. */
+	private static final int LENS_DISTANCE_HALF = 3000;
+	private static final int GRAVITY_RANGE = 600;
+	private static final int GRAVITY_MAX_PULLED = 6;
+	private static final int GRAVITY_COOLDOWN = 6000;
+	private static final int GRAVITY_LAND_RANGE = 150;
+	private static final int GRAVITY_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
 	/** When this few monsters are left, they hunt the players down (none stays hidden in a corner of the field). */
 	private static final int LAST_HUNT_COUNT = 10;
 	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
@@ -459,6 +470,18 @@ public class MapDeviceManager
 			}
 		}
 
+		// Gravity Well: the monsters round the one hit are pulled to it (once in a while per monster).
+		if (run.isGravityWell() && (attacker != null) && attacker.isPlayable() && (run.getStatus() == Status.OPEN))
+		{
+			final long now = System.currentTimeMillis();
+			final Long next = run.getGravityCooldowns().get(monster.getObjectId());
+			if ((next == null) || (now >= next))
+			{
+				run.getGravityCooldowns().put(monster.getObjectId(), now + GRAVITY_COOLDOWN);
+				ThreadPool.execute(() -> gravityPull(run, monster, attacker));
+			}
+		}
+
 		if ((attacker != null) && (run.getSummonerPct() > 0) && monster.getVariables().getBoolean(SUMMONER_VAR, false))
 		{
 			monster.getVariables().remove(SUMMONER_VAR);
@@ -652,16 +675,22 @@ public class MapDeviceManager
 	 */
 	public static int getAggroRange(Monster monster, int aggroRange)
 	{
-		if (!isForcedAggressive(monster))
+		final MapRun run = getMonsterRun(monster);
+		if (run == null)
 		{
 			return aggroRange;
 		}
-		final MapRun run = getMonsterRun(monster);
+		// Cartographer's Lens: the monsters that were aggressive anyway notice you from farther.
+		final int range = run.isLens() && (aggroRange > 0) ? (int) (aggroRange * LENS_AGGRO_MULT) : aggroRange;
+		if (!isForcedAggressive(monster))
+		{
+			return range;
+		}
 		if (isLastHunt(run))
 		{
-			return Math.max(aggroRange, LAST_HUNT_AGGRO_RANGE);
+			return Math.max(range, LAST_HUNT_AGGRO_RANGE);
 		}
-		return (int) ((aggroRange > 0 ? aggroRange : FORCED_AGGRO_RANGE) * AGGRO_RANGE_MULT);
+		return (int) ((range > 0 ? range : FORCED_AGGRO_RANGE) * AGGRO_RANGE_MULT);
 	}
 
 	/**
@@ -2715,6 +2744,10 @@ public class MapDeviceManager
 		{
 			run.addChainKill();
 		}
+		if (run.isGravityWell())
+		{
+			run.getGravityCooldowns().remove(victim.getObjectId());
+		}
 		final boolean killerInside = (player != null) && (player.getInstanceId() == run.getInstanceId());
 
 		final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
@@ -2834,7 +2867,8 @@ public class MapDeviceManager
 		synchronized (run.getRadarMarks())
 		{
 			final int toGo = getMonstersToGo(run);
-			if (run.isUnique() || (run.getStatus() != Status.OPEN) || (toGo == 0) || (toGo > LAST_HUNT_COUNT))
+			final boolean lastHunt = toGo <= LAST_HUNT_COUNT;
+			if (run.isUnique() || (run.getStatus() != Status.OPEN) || (toGo == 0) || (!lastHunt && !run.isLens()))
 			{
 				clearLastHuntRadar(run);
 				return;
@@ -2872,7 +2906,31 @@ public class MapDeviceManager
 				}
 
 				final boolean next = target == null;
-				if (next)
+				int pack = 0;
+				if (next && !lastHunt)
+				{
+					// Cartographer's Lens, before the last hunt: the best pack, the most monsters for the walk.
+					double best = -1;
+					for (Monster monster : alive)
+					{
+						int neighbours = 0;
+						for (Monster other : alive)
+						{
+							if ((other != monster) && (monster.calculateDistance2D(other) <= LENS_PACK_RANGE))
+							{
+								neighbours++;
+							}
+						}
+						final double score = (neighbours + 1) / (1.0 + (player.calculateDistance2D(monster) / LENS_DISTANCE_HALF));
+						if (score > best)
+						{
+							best = score;
+							target = monster;
+							pack = neighbours + 1;
+						}
+					}
+				}
+				else if (next)
 				{
 					double nearest = Double.MAX_VALUE;
 					for (Monster monster : alive)
@@ -2895,7 +2953,9 @@ public class MapDeviceManager
 				QuestSpawnUtil.moveMarker(player, mark != null ? mark.spot() : null, spot);
 				if (next)
 				{
-					player.sendMessage("Radar: " + toGo + (toGo == 1 ? " monster" : " monsters") + " to go. The nearest, a " + target.getName() + ", is " + describeWay(player, target) + ".");
+					final String line = lastHunt ? "Radar: " + toGo + (toGo == 1 ? " monster" : " monsters") + " to go. The nearest, a " + target.getName() + ", is " + describeWay(player, target) + "." : "Lens: a pack of " + pack + (pack == 1 ? " monster" : " monsters") + " round a " + target.getName() + ", " + describeWay(player, target) + ".";
+					player.sendMessage(line);
+					run.probeLog(line);
 				}
 			}
 		}
@@ -2945,6 +3005,49 @@ public class MapDeviceManager
 				player.sendMessage("The " + victim.getName() + " explodes!");
 			}
 		}
+	}
+
+	/**
+	 * Gravity Well: the monsters round the one a player hit fly to its side and join the fight, the nearest first.
+	 */
+	private static void gravityPull(MapRun run, Monster center, Creature attacker)
+	{
+		if (run.isClosed() || center.isDead() || attacker.isDead() || (attacker.getInstanceId() != run.getInstanceId()))
+		{
+			return;
+		}
+		final List<Monster> pulled = new ArrayList<>();
+		for (Monster monster : World.getInstance().getVisibleObjectsInRange(center, Monster.class, GRAVITY_RANGE))
+		{
+			if ((monster != center) && !monster.isDead() && (monster.getInstanceId() == run.getInstanceId()) && !monster.isFakePlayer() && !monster.isPvpFakePlayer() && !(monster instanceof Chest) && !monster.isMovementDisabled() && !monster.getVariables().getBoolean(GUARDIAN_VAR, false) && (monster.getAI().getIntention() != Intention.ATTACK))
+			{
+				pulled.add(monster);
+			}
+		}
+		if (pulled.isEmpty())
+		{
+			return;
+		}
+		pulled.sort(Comparator.comparingDouble(center::calculateDistance2D));
+		int count = 0;
+		for (Monster monster : pulled)
+		{
+			if (count >= GRAVITY_MAX_PULLED)
+			{
+				break;
+			}
+			final Location spot = nearSpot(run, center, GRAVITY_LAND_RANGE);
+			AreaTargets.flyTo(monster, spot.getX(), spot.getY(), spot.getZ());
+			monster.addDamageHate(attacker, 0, 200);
+			monster.getAI().setIntention(Intention.ATTACK, attacker);
+			count++;
+			if (run.isProbe())
+			{
+				run.probeLog("Gravity Well: the " + monster.getName() + " lands " + (int) monster.calculateDistance2D(center) + " from the " + center.getName() + ", " + (monster.getAI().getIntention() == Intention.ATTACK ? "attacking." : "not attacking!"));
+			}
+		}
+		center.broadcastPacket(new MagicSkillUse(center, center, GRAVITY_SKILL_ID, 1, 0, 0));
+		run.addPulled(count);
 	}
 
 	/**
