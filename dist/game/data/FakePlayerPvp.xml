@@ -116,7 +116,6 @@
 	                   behind         - get behind the target first (Backstab, Lethal Blow)
 	                   disabledTarget - only while the target is stunned, asleep, paralyzed or rooted
 	                   mageTarget     - only against a target that fights with magic (a silence is wasted on a warrior)
-	                   rangedTarget   - only against an archer or a mage by class (a tank's root before it walks up)
 	                 A debuff that is already on the target is skipped, and so is a self buff when it, or any
 	                 buff of the same type, is already on (e.g. Focus Chance/Power/Death replace each other).
 	     Class passive skills (masteries, etc.) for the level are always added.
@@ -719,18 +718,11 @@
 		<attack>984,400</attack> <!-- Shield Strike (1,127 per cast second), Tribunal (843, and the target takes +20% from swords). docs/class-clinic/tanks.md: no Power Strike (583, less than its normal attack), Divine Strike (undead only) or Drain Health (3 s cast, 11 per cast second) -->
 		<debuff>92,403</debuff> <!-- Shield Stun, Shackle. No Shield Slam: its physical silence lands 11% -->
 		<buff>82,406,350,916,112,527,760,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
-		<heal>262,45</heal> <!-- Divine Blessing, Divine Heal: long casts, kept with a melee on it only while it takes little (FakePlayerPvpAI.selfHeals): without them a healer's mace wore it down -->
 		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster) -->
 		<toggle>322,335</toggle>
 		<peel>92,403</peel>
-		<cleanse>44</cleanse>
+		<cleanse>44</cleanse> <!-- No heals: Divine Heal (4 s) and Divine Blessing (5 s) were aborted 49% and 58% of the time, 74% and 84% against archers -->
 		<enchant>403:2,400:1,92:1,110:1|110:2,406:4|406:3</enchant> <!-- Shackle Chance first: every tank that enchants anything has its root enchanted -->
-		<combo name="Root and stun" pvp="true">
-			<step skill="403" rangedTarget="true" /> <!-- Shackle an archer or mage from 600 -->
-			<step skill="92" /> <!-- Shield Stun as it arrives, before the root runs out (5 s on a level 85) -->
-			<step skill="984" /> <!-- Shield Strike -->
-			<step skill="400" optional="true" /> <!-- Tribunal -->
-		</combo>
 		<combo name="Shield stun" pvp="true">
 			<step skill="92" /> <!-- Shield Stun -->
 			<step skill="984" /> <!-- Shield Strike -->
@@ -742,8 +734,7 @@
 		<attack>984,400</attack> <!-- Shield Strike (1,021 per cast second), Tribunal (power 1,841, and the target takes +20% from swords): learned and never in the build. docs/class-clinic/tanks.md: no Power Strike (529, less than its normal attack) -->
 		<debuff>352,402</debuff> <!-- Shield Bash, Arrest. No Entangle: a 3 s magic cast, 38% aborted, lands 15% -->
 		<buff>351,916,112,123,230,527,760,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
-		<heal>58</heal> <!-- Elemental Heal: a 5 s cast, kept with a melee on it only while it takes little (FakePlayerPvpAI.selfHeals): without it a healer's mace wore it down (healers 31% -> 14%) -->
-		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster) -->
+		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster). No Elemental Heal: a 5 s cast, aborted 45% of the time -->
 		<toggle>322,335</toggle>
 		<peel>352,402</peel>
 		<cleanse>21</cleanse>
@@ -759,18 +750,11 @@
 		<attack>762,984,401</attack> <!-- Insane Crusher (3,019 per cast second), Shield Strike (1,059), Judgment (810, and the target takes +20% from swords). docs/class-clinic/tanks.md: no Power Strike (554, less than its normal attack) or Drain Health (3 s cast, 43 per cast second) -->
 		<debuff>92,403,127,342</debuff> <!-- Shield Stun, Shackle, Hamstring, Touch of Death. No Shield Slam (lands 15%) or Horror (9%) -->
 		<buff>82,86,350,916,112,527,760,761,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
-		<heal>45</heal> <!-- Divine Heal: a 4 s cast, kept with a melee on it only while it takes little (FakePlayerPvpAI.selfHeals) -->
-		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster) -->
+		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster). No Divine Heal: a 4 s cast, aborted 51% of the time -->
 		<toggle>322,335</toggle>
 		<peel>92,403,763</peel> <!-- Shield Stun, Shackle, Hell Scream -->
 		<summon>283</summon> <!-- Summon Dark Panther -->
 		<enchant>403:2,127:1,342:2,401:1,92:1,110:1|110:2,86:1</enchant> <!-- Shackle Chance first: every tank that enchants anything has its root enchanted -->
-		<combo name="Root and stun" pvp="true">
-			<step skill="403" rangedTarget="true" /> <!-- Shackle an archer or mage from 600 -->
-			<step skill="92" /> <!-- Shield Stun as it arrives, before the root runs out (5 s on a level 85) -->
-			<step skill="401" /> <!-- Judgment -->
-			<step skill="984" optional="true" /> <!-- Shield Strike -->
-		</combo>
 		<combo name="Shield stun" pvp="true">
 			<step skill="92" /> <!-- Shield Stun -->
 			<step skill="401" /> <!-- Judgment -->

@@ -57,7 +57,6 @@ public class FakePlayerPvpCombo
 		private final boolean _behind;
 		private final boolean _disabledTarget;
 		private final boolean _mageTarget;
-		private final boolean _rangedTarget;
 		
 		/**
 		 * @param skillIds alternatives, the first one the fake player has learned is used
@@ -66,9 +65,8 @@ public class FakePlayerPvpCombo
 		 * @param behind get behind the target before using it (blows)
 		 * @param disabledTarget only used while the target is stunned, rooted, asleep or paralyzed
 		 * @param mageTarget only used against a target that fights with magic (a silence is wasted on a warrior)
-		 * @param rangedTarget only used against an archer or a mage by class (a root that a melee walks up on, a tank's opener against one that shoots from afar)
 		 */
-		public Step(int[] skillIds, boolean optional, boolean self, boolean behind, boolean disabledTarget, boolean mageTarget, boolean rangedTarget)
+		public Step(int[] skillIds, boolean optional, boolean self, boolean behind, boolean disabledTarget, boolean mageTarget)
 		{
 			_skillIds = skillIds;
 			_optional = optional;
@@ -76,7 +74,6 @@ public class FakePlayerPvpCombo
 			_behind = behind;
 			_disabledTarget = disabledTarget;
 			_mageTarget = mageTarget;
-			_rangedTarget = rangedTarget;
 		}
 		
 		public int[] getSkillIds()
@@ -107,11 +104,6 @@ public class FakePlayerPvpCombo
 		public boolean needsMageTarget()
 		{
 			return _mageTarget;
-		}
-		
-		public boolean needsRangedTarget()
-		{
-			return _rangedTarget;
 		}
 	}
 	
