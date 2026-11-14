@@ -738,7 +738,7 @@
 		<toggle>322,335</toggle>
 		<peel>352,402</peel>
 		<cleanse>21</cleanse>
-		<enchant>402:2,352:1,400:1,110:1|110:2,123:1</enchant> <!-- Arrest Chance first: every tank that enchants anything has its root enchanted -->
+		<enchant>402:2,352:1,67:1,10:1,400:1,110:1|110:2,123:1</enchant> <!-- Arrest Chance first: every tank that enchants anything has its root enchanted; then Shield Bash, then its cubics (power: the cubic's skill level, the guide's Storm Cubic +15 hits a mage for 300 to 400) -->
 		<combo name="Shield bash" pvp="true">
 			<step skill="352" /> <!-- Shield Bash -->
 			<step skill="984" /> <!-- Shield Strike -->
@@ -774,7 +774,7 @@
 		<emergency>368,110</emergency> <!-- Vengeance (P. Def +5,400), then Ultimate Defense: two 30 s defences a fight. The reflex casts them only when it is about to die (Reflexes, rootsCaster) -->
 		<toggle>322,335</toggle>
 		<peel>352,402</peel>
-		<enchant>402:2,352:1,342:2,223:1,401:1,110:1|110:2</enchant> <!-- Arrest Chance first: every tank that enchants anything has its root enchanted -->
+		<enchant>402:2,352:1,22:1,33:1,342:2,223:1,401:1,110:1|110:2</enchant> <!-- Arrest Chance first: every tank that enchants anything has its root enchanted; then Shield Bash, then its cubics (power: the cubic's skill level, the guide's Storm Cubic +15 hits a mage for 300 to 400) -->
 		<combo name="Shield bash" pvp="true">
 			<step skill="352" /> <!-- Shield Bash -->
 			<step skill="984" /> <!-- Shield Strike -->
