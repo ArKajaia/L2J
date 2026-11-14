@@ -890,11 +890,17 @@ def run(args):
     status = api.call("status")
     if status.get("matrix"):
         sys.exit(f"A matrix is already running ({status['matrix']['name']}): wait for it, or stop it with POST /api/simulation/matrix/stop.")
-    params = {"focus": args.build, "battles": args.battles, "parallel": args.parallel, "level": args.level, "time": args.time, "distance": args.distance, "brain": args.brain, "keep": 100000}
+    # Several builds separated by commas fight in one run (their tails of long fights overlap). A battle's fighters come
+    # from the seed and the pair, not from the focus, so each build meets the same fighters as in a run of its own.
+    focus = [b.strip() for b in args.build.split(",") if b.strip()]
+    params = {"focus": ",".join(focus), "battles": args.battles, "parallel": args.parallel, "level": args.level, "time": args.time, "distance": args.distance, "brain": args.brain, "keep": 100000}
     if args.seed:
         params["seed"] = args.seed
     if args.against:
-        params["builds"] = ",".join([args.build] + resolve_against(args.against, args.build))
+        against = []
+        for build in focus:
+            against += [b for b in resolve_against(args.against, build) if b not in against and b not in focus]
+        params["builds"] = ",".join(focus + against)
     answer = api.call("start", params, post=True)
     print("\n".join(answer.get("lines", [])), flush=True)
     matrix = answer.get("matrix")
@@ -911,12 +917,14 @@ def run(args):
         if current["done"] != last:
             last = current["done"]
             print(f"  {current['done']}/{current['total']} battles", flush=True)
-    text, _ = report(folder, args.build)
-    path = os.path.join(folder, "clinic.md")
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(text)
-    print(text)
-    print(f"Folder: {folder}\nReport: {path}")
+    for build in focus:
+        text, _ = report(folder, build)
+        path = os.path.join(folder, "clinic.md" if len(focus) == 1 else "clinic-" + build.replace(" ", "-").replace("'", "") + ".md")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+        if len(focus) == 1:
+            print(text)
+        print(f"Folder: {folder}\nReport: {path}")
 
 
 def main():

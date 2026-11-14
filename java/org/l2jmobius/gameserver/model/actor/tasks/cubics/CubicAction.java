@@ -58,20 +58,20 @@ public class CubicAction implements Runnable
 		
 		try
 		{
-			if (_cubic.getOwner().isDead() || !_cubic.getOwner().isOnline())
+			if (_cubic.isOwnerGone())
 			{
 				_cubic.stopAction();
 				_cubic.getOwner().getCubics().remove(_cubic.getId());
-				_cubic.getOwner().broadcastUserInfo();
+				_cubic.refreshOwner();
 				_cubic.cancelDisappear();
 				return;
 			}
 			
 			if (!AttackStanceTaskManager.getInstance().hasAttackStanceTask(_cubic.getOwner()))
 			{
-				if (_cubic.getOwner().hasSummon())
+				if (_cubic.getOwner().isPlayer() && _cubic.getOwner().asPlayer().hasSummon())
 				{
-					if (!AttackStanceTaskManager.getInstance().hasAttackStanceTask(_cubic.getOwner().getSummon()))
+					if (!AttackStanceTaskManager.getInstance().hasAttackStanceTask(_cubic.getOwner().asPlayer().getSummon()))
 					{
 						_cubic.stopAction();
 						return;

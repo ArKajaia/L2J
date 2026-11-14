@@ -40,13 +40,14 @@ public class CubicMastery extends AbstractEffect
 	@Override
 	public boolean canStart(Creature effector, Creature effected, Skill skill)
 	{
-		return (effector != null) && (effected != null) && effected.isPlayer();
+		// Any Npc too: a fake player's passive skills are given while it is built, before it counts as a fake player (only a limit on cubics, which only players and fake players summon).
+		return (effector != null) && (effected != null) && (effected.isPlayer() || effected.isNpc());
 	}
 	
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
-		effected.asPlayer().getStat().setMaxCubicCount(_cubicCount);
+		effected.getStat().setMaxCubicCount(_cubicCount);
 	}
 	
 	@Override
@@ -58,6 +59,6 @@ public class CubicMastery extends AbstractEffect
 	@Override
 	public void onExit(Creature effector, Creature effected, Skill skill)
 	{
-		effected.asPlayer().getStat().setMaxCubicCount(1);
+		effected.getStat().setMaxCubicCount(1);
 	}
 }

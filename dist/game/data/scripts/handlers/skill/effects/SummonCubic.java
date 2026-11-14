@@ -19,7 +19,6 @@ package handlers.skill.effects;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
-import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Cubic;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
@@ -59,6 +58,12 @@ public class SummonCubic extends AbstractEffect
 	}
 	
 	@Override
+	public int getCubicId()
+	{
+		return _cubicId;
+	}
+	
+	@Override
 	public boolean isInstant()
 	{
 		return true;
@@ -67,7 +72,8 @@ public class SummonCubic extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
-		if ((effected == null) || !effected.isPlayer() || effected.isAlikeDead())
+		// A player, or a fake player (Eva's and Shillien Templars summon theirs before a fight).
+		if ((effected == null) || !(effected.isPlayer() || effected.isFakePlayer()) || effected.isAlikeDead())
 		{
 			return;
 		}
@@ -78,11 +84,11 @@ public class SummonCubic extends AbstractEffect
 			return;
 		}
 		
-		final Player player = effected.asPlayer();
-		if (player.inObserverMode() || player.isMounted())
+		if (effected.isPlayer() && (effected.asPlayer().inObserverMode() || effected.asPlayer().isMounted()))
 		{
 			return;
 		}
+		final Creature player = effected;
 		
 		// Gnacik: TODO: Make better method of calculation.
 		// If skill is enchanted calculate cubic skill level based on enchant
@@ -123,6 +129,13 @@ public class SummonCubic extends AbstractEffect
 		
 		// Adding a new cubic.
 		player.addCubic(_cubicId, cubicSkillLevel, _cubicPower, _cubicDelay, _cubicSkillChance, _cubicMaxCount, _cubicDuration, effected != effector);
-		player.broadcastUserInfo();
+		if (player.isPlayer())
+		{
+			player.asPlayer().broadcastUserInfo();
+		}
+		else
+		{
+			player.broadcastInfo();
+		}
 	}
 }

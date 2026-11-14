@@ -31,6 +31,10 @@ import java.util.Random;
 import java.util.Set;
 
 import org.l2jmobius.gameserver.ai.fight.ReflexEvent.Kind;
+import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
+import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
  * Decides whether a fake player reacts to what just happened in its fight, between its thinks: interrupt a cast coming at it, stop a heal, ready a peel for a gap closer, answer a burst with a defensive skill, cleanse a root with a melee coming, start its burst when
@@ -205,10 +209,17 @@ public class Reflexes
 			case HP_CRASH:
 			case ENEMY_BURST:
 			{
-				if ((event.kind() == Kind.ENEMY_BURST) || (_read.timeToDie(now, 0) < _weights.burstReflexTtd()))
+				final boolean dying = _read.timeToDie(now, 0) < _weights.burstReflexTtd();
+				if ((event.kind() == Kind.ENEMY_BURST) || dying)
 				{
 					for (SkillOption option : options)
 					{
+						// A defence that roots its caster (Ultimate Defense, Vengeance: 30 s, 15 min reuse) only when it is about to die: cast on the first burst at full HP it stood
+						// rooted while an archer or a mage shot it from afar, and had nothing left for the end of the fight (docs/class-clinic/tanks.md).
+						if (!dying && (option.skill() != null) && rootsCaster(SkillData.getInstance().getSkill(option.skill().id(), option.skill().level())))
+						{
+							continue;
+						}
 						if (has(option, SkillMeaning.DEFENSIVE) || ((option.kind() == SkillOption.Kind.STEP_BACK) && ctx.ranged()))
 						{
 							candidates.add(option);
@@ -292,6 +303,36 @@ public class Reflexes
 	private static boolean has(SkillOption option, SkillMeaning meaning)
 	{
 		return (option.kind() == SkillOption.Kind.SKILL) && (option.skill() != null) && SkillMeanings.classify(option.skill()).contains(meaning);
+	}
+	
+	/**
+	 * @return {@code true} for a skill whose effect on its caster roots it (ImmobileBuff: Ultimate Defense, Vengeance)
+	 */
+	private static boolean rootsCaster(Skill skill)
+	{
+		if (skill == null)
+		{
+			return false;
+		}
+		for (EffectScope scope : new EffectScope[]
+		{
+			EffectScope.GENERAL,
+			EffectScope.SELF
+		})
+		{
+			final List<AbstractEffect> effects = skill.getEffects(scope);
+			if (effects != null)
+			{
+				for (AbstractEffect effect : effects)
+				{
+					if ("ImmobileBuff".equals(effect.getClass().getSimpleName()))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 	
 	/**

@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.actor.tasks.cubics.CubicAction;
 import org.l2jmobius.gameserver.model.actor.tasks.cubics.CubicDisappear;
@@ -78,7 +79,8 @@ public class Cubic
 	public static final int SKILL_CUBIC_HEAL = 4051;
 	public static final int SKILL_CUBIC_CURE = 5579;
 	
-	private final Player _owner;
+	/** A player, or a fake player (an Npc): see {@link #getOwner()}. */
+	private final Creature _owner;
 	private Creature _target;
 	
 	private final int _cubicId;
@@ -93,7 +95,7 @@ public class Cubic
 	private Future<?> _disappearTask;
 	private Future<?> _actionTask;
 	
-	public Cubic(Player owner, int cubicId, int level, int cubicPower, int cubicDelay, int cubicSkillChance, int cubicMaxCount, int cubicDuration, boolean givenByOther)
+	public Cubic(Creature owner, int cubicId, int level, int cubicPower, int cubicDelay, int cubicSkillChance, int cubicMaxCount, int cubicDuration, boolean givenByOther)
 	{
 		_owner = owner;
 		_cubicId = cubicId;
@@ -232,9 +234,35 @@ public class Cubic
 		return _cubicId;
 	}
 	
-	public Player getOwner()
+	/**
+	 * @return the creature it belongs to: a player, or a fake player (an Npc with a fake player profile)
+	 */
+	public Creature getOwner()
 	{
 		return _owner;
+	}
+	
+	/**
+	 * @return {@code true} if its owner is gone: a player offline, a fake player despawned, or either dead
+	 */
+	public boolean isOwnerGone()
+	{
+		return _owner.isDead() || (_owner.isPlayer() ? !_owner.asPlayer().isOnline() : !_owner.isSpawned());
+	}
+	
+	/**
+	 * Shows its owner's cubics again, after one appeared or went away.
+	 */
+	public void refreshOwner()
+	{
+		if (_owner.isPlayer())
+		{
+			_owner.asPlayer().broadcastUserInfo();
+		}
+		else
+		{
+			_owner.broadcastInfo();
+		}
 	}
 	
 	public int getCubicPower()
@@ -293,11 +321,23 @@ public class Cubic
 				return;
 			}
 			
+			// A fake player's cubic hits what it fights: its target, if that is another living creature not of its team or party.
+			if (!_owner.isPlayer())
+			{
+				if (ownerTarget.isCreature() && (ownerTarget != _owner) && !ownerTarget.asCreature().isDead() && ((_owner.getTeam() == Team.NONE) || (_owner.getTeam() != ownerTarget.asCreature().getTeam())) && !(_owner.isInParty() && ownerTarget.isPlayer() && _owner.getParty().containsPlayer(ownerTarget.asPlayer())))
+				{
+					_target = ownerTarget.asCreature();
+				}
+				return;
+			}
+			
+			final Player owner = _owner.asPlayer();
+			
 			// Custom event targeting
-			if (_owner.isOnEvent())
+			if (owner.isOnEvent())
 			{
 				final Player target = ownerTarget.asPlayer();
-				if ((target != null) && ((_owner.getTeam() != target.getTeam()) || _owner.isOnSoloEvent()) && !(target.isDead()))
+				if ((target != null) && ((owner.getTeam() != target.getTeam()) || owner.isOnSoloEvent()) && !(target.isDead()))
 				{
 					_target = ownerTarget.asCreature();
 				}
@@ -305,18 +345,18 @@ public class Cubic
 			}
 			
 			// Duel targeting
-			if (_owner.isInDuel())
+			if (owner.isInDuel())
 			{
-				final Player playerA = DuelManager.getInstance().getDuel(_owner.getDuelId()).getPlayerA();
-				final Player playerB = DuelManager.getInstance().getDuel(_owner.getDuelId()).getPlayerB();
-				if (DuelManager.getInstance().getDuel(_owner.getDuelId()).isPartyDuel())
+				final Player playerA = DuelManager.getInstance().getDuel(owner.getDuelId()).getPlayerA();
+				final Player playerB = DuelManager.getInstance().getDuel(owner.getDuelId()).getPlayerB();
+				if (DuelManager.getInstance().getDuel(owner.getDuelId()).isPartyDuel())
 				{
 					final Party partyA = playerA.getParty();
 					final Party partyB = playerB.getParty();
 					Party partyEnemy = null;
 					if (partyA != null)
 					{
-						if (partyA.getMembers().contains(_owner))
+						if (partyA.getMembers().contains(owner))
 						{
 							if (partyB != null)
 							{
@@ -334,7 +374,7 @@ public class Cubic
 					}
 					else
 					{
-						if (playerA == _owner)
+						if (playerA == owner)
 						{
 							if (partyB != null)
 							{
@@ -366,13 +406,13 @@ public class Cubic
 					}
 				}
 				
-				if ((playerA != _owner) && (ownerTarget == playerA))
+				if ((playerA != owner) && (ownerTarget == playerA))
 				{
 					_target = playerA;
 					return;
 				}
 				
-				if ((playerB != _owner) && (ownerTarget == playerB))
+				if ((playerB != owner) && (ownerTarget == playerB))
 				{
 					_target = playerB;
 					return;
@@ -383,12 +423,12 @@ public class Cubic
 			}
 			
 			// Olympiad targeting
-			if (_owner.isInOlympiadMode())
+			if (owner.isInOlympiadMode())
 			{
-				if (_owner.isOlympiadStart() && ownerTarget.isPlayable())
+				if (owner.isOlympiadStart() && ownerTarget.isPlayable())
 				{
 					final Player targetPlayer = ownerTarget.asPlayer();
-					if ((targetPlayer != null) && (targetPlayer.getOlympiadGameId() == _owner.getOlympiadGameId()) && (targetPlayer.getOlympiadSide() != _owner.getOlympiadSide()))
+					if ((targetPlayer != null) && (targetPlayer.getOlympiadGameId() == owner.getOlympiadGameId()) && (targetPlayer.getOlympiadSide() != owner.getOlympiadSide()))
 					{
 						_target = ownerTarget.asCreature();
 					}
@@ -397,19 +437,19 @@ public class Cubic
 			}
 			
 			// test owners target if it is valid then use it
-			if (ownerTarget.isCreature() && (ownerTarget != _owner.getSummon()) && (ownerTarget != _owner))
+			if (ownerTarget.isCreature() && (ownerTarget != owner.getSummon()) && (ownerTarget != owner))
 			{
 				// target mob which has aggro on you or your summon
 				if (ownerTarget.isAttackable())
 				{
 					final Attackable attackable = ownerTarget.asAttackable();
-					if (attackable.isInAggroList(_owner) && !attackable.isDead())
+					if (attackable.isInAggroList(owner) && !attackable.isDead())
 					{
 						_target = ownerTarget.asCreature();
 						return;
 					}
 					
-					if (_owner.hasSummon() && attackable.isInAggroList(_owner.getSummon()) && !attackable.isDead())
+					if (owner.hasSummon() && attackable.isInAggroList(owner.getSummon()) && !attackable.isDead())
 					{
 						_target = ownerTarget.asCreature();
 						return;
@@ -418,7 +458,7 @@ public class Cubic
 				
 				// get target in pvp or in siege
 				Player enemy = null;
-				if (((_owner.getPvpFlag() > 0) && !_owner.isInsideZone(ZoneId.PEACE)) || _owner.isInsideZone(ZoneId.PVP))
+				if (((owner.getPvpFlag() > 0) && !owner.isInsideZone(ZoneId.PEACE)) || owner.isInsideZone(ZoneId.PVP))
 				{
 					if (!ownerTarget.asCreature().isDead())
 					{
@@ -428,26 +468,26 @@ public class Cubic
 					if (enemy != null)
 					{
 						boolean targetIt = true;
-						if (_owner.getParty() != null)
+						if (owner.getParty() != null)
 						{
-							if (_owner.getParty().getMembers().contains(enemy))
+							if (owner.getParty().getMembers().contains(enemy))
 							{
 								targetIt = false;
 							}
-							else if ((_owner.getParty().getCommandChannel() != null) && _owner.getParty().getCommandChannel().getMembers().contains(enemy))
+							else if ((owner.getParty().getCommandChannel() != null) && owner.getParty().getCommandChannel().getMembers().contains(enemy))
 							{
 								targetIt = false;
 							}
 						}
 						
-						if ((_owner.getClan() != null) && !_owner.isInsideZone(ZoneId.PVP))
+						if ((owner.getClan() != null) && !owner.isInsideZone(ZoneId.PVP))
 						{
-							if (_owner.getClan().isMember(enemy.getObjectId()))
+							if (owner.getClan().isMember(enemy.getObjectId()))
 							{
 								targetIt = false;
 							}
 							
-							if ((_owner.getAllyId() > 0) && (enemy.getAllyId() > 0) && (_owner.getAllyId() == enemy.getAllyId()))
+							if ((owner.getAllyId() > 0) && (enemy.getAllyId() > 0) && (owner.getAllyId() == enemy.getAllyId()))
 							{
 								targetIt = false;
 							}
@@ -463,7 +503,7 @@ public class Cubic
 							targetIt = false;
 						}
 						
-						if ((_owner.getSiegeState() > 0) && (_owner.getSiegeState() == enemy.getSiegeState()))
+						if ((owner.getSiegeState() > 0) && (owner.getSiegeState() == enemy.getSiegeState()))
 						{
 							targetIt = false;
 						}
@@ -514,7 +554,7 @@ public class Cubic
 			if (target.isPlayer())
 			{
 				final Player player = target.asPlayer();
-				if (player.isInDuel() && skill.hasNegativeEffect() && (_owner.getDuelId() == player.getDuelId()))
+				if (player.isInDuel() && skill.hasNegativeEffect() && _owner.isPlayer() && (_owner.asPlayer().getDuelId() == player.getDuelId()))
 				{
 					DuelManager.getInstance().onBuff(player, skill);
 				}
@@ -571,6 +611,8 @@ public class Cubic
 					{
 						_owner.sendDamageMessage(target, skill, damage, mcrit, false, false);
 						target.reduceCurrentHp(damage, _owner, skill);
+						// Like a totem's or a prophecy's hit: the combat log, the simulation log and the passive tree see it.
+						target.notifyDamageReceived(damage, _owner, skill, mcrit, false);
 					}
 				}
 			}
@@ -592,7 +634,7 @@ public class Cubic
 			
 			// TODO: Unhardcode fixed value
 			final double hpAdd = (0.4 * damage * Totems.getLeechRate(target));
-			final Player owner = _owner;
+			final Creature owner = _owner;
 			final double hp = ((owner.getCurrentHp() + hpAdd) > owner.getMaxHp() ? owner.getMaxHp() : (owner.getCurrentHp() + hpAdd));
 			owner.setCurrentHp(hp);
 			
@@ -603,6 +645,7 @@ public class Cubic
 				try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, skill, 0))
 				{
 					target.reduceCurrentHp(damage, _owner, skill);
+					target.notifyDamageReceived(damage, _owner, skill, mcrit, false);
 					
 					// Manage attack or cast break of the target (calculating rate, sending message...)
 					if (!target.isRaid() && Formulas.calcAtkBreak(target, damage))
@@ -636,7 +679,7 @@ public class Cubic
 				if (target.isPlayer())
 				{
 					final Player player = target.asPlayer();
-					if (player.isInDuel() && skill.hasNegativeEffect() && (_owner.getDuelId() == player.getDuelId()))
+					if (player.isInDuel() && skill.hasNegativeEffect() && _owner.isPlayer() && (_owner.asPlayer().getDuelId() == player.getDuelId()))
 					{
 						DuelManager.getInstance().onBuff(player, skill);
 					}
@@ -685,22 +728,31 @@ public class Cubic
 	{
 		Creature target = null;
 		double percentleft = 100.0;
-		Party party = _owner.getParty();
+		
+		// A fake player's life cubic heals the fake player.
+		if (!_owner.isPlayer())
+		{
+			_target = _owner.getCurrentHp() < _owner.getMaxHp() ? _owner : null;
+			return;
+		}
+		
+		final Player owner = _owner.asPlayer();
+		Party party = owner.getParty();
 		
 		// if owner is in a duel but not in a party duel, then it is the same as he does not have a party
-		if (_owner.isInDuel() && !DuelManager.getInstance().getDuel(_owner.getDuelId()).isPartyDuel())
+		if (owner.isInDuel() && !DuelManager.getInstance().getDuel(owner.getDuelId()).isPartyDuel())
 		{
 			party = null;
 		}
 		
-		if ((party != null) && !_owner.isInOlympiadMode())
+		if ((party != null) && !owner.isInOlympiadMode())
 		{
 			// Get all visible objects in a spheric area near the Creature
 			// Get a list of Party Members
 			for (Creature partyMember : party.getMembers())
 			{
 				// if party member not dead, check if he is in cast range of heal cubic and member is in cubic casting range, check if he need heal and if he have the lowest HP
-				if (!partyMember.isDead() && isInCubicRange(_owner, partyMember) && (partyMember.getCurrentHp() < partyMember.getMaxHp()) && (percentleft > (partyMember.getCurrentHp() / partyMember.getMaxHp())))
+				if (!partyMember.isDead() && isInCubicRange(owner, partyMember) && (partyMember.getCurrentHp() < partyMember.getMaxHp()) && (percentleft > (partyMember.getCurrentHp() / partyMember.getMaxHp())))
 				{
 					percentleft = (partyMember.getCurrentHp() / partyMember.getMaxHp());
 					target = partyMember;
@@ -718,7 +770,7 @@ public class Cubic
 						}
 						
 						// If party member's pet not dead, check if it is in cast range of heal cubic.
-						if (!isInCubicRange(_owner, summon))
+						if (!isInCubicRange(owner, summon))
 						{
 							continue;
 						}
@@ -735,15 +787,15 @@ public class Cubic
 		}
 		else
 		{
-			if (_owner.getCurrentHp() < _owner.getMaxHp())
+			if (owner.getCurrentHp() < owner.getMaxHp())
 			{
-				percentleft = (_owner.getCurrentHp() / _owner.getMaxHp());
-				target = _owner;
+				percentleft = (owner.getCurrentHp() / owner.getMaxHp());
+				target = owner;
 			}
 			
-			if (_owner.hasSummon() && !_owner.getSummon().isDead() && (_owner.getSummon().getCurrentHp() < _owner.getSummon().getMaxHp()) && (percentleft > (_owner.getSummon().getCurrentHp() / _owner.getSummon().getMaxHp())) && isInCubicRange(_owner, _owner.getSummon()))
+			if (owner.hasSummon() && !owner.getSummon().isDead() && (owner.getSummon().getCurrentHp() < owner.getSummon().getMaxHp()) && (percentleft > (owner.getSummon().getCurrentHp() / owner.getSummon().getMaxHp())) && isInCubicRange(owner, owner.getSummon()))
 			{
-				target = _owner.getSummon();
+				target = owner.getSummon();
 			}
 		}
 		

@@ -56,6 +56,8 @@ public class CreatureStat
 	private final int[] _traitsInvul = new int[TraitType.values().length];
 	/** Creature's maximum buff count. */
 	private int _maxBuffCount = PlayerConfig.BUFFS_MAX_AMOUNT;
+	/** How many cubics it may have out at once (Cubic Mastery): a player's, or a fake player's. */
+	private int _maxCubicCount = 1;
 	/** Speed multiplier set by admin gmspeed command */
 	private double _gmSpeedMultiplier = 1;
 	
@@ -948,6 +950,24 @@ public class CreatureStat
 	}
 	
 	/**
+	 * Gets the maximum cubic count.
+	 * @return the maximum cubic count
+	 */
+	public int getMaxCubicCount()
+	{
+		return _maxCubicCount;
+	}
+	
+	/**
+	 * Sets the maximum cubic count.
+	 * @param cubicCount the maximum cubic count
+	 */
+	public void setMaxCubicCount(int cubicCount)
+	{
+		_maxCubicCount = cubicCount;
+	}
+	
+	/**
 	 * Gets the maximum buff count.
 	 * @return the maximum buff count
 	 */
@@ -964,4 +984,4 @@ public class CreatureStat
 	{
 		_maxBuffCount = buffCount;
 	}
-}
+}
