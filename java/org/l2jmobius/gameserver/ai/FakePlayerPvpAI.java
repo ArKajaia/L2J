@@ -317,6 +317,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static final double LIST_RANK_FACTOR = 0.85;
 	/** Most critical hit chance counted for normal attacks. */
 	private static final double MAX_CRIT_CHANCE = 0.8;
+	/** The most of a normal attack's worth that damage reflection takes off (see {@link #estimateAutoAttackDps}). */
+	private static final double REFLECT_CAP = 0.9;
 	/** Within this gap a melee fake player counts its enemy as on it (its long casts risk an interrupt). */
 	private static final double MELEE_NEAR = 150;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
@@ -8822,7 +8824,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final double critChance = Math.min(MAX_CRIT_CHANCE, npc.getCriticalHit(target, null) / 1000.0);
 		final double damage = Formulas.calcPhysDam(npc, target, null, (byte) 0, false, true) * (1 + critChance);
 		final int interval = Math.max(npc.calculateTimeBetweenAttacks(), npc.getActiveWeaponItem() != null ? npc.calculateReuseTime(npc.getActiveWeaponItem()) : 0);
-		return (damage * 1000) / Math.max(200, interval);
+		// Damage reflection (a tank's passives, Vengeance) sends a share of every melee normal attack back to it, and none of its skills' damage (Creature.onHitTimer): a Titan's hits on a Hell Knight
+		// came back at 44%. That share is HP it loses for the damage, so the normal attack is worth that much less against such a target. Arrows are not reflected.
+		final boolean bow = (npc.getActiveWeaponItem() != null) && ((npc.getActiveWeaponItem().getItemType() == WeaponType.BOW) || (npc.getActiveWeaponItem().getItemType() == WeaponType.CROSSBOW));
+		final double reflect = (bow || target.isInvul()) ? 0 : Math.min(REFLECT_CAP, target.getStat().calcStat(Stat.REFLECT_DAMAGE_PERCENT, 0, null, null) / 100.0);
+		return ((damage * 1000) / Math.max(200, interval)) * (1 - reflect);
 	}
 	
 	/**
