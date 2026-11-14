@@ -10,7 +10,7 @@
 	     last: the strong fake players of the PvP spots always wear it.
 	     Weapons of C grade and up (40) are the item with a special ability (SA, the soul crystal of a player's blacksmith), the one that suits the
 	     kit's class: Health for tanks and shield fighters, Focus for two-handed warriors, fists, archers and the Judicator, Critical Damage for daggers, Haste
-	     for polearms (Anger where a grade has no Haste), Acumen for mages (Mana Up at A grade where there is no Acumen). Where a grade has not the wanted SA, the
+	     for polearms (Light, a PvP damage bonus only, where a grade has no Haste or Health; Anger is never used: -15% max HP for +3% P. Atk. at S80), Acumen for mages (Mana Up at A grade where there is no Acumen). Where a grade has not the wanted SA, the
 	     next one of that kit's list is used (Haste or Guidance at C and B for most). Only the passive SAs count: Critical Stun, Critical Bleed, Magic Silence... are
 	     trigger skills a fake player doesn't use, so those tiers keep the plain weapon (the mages' staves of C and B grade). Dual swords and dual daggers have no
 	     SA in the item data.
@@ -291,11 +291,11 @@
 	<kit name="POLEARM">
 		<tier minLevel="1" rhand="16" /> <!-- Great Spear -->
 		<tier minLevel="20" rhand="93" /> <!-- Winged Spear -->
-		<tier minLevel="40" rhand="4846" /> <!-- Scorpion - Anger -->
-		<tier minLevel="52" rhand="4858" /> <!-- Lance - Anger -->
+		<tier minLevel="40" rhand="301" /> <!-- Scorpion (its SA is Anger: -15% max HP for +3% P. Atk., so none) -->
+		<tier minLevel="52" rhand="97" /> <!-- Lance (Anger only, so none) -->
 		<tier minLevel="61" rhand="5626" /> <!-- Halberd - Haste -->
 		<tier minLevel="76" rhand="6601" /> <!-- Saint Spear - Haste -->
-		<tier minLevel="80" rhand="10449" /> <!-- Icarus Trident - Anger -->
+		<tier minLevel="80" rhand="10451" /> <!-- Icarus Trident - Light (only PvP damage: no Haste or Health at S80) -->
 		<tier minLevel="84" rhand="14135" /> <!-- Vesper Stormer - Haste -->
 	</kit>
 	<kit name="MAGE">
@@ -513,10 +513,10 @@
 		<tier minLevel="1" rhand="16" /> <!-- Great Spear -->
 		<tier minLevel="20" rhand="93" /> <!-- Winged Spear -->
 		<tier minLevel="40" rhand="303" /> <!-- Widow Maker -->
-		<tier minLevel="52" rhand="4855" /> <!-- Great Axe - Anger -->
+		<tier minLevel="52" rhand="300" /> <!-- Great Axe (Anger only, so none) -->
 		<tier minLevel="61" rhand="5633" /> <!-- Tallum Glaive - Health, kept at S grade -->
-		<tier minLevel="80" rhand="9869" /> <!-- Dynasty Halberd - Anger -->
-		<tier minLevel="84" rhand="10449" /> <!-- Icarus Trident - Anger -->
+		<tier minLevel="80" rhand="9871" /> <!-- Dynasty Halberd - Light (only PvP damage) -->
+		<tier minLevel="84" rhand="10451" /> <!-- Icarus Trident - Light (only PvP damage) -->
 	</kit>
 
 	<!-- Cloaks: a full armor set whose set skill opens the cloak slot (Dynasty, Moirai, Vesper Noble..., not the plain Vesper sets) lets a fake
