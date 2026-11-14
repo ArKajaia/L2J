@@ -98,6 +98,19 @@ The seed skills and the icons they open, in the `buff` lists (cast as soon as th
 
 No kind clearly worse. Touch of Eva, Flame Icon and Spirit of Shilen are cast 0.8 to 0.9 times a battle; the seeds (2.5 s) are aborted 39% of the time. Fault 8 (Eva's Templar worn down by healers) is answered the way the guide plays it.
 
+### Batch 4: cubics for fake players, kept (`matrix-20261114-103031`, against batch 3, short form)
+
+Fake players couldn't have cubics (`SummonCubic` worked on a player only). Now a cubic's owner is any creature: a fake player's cubic hits its target (not of its team or party) and its Life Cubic heals it; Cubic Mastery gives it its 3 cubics. The two Templars summon theirs before a fight (the guide's: Storm, Life and Smart for Eva's Templar; Vampiric, Phantom and Smart for the Shillien Templar), never in one.
+
+| Build | Before | After | Difference (95%) | Clearly better against |
+|---|---|---|---|---|
+| Eva's Templar | 63.1% | 72.2% | +9.1 (+3.8 to +14.5) | archer, healer (63% → 86%) |
+| Shillien Templar | 70.9% | 75.2% | +4.4 (-0.7 to +9.4) | - (no clear change) |
+| Phoenix Knight | 77.4% | 72.9% | -4.4 (-9.4 to +0.5) | - (unchanged build: two stronger Templars and noise) |
+| Hell Knight | 75.0% | 70.5% | -4.5 (-9.6 to +0.6) | - (unchanged build) |
+
+In the run: 3,605 Cubic Heals, 2,489 Icy Air, 133 Phantom Cubic debuffs. The damage cubics (Storm, Vampiric, the Shillien Smart Cubic's drain) hit but weren't logged: a cubic's damage didn't go through `notifyDamageReceived`, for a player's cubic either. Fixed after the run (`Cubic.useCubicMdam`, `useCubicDrain`, as the totems and prophecies do): Storm Cubic about 80 a hit unenchanted, Vampiric Cubic about 200.
+
 ## 5. Not fixed here
 
 - **Archers and nukers outrange them.** Speed 175 against 222 for an archer, no gap closer, a bow that hits for a third of what it takes. What the root and the stun can win is measured in batch 2.

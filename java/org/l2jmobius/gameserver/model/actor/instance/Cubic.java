@@ -611,6 +611,8 @@ public class Cubic
 					{
 						_owner.sendDamageMessage(target, skill, damage, mcrit, false, false);
 						target.reduceCurrentHp(damage, _owner, skill);
+						// Like a totem's or a prophecy's hit: the combat log, the simulation log and the passive tree see it.
+						target.notifyDamageReceived(damage, _owner, skill, mcrit, false);
 					}
 				}
 			}
@@ -643,6 +645,7 @@ public class Cubic
 				try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, skill, 0))
 				{
 					target.reduceCurrentHp(damage, _owner, skill);
+					target.notifyDamageReceived(damage, _owner, skill, mcrit, false);
 					
 					// Manage attack or cast break of the target (calculating rate, sending message...)
 					if (!target.isRaid() && Formulas.calcAtkBreak(target, damage))
