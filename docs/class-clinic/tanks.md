@@ -63,6 +63,19 @@ Skill use moved as meant: Ultimate Defense from the burst reflex 209 → 11 cast
 
 The heals came back as 6.4 casts a battle for the Phoenix Knight, 63% of them aborted, and didn't win back the healer fights (Eva's Templar 14% → 14%): the `selfHeals` rule let them in far more often than meant. The root-then-stun combo left Shield Stun at 4.6 casts a battle: no sign it did anything. Both reverted. The root first in the `enchant` lists (fault 10, an earlier commit) stays: no measurable effect, the intended behaviour. Fault 8 stays open: Eva's Templar against healers is 14%.
 
+### Passive trees leaning on defence and speed, not kept (`matrix-20261114-094718`, against `matrix-20261114-093250`)
+
+The build attribute `weights` at ×1.25 on PDEF_PCT, MDEF_PCT, SHIELD_RATE_PCT, SHIELD_DEF_PCT, CRIT_DMG_TAKEN_RED_PCT, DEBUFF_RES_PCT and MOVE_SPEED_ADD for the four tanks. Both runs on the batch 1 code, in the short form (15 battles a pair, 150 s limit: 2,250 battles in about 11 minutes, against 4,500 in 20 to 30 for the full form; it shows a change of about 5 to 6 points overall, 12 to 20 per kind).
+
+| Build | Before | After | Difference (95%) | Damage /s dealt | Damage /s taken |
+|---|---|---|---|---|---|
+| Phoenix Knight | 70.3% | 72.0% | +1.6 (-3.6 to +6.8) | 449 → 412 | 314 → 304 |
+| Hell Knight | 73.2% | 69.1% | -4.1 (-9.3 to +1.1) | 393 → 369 | 285 → 287 |
+| Eva's Templar | 50.4% | 51.1% | +0.7 (-5.0 to +6.4) | 453 → 413 | 312 → 309 |
+| Shillien Templar | 60.1% | 60.0% | -0.1 (-5.7 to +5.5) | 479 → 434 | 278 → 276 |
+
+No clear change for any of them, overall or against any kind. The points the trees moved into defence came out of damage: dealt fell 5 to 10%, taken 0 to 3%. Every tank did worse against nukers (−7 to −11, none clearly). Taken out.
+
 ## 5. Not fixed here
 
 - **Archers and nukers outrange them.** Speed 175 against 222 for an archer, no gap closer, a bow that hits for a third of what it takes. What the root and the stun can win is measured in batch 2.

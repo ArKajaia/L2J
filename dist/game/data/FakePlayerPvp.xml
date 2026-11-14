@@ -714,7 +714,7 @@
 	</build>
 
 	<!-- Tanks -->
-	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2" weights="PDEF_PCT:1.25;MDEF_PCT:1.25;SHIELD_RATE_PCT:1.25;SHIELD_DEF_PCT:1.25;CRIT_DMG_TAKEN_RED_PCT:1.25;DEBUFF_RES_PCT:1.25;MOVE_SPEED_ADD:1.25">
+	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>984,400</attack> <!-- Shield Strike (1,127 per cast second), Tribunal (843, and the target takes +20% from swords). docs/class-clinic/tanks.md: no Power Strike (583, less than its normal attack), Divine Strike (undead only) or Drain Health (3 s cast, 11 per cast second) -->
 		<debuff>92,403</debuff> <!-- Shield Stun, Shackle. No Shield Slam: its physical silence lands 11% -->
 		<buff>82,406,350,916,112,527,760,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
@@ -730,7 +730,7 @@
 		</combo>
 		<variant name="Phoenix Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2" weights="PDEF_PCT:1.25;MDEF_PCT:1.25;SHIELD_RATE_PCT:1.25;SHIELD_DEF_PCT:1.25;CRIT_DMG_TAKEN_RED_PCT:1.25;DEBUFF_RES_PCT:1.25;MOVE_SPEED_ADD:1.25">
+	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>984,400</attack> <!-- Shield Strike (1,021 per cast second), Tribunal (power 1,841, and the target takes +20% from swords): learned and never in the build. docs/class-clinic/tanks.md: no Power Strike (529, less than its normal attack) -->
 		<debuff>352,402</debuff> <!-- Shield Bash, Arrest. No Entangle: a 3 s magic cast, 38% aborted, lands 15% -->
 		<buff>351,916,112,123,230,527,760,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
@@ -746,7 +746,7 @@
 		</combo>
 		<variant name="Eva's Templar Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="Hell Knight" classId="91" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2" weights="PDEF_PCT:1.25;MDEF_PCT:1.25;SHIELD_RATE_PCT:1.25;SHIELD_DEF_PCT:1.25;CRIT_DMG_TAKEN_RED_PCT:1.25;DEBUFF_RES_PCT:1.25;MOVE_SPEED_ADD:1.25"> <!-- Dark Avenger line -->
+	<build name="Hell Knight" classId="91" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Dark Avenger line -->
 		<attack>762,984,401</attack> <!-- Insane Crusher (3,019 per cast second), Shield Strike (1,059), Judgment (810, and the target takes +20% from swords). docs/class-clinic/tanks.md: no Power Strike (554, less than its normal attack) or Drain Health (3 s cast, 43 per cast second) -->
 		<debuff>92,403,127,342</debuff> <!-- Shield Stun, Shackle, Hamstring, Touch of Death. No Shield Slam (lands 15%) or Horror (9%) -->
 		<buff>82,86,350,916,112,527,760,761,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
@@ -767,7 +767,7 @@
 		</combo>
 		<variant name="Hell Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2" weights="PDEF_PCT:1.25;MDEF_PCT:1.25;SHIELD_RATE_PCT:1.25;SHIELD_DEF_PCT:1.25;CRIT_DMG_TAKEN_RED_PCT:1.25;DEBUFF_RES_PCT:1.25;MOVE_SPEED_ADD:1.25">
+	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>984,401,223</attack> <!-- Shield Strike (1,209 per cast second), Judgment (986, and the target takes +20% from swords), Sting (926). docs/class-clinic/tanks.md: no Lightning Strike, Freezing Strike, Life Leech or Drain Health (3 s magic casts, 25 to 65 per cast second, 26 to 51% aborted) or Power Strike (663) -->
 		<debuff>352,402,342</debuff> <!-- Shield Bash, Arrest, Touch of Death. No Hex, Power Break or Poison: they land 9 to 12% -->
 		<buff>351,916,112,527,760,982,913</buff> <!-- and its own Combat Aura (P. Atk, Atk. Spd +5%) and Deflect Magic -->
