@@ -1197,7 +1197,13 @@ public class Item extends WorldObject
 		return 0;
 	}
 	
-	private void applyAttribute(byte element, int value)
+	/**
+	 * Adds an elemental attribute to the item without saving it, for an item made in memory that nobody owns yet (the piece of gear a fake player drops, see {@code FakePlayerPvpPiece#applyTo}): it is saved with the item when it goes into an inventory. {@link #setElementAttr} saves at once, which
+	 * would leave rows in the database for an item that is never picked up.
+	 * @param element the element (Elementals.FIRE...)
+	 * @param value the attribute value
+	 */
+	public void applyAttribute(byte element, int value)
 	{
 		if (_elementals == null)
 		{

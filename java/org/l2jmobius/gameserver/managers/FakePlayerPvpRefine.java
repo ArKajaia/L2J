@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,8 @@ public class FakePlayerPvpRefine
 	private byte _attackElement = Elementals.NONE;
 	private int _attackValue;
 	private final int[] _defence = new int[6];
+	/** What each armor piece has (item id -> its value of each element), which adds up to {@link #_defence}: a piece it drops keeps its own. */
+	private final Map<Integer, int[]> _pieceDefence = new HashMap<>();
 	private int _augmentationId;
 
 	private FakePlayerPvpRefine()
@@ -154,7 +157,9 @@ public class FakePlayerPvpRefine
 				{
 					if ((armor != null) && armor.isElementable())
 					{
-						result._defence[element] += crystals ? rollCrystal(enchanter, ARMOR_STEP, ARMOR_STONE_MAX, ARMOR_CRYSTAL_MAX) : rollStone(ARMOR_STEP, ARMOR_STONE_MIN, ARMOR_STONE_MAX);
+						final int value = crystals ? rollCrystal(enchanter, ARMOR_STEP, ARMOR_STONE_MAX, ARMOR_CRYSTAL_MAX) : rollStone(ARMOR_STEP, ARMOR_STONE_MIN, ARMOR_STONE_MAX);
+						result._defence[element] += value;
+						result._pieceDefence.computeIfAbsent(armor.getId(), id -> new int[6])[element] += value;
 					}
 				}
 			}
@@ -250,6 +255,30 @@ public class FakePlayerPvpRefine
 	public int getDefence(byte element)
 	{
 		return _defence[element];
+	}
+
+	/**
+	 * @return the attribute its weapon has, as the value of each element (index Elementals.FIRE ... Elementals.DARK), all 0 for none
+	 */
+	public int[] getWeaponAttributes()
+	{
+		final int[] attributes = new int[6];
+		if ((_attackElement >= 0) && (_attackValue > 0))
+		{
+			attributes[_attackElement] = _attackValue;
+		}
+
+		return attributes;
+	}
+
+	/**
+	 * @param itemId the id of one of the armor pieces it wears
+	 * @return what that piece has, as the value of each element (index Elementals.FIRE ... Elementals.DARK), all 0 for none; the pieces add up to {@link #getDefence}
+	 */
+	public int[] getArmorAttributes(int itemId)
+	{
+		final int[] attributes = _pieceDefence.get(itemId);
+		return attributes != null ? attributes.clone() : new int[6];
 	}
 
 	/**
