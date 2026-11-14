@@ -2,13 +2,27 @@
 
 Taken through `docs/class-clinic.md` on 2026-11-14. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds (1,170 a run). The Dominator (classId 115) is the Overlord that fights; the Doomcryer is the Warcryer as a buffer.
 
-**Result: 30.0% → 69.7% overall (+39.7, 95% +36.0 to +43.4).** Clearly better against tanks (5% → 93%), melee (18% → 83%), daggers (8% → 46%), archers (10% → 55%) and buffers (65% → 92%); nukers (31% → 30%) and healers (98% → 96%) where they were. Build data, plus one class AI rule that only the Dominator reaches (no guard run).
+**Result: 30.0% → 71.3% overall (+41.3, 95% +37.6 to +45.0).** Clearly better against tanks (5% → 94%), melee (18% → 84%), daggers (8% → 57%), archers (10% → 55%) and buffers (65% → 91%); nukers (31% → 33%) and healers (98% → 96%) where they were. Build data, a class AI rule only the Dominator reaches, and CP heals that work on fake players (guard run on the Duelist).
 
 ## 1. The class
 
 From `skill_cards.py "Dominator"`: a robe caster with one damage spell, **Steal Essence** (4 s cast, 2 s reuse, reach 900, drains 80% of what it deals), and a kit of seals: debuffs around itself (target AURA, no reach of their own, area 200) at magic level 74 to 79. Seal of Despair (P. Atk −10%, speed −20%, M. Def −30%, attack speed −30%, 30 s reuse), Seal of Blockade (power 80 and no normal attacks for 10 s, 75 s reuse, lands 80% base), Seal of Disease (heals −50%, reach 600), Silence, Binding (root), Slow, Winter, Chaos, Poison, plus Dreaming Spirit (sleep), Fear and Madness. Its old attack spells (Frost Flame, Chill Flame, Venom, Aura Sink, Blaze Quake) are magic level 14 to 35. Chants and Pa'agrio buffs for a party; Arcane Power (M. Atk ×1.3) and Soul Guard (P. Def +653) toggles; Hammer Crush and Stun Attack with a blunt.
 
-Retail play (High Five): a mass debuffer for a clan. The sources found describe the Overlord/Dominator as a buffer and mass debuffer whose key PvP tools are Seal of Disease, Despair and Blockade ([l2calendar.com](https://l2calendar.com/blog/high-five-best-classes)); Seal of Limit stacks with Suspension and Despair ([rezidentev.ucoz.ru](http://rezidentev.ucoz.ru/forum/73-238-1), from the search summary); Suspension against a caster or dagger that closes in ([forum.pmfun.com](https://forum.pmfun.com/viewtopic.php?t=419), a 2007 post, pre-High Five). No High Five duel guide turned up. Yardstick for a duel: Steal Essence for the damage, the seals that land (Despair, Blockade, Disease) on a target in reach, nothing that lands 10%.
+Retail play (High Five): a mass debuffer for a clan. The sources found describe the Overlord/Dominator as a buffer and mass debuffer whose key PvP tools are Seal of Disease, Despair and Blockade ([l2calendar.com](https://l2calendar.com/blog/high-five-best-classes)); Seal of Limit stacks with Suspension and Despair ([rezidentev.ucoz.ru](http://rezidentev.ucoz.ru/forum/73-238-1), from the search summary); Suspension against a caster or dagger that closes in ([forum.pmfun.com](https://forum.pmfun.com/viewtopic.php?t=419), a 2007 post, pre-High Five). No High Five duel guide turned up.
+
+A full guide read afterwards: [maxcheaters.com, "[Guide] Lineage II: Dominator"](https://maxcheaters.com/topic/59811-guide-lineage-ii-dominator/) (2010; the author says it leaves out the C6 and later skills, so it predates High Five and its Seals of Despair and Blockade by level only). What it says, against what the clinic measured:
+
+| The guide | At level 85 here | Done |
+|---|---|---|
+| Steal Essence "the most important (and sometimes only) attacking skill. If you don't use it, you're dead" | 81% of its damage at the baseline, 95% now | Its only attack (batch 1) |
+| Against a melee: sleep first, then Seal of Binding ("once he gets rooted he has no chance"), then Despair or Suspension | Dreaming Spirit and Seal of Binding land 11% on a level 85 target in full buffs (the guide: Dreaming Spirit's land rate "is too big" on private servers) | Both out (batches 4, 5: +13.1 and melee +9.2); Despair kept in a combo started in reach (batch 3) |
+| **"Heal CP / hit, heal CP / hit"** with Ritual of Life (CP 858) between drains; its basic rule | A fake player has no CP: its class CP is the top of its HP pool (`FakePvpIncludeCpInHp`), and every CP heal effect restored nothing on it | CP heals now restore a fake player's HP (batch 6), Honor of Pa'agrio as its heal (batch 7) |
+| Seal of Suspension "one of my favourite skills": the target's reuse ×3 | Lands 43%, but a 4 s cast in the race with a dagger | Tried, daggers clearly worse (batch 8) |
+| Seal of Gloom against a mage, to drain its MP | Fake players cast for free | Not used |
+| Seal of Disease on healers ("you win") | It wins 96 to 99% against healers already | Kept |
+| Soul Cry, Soul Guard, Hammer Crush in fighter gear | It fights in a robe with a mage blunt | Soul Guard only (batch 1) |
+
+Yardstick for a duel: Steal Essence for the damage, the seals that land (Despair, Blockade, Disease) on a target in reach, nothing that lands 10%.
 
 ## 2. Baseline (`matrix-20261114-132505`)
 
@@ -108,10 +122,42 @@ Code: `isComboReady` in `FakePlayerPvpAI` and `FakePlayerPvpAIExperimental` (`is
 | buffer | 65.3% | 92.0% | +26.7 (+17.9 to +35.4) |
 | **all** | **30.0%** | **69.7%** | **+39.7 (+36.0 to +43.4)** |
 
+### Batch 6: CP heals restore a fake player's HP; Ritual of Life and Honor of Pa'agrio as its heals (`matrix-20261114-150831`)
+
+From the guide's "heal CP / hit". Code: `FakePlayerPvpManager.restoreCpAsHp` / `getFoldedMaxCp`, called by the `CpHeal`, `CpHealPercent` and `CpHealOverTime` effects (scripts): on a fake player whose CP is folded into its HP, the CP a skill restores goes to its HP, at most its max CP a heal and no higher than its recoverable HP (Seal of Limit). Players are unchanged. Besides the Dominator it reaches the Duelist (Braveheart restores 1,000 CP: guard run below) and Victory of Pa'agrio's 20% (cast before a fight at full HP).
+
+69.7% → 70.0% (+0.3, 95% −3.4 to +4.0), no kind clearly better or worse. The heal works (`000001-Archmage-vs-Dominator`: "heals Dominator for 858 with Ritual of Life", 39% → 42% HP), but Ritual of Life was cast 1.0 times a battle (5 s each, 3.0 against nukers) and **Honor of Pa'agrio never**: `castOnSelf` took SELF, ONE, PARTY and AURA skills, and Honor is PARTY_CLAN. The same timeline shows the cost of a 5 s heal: at 28% HP it cast Ritual of Life with the Archmage at 1%.
+
+### Batch 7: Honor of Pa'agrio as its heal, cast on itself (`matrix-20261114-152044`): kept on its own measure
+
+Code: `castOnSelf` (both brains) also takes a PARTY_CLAN skill, which takes in its caster. Only the Dominator has one in a list `castOnSelf` reads. Ritual of Life out of `heal` (5 s for 858).
+
+Against batch 5 (69.7%): 71.3% (+1.6, 95% −2.1 to +5.3), no kind clearly better or worse; daggers 45.6% → 56.7% (+11.1, −3.4 to +25.6). Honor of Pa'agrio 0 → 0.97 casts a battle (2.7 against nukers, 1.1 against archers), 3% aborted. Kept: it is cast and heals as meant, no kind is worse, and a fake player's CP heals working was asked for.
+
+**Guard: the Duelist** (Braveheart, 1,000 CP, is in its `heal` list), 15 battles an opponent, the CP heal scripts before (`matrix-20261114-153855`) and after (`matrix-20261114-153135`): 52.8% → 56.0% (+3.2, 95% −2.5 to +8.9), no kind clearly worse (buffers −4.0, the rest +0 to +6.7).
+
+### Batch 8: Seal of Suspension in the Despair combo and `debuff` (`matrix-20261114-154611`): taken out
+
+The guide's favourite: the target's reuse ×3 for 2 min, against fighters whose damage is skills. 71.3% → 68.7% (−2.6, 95% −6.3 to +1.1); **daggers 56.7% → 37.8% (−18.9, −33.2 to −4.6), clearly worse**; the rest within ±4. It landed 43% (more than the level 74 seals' 10%), cast 0.8 times a battle, and each cast was a Steal Essence less (−0.8): against a dagger, which kills it in 20 to 30 s, a 4 s seal is a race lost.
+
+Final: batch 7.
+
+| Against | Baseline | Final (batch 7) | Difference (95%) |
+|---|---|---|---|
+| tank | 5.0% | 94.2% | +89.2 |
+| melee | 18.1% | 83.5% | +65.4 |
+| dagger | 7.8% | 56.7% | +48.9 |
+| archer | 10.0% | 55.0% | +45.0 |
+| nuker | 30.8% | 33.3% | +2.5 |
+| healer | 98.3% | 96.1% | −2.2 |
+| buffer | 65.3% | 91.3% | +26.0 |
+| **all** | **30.0%** | **71.3%** | **+41.3** |
+
 ## 5. Not fixed here, and next
 
 - **Nukers (29%)**: it is out-damaged at range. Storm Screamer 0%, Soultaker 7%, Mystic Muse 10%, Archmage 13%: the wizards are the strongest builds of the clinic since their own clinic (`docs/class-clinic/wizards.md`), a balance question. Doom Oracle 13%: disabled 23% of the fight by its prophecies.
 - **Party play**: Chant of Life is out of the build entirely, so a Dominator in a real party doesn't cast it either. Its party buffs are untouched. A `supportParty` that doesn't count a party of one would let it come back (it reaches the Sword Muse too: guard run).
-- Seal of Suspension and Seal of Limit (section 3) are untested.
+- Seal of Limit (section 3) is untested.
+- Pa'agrio's Fist (+800 max CP, then 800 CP) would need its max CP stat folded into a fake player's HP as well.
 - **Daggers (46%)**: they stand on it 70% of the fight and it has no peel left that lands; a root or escape that works would be the next thing to look for (it has none in its kit).
 - **Balance**: from 30% to 70% puts the Dominator among the stronger builds (Archmage 85%, Storm Screamer 91%, War Dancer 72%). Its 4 s Steal Essence was not the problem; the casts spent around it were.

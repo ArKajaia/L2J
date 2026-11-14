@@ -672,8 +672,9 @@
 	</build>
 	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="2"> <!-- Overlord line -->
 		<attack>1245</attack> <!-- Steal Essence alone: Frost Flame, Chill Flame, Venom, Aura Sink (magic level 14 to 35) and Life Drain dealt 2 to 280 a cast against its 1,300 (docs/class-clinic/dominator.md) -->
-		<debuff>1462,1366,1367</debuff> <!-- Seal of Blockade, Despair, Disease, the seals the combo below leads with; the seals that land 10% (Silence, Binding, Slow, Winter, Chaos, Poison) and Madness out -->
+		<debuff>1462,1366,1367</debuff> <!-- Seal of Blockade, Despair, Disease, the seals the combo below leads with; the seals that land 10% (Silence, Binding, Slow, Winter, Chaos, Poison) and Madness out; Seal of Suspension tried, daggers clearly worse -->
 		<buff>1533</buff>
+		<heal>1305</heal> <!-- Honor of Pa'agrio (687, 2.5 s): a CP heal, which restores a fake player's HP (its CP is part of it). Ritual of Life (858, 5 s) tried, no change, and too slow -->
 		<toggle>337,1283</toggle> <!-- Arcane Power; Soul Guard (+653 P. Def) -->
 		<partyBuff>1414,1415,1365,1364,1003,1004,1005,1008,1249,1250,1260,1261,1282,1536,1537,1538,1563</partyBuff> <!-- In a party: Victory of Pa'agrio, Pa'agrio's Emblem, Soul/Eye of Pa'agrio, Gift, Wisdom, Blessings, Glory, Vision, Shield, Tact, Rage, Haste, Combat, Critical, Condition, Fury -->
 		<enchant>1245:1,1366:1,1367:1,1462:1</enchant>

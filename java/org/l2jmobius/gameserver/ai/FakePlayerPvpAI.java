@@ -5528,8 +5528,9 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				continue;
 			}
 			
+			// PARTY_CLAN takes in the caster too: the Dominator's Honor of Pa'agrio (a CP heal, so its HP) heals it alone.
 			final TargetType targetType = skill.getTargetType();
-			if ((targetType != TargetType.SELF) && (targetType != TargetType.ONE) && (targetType != TargetType.PARTY) && (targetType != TargetType.AURA))
+			if ((targetType != TargetType.SELF) && (targetType != TargetType.ONE) && (targetType != TargetType.PARTY) && (targetType != TargetType.PARTY_CLAN) && (targetType != TargetType.AURA))
 			{
 				continue;
 			}

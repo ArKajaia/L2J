@@ -20,6 +20,7 @@
  */
 package handlers.skill.effects;
 
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -46,6 +47,13 @@ public class CpHealOverTime extends AbstractEffect
 		if (effected.isDead())
 		{
 			return false;
+		}
+		
+		// A fake player's CP is part of its HP: the heal goes there.
+		final double asHp = FakePlayerPvpManager.restoreCpAsHp(effected, _power * getTicksMultiplier());
+		if (asHp >= 0)
+		{
+			return asHp > 0;
 		}
 		
 		double cp = effected.getCurrentCp();

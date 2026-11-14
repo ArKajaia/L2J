@@ -17,6 +17,7 @@
 package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.managers.CombatLogManager;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -58,6 +59,14 @@ public class CpHeal extends AbstractEffect
 	{
 		if ((effected == null) || effected.isDead() || effected.isDoor())
 		{
+			return;
+		}
+		
+		// A fake player's CP is part of its HP: the heal goes there.
+		final double asHp = FakePlayerPvpManager.restoreCpAsHp(effected, _power);
+		if (asHp >= 0)
+		{
+			CombatLogManager.onHealed(effector, effected, skill, asHp, 0);
 			return;
 		}
 		
