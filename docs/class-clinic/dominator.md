@@ -140,6 +140,10 @@ Against batch 5 (69.7%): 71.3% (+1.6, 95% −2.1 to +5.3), no kind clearly bette
 
 The guide's favourite: the target's reuse ×3 for 2 min, against fighters whose damage is skills. 71.3% → 68.7% (−2.6, 95% −6.3 to +1.1); **daggers 56.7% → 37.8% (−18.9, −33.2 to −4.6), clearly worse**; the rest within ±4. It landed 43% (more than the level 74 seals' 10%), cast 0.8 times a battle, and each cast was a Steal Essence less (−0.8): against a dagger, which kills it in 20 to 30 s, a 4 s seal is a race lost.
 
+### Batch 9: heal each time Honor of Pa'agrio is ready (`matrix-20261114-160138`): taken out
+
+Asked for: the guide's "heal CP / hit" taken literally. Build attribute `healOnCooldown` (`FakePlayerPvpBuild`, read in `thinkAttack` in both brains): the `heal` list is cast whenever it is ready and HP is under 98%, instead of under 50% half the time. 71.3% → 66.7% (−4.6, 95% −8.4 to −0.9), **clearly worse; melee 83.5% → 74.7% (−8.8, −14.7 to −2.8), clearly worse**; archers −10.8, daggers −12.2. Honor of Pa'agrio 1.0 → 9.6 casts a battle (18.7 against tanks), damage dealt 539 → 486 a second. A heal of 687 in 2.5 s takes the place of part of a Steal Essence, which drains about 1,100 back in 4 s and deals 1,385: Steal Essence is already its better heal. The attribute stays in the code, off for every build.
+
 Final: batch 7.
 
 | Against | Baseline | Final (batch 7) | Difference (95%) |

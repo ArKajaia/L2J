@@ -122,6 +122,7 @@ public class FakePlayerPvpBuild
 	private int _mageRange;
 	/** A mage of this build runs from a slower melee it is losing to, and casts while the melee walks back. */
 	private boolean _outrun;
+	private boolean _healOnCooldown;
 	/** A build with a caster kit fights a melee that is on it with its main weapon while it has no jump ready, instead of standing in its reach with the magic weapon. */
 	private boolean _caughtMain;
 	/** The skills it enchants, most important first: each entry {skillId, route} alternatives, of which one is picked for each fake player. */
@@ -175,6 +176,7 @@ public class FakePlayerPvpBuild
 		variant._variant = true;
 		variant._mageRange = _mageRange;
 		variant._outrun = _outrun;
+		variant._healOnCooldown = _healOnCooldown;
 		variant._caughtMain = _caughtMain;
 		variant._enchants = _enchants;
 		variant._richWeaponKit = _richWeaponKit;
@@ -360,6 +362,19 @@ public class FakePlayerPvpBuild
 	public void setOutrunner(boolean outrun)
 	{
 		_outrun = outrun;
+	}
+	
+	/**
+	 * @return {@code true} for a build that casts its heal each time it is ready while it is hurt at all (the healOnCooldown attribute: a Dominator guide's "heal CP / hit"), instead of below half its HP
+	 */
+	public boolean isHealOnCooldown()
+	{
+		return _healOnCooldown;
+	}
+	
+	public void setHealOnCooldown(boolean healOnCooldown)
+	{
+		_healOnCooldown = healOnCooldown;
 	}
 	
 	/**

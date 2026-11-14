@@ -1129,7 +1129,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 
-		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
+		// healOnCooldown: each time the heal is ready, while it is hurt at all ("heal CP / hit"); otherwise below half its HP, half the time.
+		if ((((hpRatio < 0.5) && (Rnd.get(100) < 50)) || (profile.getBuild().isHealOnCooldown() && (hpRatio < HEAL_ON_COOLDOWN_BELOW))) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "HEAL");
 			return;
@@ -3230,6 +3231,9 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	{
 		npc.setHeading((LocationUtil.calculateHeadingFrom(npc, target) - (int) ((skill.getFlyCourse() * 65536) / 360)) & 0xFFFF);
 	}
+	
+	/** healOnCooldown: it heals whenever it is under this share of its HP. */
+	private static final double HEAL_ON_COOLDOWN_BELOW = 0.98;
 	
 	/** Outrun: how much faster than the melee on it a caster has to be. */
 	private static final double OUTRUN_SPEED_RATIO = 1.2;
