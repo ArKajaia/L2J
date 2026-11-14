@@ -722,7 +722,7 @@
 		<toggle>322,335</toggle>
 		<peel>92,403</peel>
 		<cleanse>44</cleanse> <!-- No heals: Divine Heal (4 s) and Divine Blessing (5 s) were aborted 49% and 58% of the time, 74% and 84% against archers -->
-		<enchant>403:2,400:1,92:1,110:1|110:2,406:4|406:3</enchant>
+		<enchant>403:2,400:1,92:1,110:1|110:2,406:4|406:3</enchant> <!-- Shackle Chance first: every tank that enchants anything has its root enchanted -->
 		<combo name="Shield stun" pvp="true">
 			<step skill="92" /> <!-- Shield Stun -->
 			<step skill="984" /> <!-- Shield Strike -->
@@ -738,7 +738,7 @@
 		<toggle>322,335</toggle>
 		<peel>352,402</peel>
 		<cleanse>21</cleanse>
-		<enchant>352:1,402:2,400:1,110:1|110:2,123:1</enchant>
+		<enchant>402:2,352:1,400:1,110:1|110:2,123:1</enchant> <!-- Arrest Chance first: every tank that enchants anything has its root enchanted -->
 		<combo name="Shield bash" pvp="true">
 			<step skill="352" /> <!-- Shield Bash -->
 			<step skill="984" /> <!-- Shield Strike -->
@@ -754,7 +754,7 @@
 		<toggle>322,335</toggle>
 		<peel>92,403,763</peel> <!-- Shield Stun, Shackle, Hell Scream -->
 		<summon>283</summon> <!-- Summon Dark Panther -->
-		<enchant>403:2,127:1,342:2,401:1,92:1,110:1|110:2,86:1</enchant>
+		<enchant>403:2,127:1,342:2,401:1,92:1,110:1|110:2,86:1</enchant> <!-- Shackle Chance first: every tank that enchants anything has its root enchanted -->
 		<combo name="Shield stun" pvp="true">
 			<step skill="92" /> <!-- Shield Stun -->
 			<step skill="401" /> <!-- Judgment -->
@@ -774,7 +774,7 @@
 		<emergency>110</emergency> <!-- Ultimate Defense: the reflex casts it only when it is about to die (Reflexes, rootsCaster) -->
 		<toggle>322,335</toggle>
 		<peel>352,402</peel>
-		<enchant>352:1,402:2,342:2,223:1,401:1,110:1|110:2</enchant>
+		<enchant>402:2,352:1,342:2,223:1,401:1,110:1|110:2</enchant> <!-- Arrest Chance first: every tank that enchants anything has its root enchanted -->
 		<combo name="Shield bash" pvp="true">
 			<step skill="352" /> <!-- Shield Bash -->
 			<step skill="984" /> <!-- Shield Strike -->
