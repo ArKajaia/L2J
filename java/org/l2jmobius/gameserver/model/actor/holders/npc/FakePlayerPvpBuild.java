@@ -365,7 +365,7 @@ public class FakePlayerPvpBuild
 	}
 	
 	/**
-	 * @return {@code true} for a build that casts its heal each time it is ready while it is hurt at all (the healOnCooldown attribute: a Dominator guide's "heal CP / hit"), instead of below half its HP
+	 * @return {@code true} for a build that casts its heal in the reuse of all its attacks, under 90% HP and with no enemy within 300 (the healOnCooldown attribute: a Dominator guide's "heal CP / hit"), as well as below half its HP
 	 */
 	public boolean isHealOnCooldown()
 	{

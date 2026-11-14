@@ -144,6 +144,12 @@ The guide's favourite: the target's reuse ×3 for 2 min, against fighters whose 
 
 Asked for: the guide's "heal CP / hit" taken literally. Build attribute `healOnCooldown` (`FakePlayerPvpBuild`, read in `thinkAttack` in both brains): the `heal` list is cast whenever it is ready and HP is under 98%, instead of under 50% half the time. 71.3% → 66.7% (−4.6, 95% −8.4 to −0.9), **clearly worse; melee 83.5% → 74.7% (−8.8, −14.7 to −2.8), clearly worse**; archers −10.8, daggers −12.2. Honor of Pa'agrio 1.0 → 9.6 casts a battle (18.7 against tanks), damage dealt 539 → 486 a second. A heal of 687 in 2.5 s takes the place of part of a Steal Essence, which drains about 1,100 back in 4 s and deals 1,385: Steal Essence is already its better heal. The attribute stays in the code, off for every build.
 
+### Batch 10: heal only in Steal Essence's reuse (`matrix-20261114-161519`): taken out
+
+Asked for, after batch 9: buffed, the Dominator casts in about 0.55 s, so Steal Essence (2 s reuse) leaves a gap after each cast that a heal could fill for free. Batch 9's timelines (`000017-Dominator-vs-Titan`) agree: each Honor of Pa'agrio went in that gap, Steal Essence followed 0.3 to 0.8 s later, and Steal Essence casts didn't fall (31.3 → 32.0). Its cost was elsewhere: it stood still to heal while a melee walked in (median gap against tanks 202 → 160), it healed at 94 to 97% HP (534 of 687 in one cast), and every heal set off the enemy's `ENEMY_HEAL` reflex. `healOnCooldown` now heals only with every attack on reuse (`areAttacksOnReuse`), under 90% HP, and no enemy within 300.
+
+71.3% → 70.7% (−0.6, 95% −4.2 to +3.1), no kind clearly better or worse (daggers −11.1, archers −5.8, buffers +4.7, nukers +2.5). Honor of Pa'agrio 1.0 → 2.9 casts a battle (7.7 against nukers), Steal Essence 31.3 → 32.7, the melee within 200 of it 57% → 54%: the gap heals no longer cost anything, but they gain nothing either. Against a melee the gap is rarely free of an enemy within 300; against a nuker, a race of damage, 3% of its HP every few seconds doesn't change who falls first. Taken out (the attribute stays, off).
+
 Final: batch 7.
 
 | Against | Baseline | Final (batch 7) | Difference (95%) |

@@ -1129,8 +1129,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 
-		// healOnCooldown: each time the heal is ready, while it is hurt at all ("heal CP / hit"); otherwise below half its HP, half the time.
-		if ((((hpRatio < 0.5) && (Rnd.get(100) < 50)) || (profile.getBuild().isHealOnCooldown() && (hpRatio < HEAL_ON_COOLDOWN_BELOW))) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
+		// healOnCooldown: in the reuse of its attacks ("heal CP / hit"), hurt enough for the heal not to be wasted and with no enemy close enough to need a kite step; otherwise below half its HP, half the time.
+		if ((((hpRatio < 0.5) && (Rnd.get(100) < 50)) || (profile.getBuild().isHealOnCooldown() && (hpRatio < HEAL_ON_COOLDOWN_BELOW) && areAttacksOnReuse(npc, profile) && !isEnemyOnMe(npc, HEAL_ON_COOLDOWN_CLEAR))) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "HEAL");
 			return;
@@ -3232,8 +3232,29 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		npc.setHeading((LocationUtil.calculateHeadingFrom(npc, target) - (int) ((skill.getFlyCourse() * 65536) / 360)) & 0xFFFF);
 	}
 	
-	/** healOnCooldown: it heals whenever it is under this share of its HP. */
-	private static final double HEAL_ON_COOLDOWN_BELOW = 0.98;
+	/** healOnCooldown: it heals in its attacks' reuse when under this share of its HP (above it, a heal of 687 on 20,000 HP is partly wasted), with no enemy this close (a melee walking in: it kite steps instead). */
+	private static final double HEAL_ON_COOLDOWN_BELOW = 0.9;
+	private static final int HEAL_ON_COOLDOWN_CLEAR = 300;
+	
+	/**
+	 * @return {@code true} if every skill of its attack list is on reuse: a moment its attacks can't fill (the Dominator's Steal Essence has a 2 s reuse after a cast of about 0.55 s)
+	 */
+	private static boolean areAttacksOnReuse(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		final List<Skill> attacks = profile.getSkills(SkillCategory.ATTACK);
+		if (attacks.isEmpty())
+		{
+			return false;
+		}
+		for (Skill skill : attacks)
+		{
+			if (!npc.isSkillDisabled(skill))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	/** Outrun: how much faster than the melee on it a caster has to be. */
 	private static final double OUTRUN_SPEED_RATIO = 1.2;
