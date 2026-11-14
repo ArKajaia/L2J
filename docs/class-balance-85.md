@@ -664,3 +664,13 @@ The four Soul Hound builds against all 40 builds, 10 battles per pair, level 85,
 - No single build gained clearly; Ghost Sentinel lost clearly, and 9 of 13 moved down.
 - The losses come from melee: summed over the 13 builds, against Duelist −15.4, Male Soul Hound Hybrid −13.5, Judicator −13.1, Eva's Templar −11.5, Grand Khavatari −10.0, War Dancer −8.5 points. The −15% P.Def costs more against physical damage than stun immunity saves. Those melee builds are the ones that rose most (Male Soul Hound Hybrid +10.4, Judicator +7.1).
 - Left as it was: the builds don't take it by default. To try it again, give a build `keystones="+!Unwavering Stance"` (the Soultaker `"+!Unwavering Stance;Soul Link*0.3"`). `tools/simulation/matrix_compare.py <baseline> <changed> --builds ... --pairs` compares two matrices like this.
+
+## The wizards after their clinic (2026-11-14, `docs/class-clinic/wizards.md`)
+
+Not a balance change: the AI and a game mechanic, recorded here because it moves the balance. The class clinic (level 85, brain A, seed 4040, 1,170 duels each) took the Archmage from 63.2% to 85.4%, the Mystic Muse from 54.1% to 81.8% and the Storm Screamer from 56.2% to 90.9%:
+
+- Their builds lacked Aura Blast and opened every fight with a Surrender that lands 30% of the time; the data now has Aura Blast and an opening burst.
+- Arcane Shield did nothing for a fake player (only `PlayerStatus` read the `manaShield` stat). `NpcStatus` now applies it as for a player, and the builds cast it at the start of a fight: for 10 s a hit costs 30% of its damage in MP and no HP. Fake players don't pay MP for their other skills, so their MP is always full for it; a player's would not be. Against archers it is worth 15 to 28 points.
+- Their skills hit with base power, not PvP power (a fake player isn't playable in `Formulas`): Aura Blast 199 instead of 141. That reaches every class with PvP powers (a general finding in `docs/class-clinic.md`).
+
+They are now the strongest builds in the clinic (the other finished classes are at 41 to 73%). Options, if they are too strong: the PvP power fix first (it is a correction, and it lowers Aura Blast and Aura Cannon by 30 to 40%), then charging a fake player MP under Arcane Shield as a player pays it, before touching their stats.

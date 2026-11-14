@@ -6,9 +6,11 @@ A case of `docs/class-clinic.md`, 2026-11-14. Level 85, brain A, seed 4040, 30 b
 
 | Build | Before | After | Difference (95%) |
 |---|---|---|---|
-| Archmage | 63.2% | 77.6% (batches 1 and 2) | +14.4 |
-| Mystic Muse | 54.1% | 76.1% (batch 1) | +22.0 (+18.2 to +25.8), **better** |
-| Storm Screamer | 56.2% | 84.7% (batch 1) | +28.5 (+25.0 to +32.1), **better** |
+| Archmage | 63.2% | 85.4% | +22.2 (+18.8 to +25.6), **better** |
+| Mystic Muse | 54.1% | 81.8% | +27.7 (+24.1 to +31.3), **better** |
+| Storm Screamer | 56.2% | 90.9% | +34.7 (+31.4 to +37.9), **better** |
+
+Three batches: build data (Aura Blast, which none of the three had, an opening burst instead of a debuff that lands 30% of the time, no fear, Ice Bolt or Self Heal), Arcane Shield made to work for fake players (it did nothing), and Arcane Shield at the start of the fight with no heals. No kind of opponent got worse for any of them at any step. They are now among the strongest builds: see section 5, "Balance".
 
 ## 1. The class
 
@@ -111,21 +113,45 @@ Arcane Shield 0.2 → 1.04 casts a battle, none aborted (8% before); Slow 2.0 �
 
 Batches 1 to 3 against the Archmage's baseline: 63.2% → 85.4% (+22.2, +18.8 to +25.6), better against every kind but tanks (82.5 → 90.0, no clear change): melee 65 → 92, dagger 68 → 96, archer 33 → 83, nuker 58 → 72, healer 44 → 63, buffer 85 → 96. Its worst opponents now are the Storm Screamer (27%) and the Doom Oracle (43%).
 
-FINAL
+### Batches 2 and 3 on the other two (against their batch 1)
+
+| Against | Mystic Muse (`matrix-20261114-003948`) | Storm Screamer (`matrix-20261114-004720`) |
+|---|---|---|
+| **archer** | 53.3 → 67.5 **better** (+14.2, +1.9 to +26.4) | 62.5 → 85.0 **better** (+22.5, +11.7 to +33.3) |
+| **all** | 76.1 → 81.8 **better** (+5.7, +2.4 to +9.0) | 84.7 → 90.9 **better** (+6.1, +3.5 to +8.8) |
+
+Storm Screamer also better against melee (+5.7) and daggers (+12.2, now 100%); no kind clearly worse for either.
+
+## Before and after, all batches
+
+| Against | Archmage | Mystic Muse | Storm Screamer |
+|---|---|---|---|
+| **tank** | 82.5 → 90.0 | 75.0 → 81.7 | 71.7 → 89.2 **better** |
+| **melee** | 65.0 → 92.4 **better** | 53.9 → 92.2 **better** | 46.9 → 92.8 **better** |
+| **dagger** | 67.8 → 95.6 **better** | 52.2 → 95.6 **better** | 31.7 → 100 **better** |
+| **archer** | 33.3 → 82.5 **better** | 25.0 → 67.5 **better** | 19.2 → 85.0 **better** |
+| **nuker** | 57.5 → 72.1 **better** | 48.3 → 66.2 **better** | 60.4 → 79.6 **better** |
+| **healer** | 43.9 → 62.8 **better** | 43.9 → 61.1 **better** | 100 → 100 |
+| **buffer** | 85.3 → 96.0 **better** | 77.3 → 97.0 **better** | 77.3 → 99.3 **better** |
+| **all** | 63.2 → 85.4 **better** | 54.1 → 81.8 **better** | 56.2 → 90.9 **better** |
+
+The opponents in the "after" runs are the new wizards too, so part of the nuker column is wizard against wizard.
 
 ## 5. Not fixed here
 
 - **PvP power.** A fake player's skill hits another fake player, and a real player, with its base power, not its PvP power: `Formulas` takes `isPvP` and `isPvE` from `attacker.isPlayable()`, and a fake player is an NPC. Aura Blast hits for power 199 instead of 141, Aura Cannon 302 instead of 178. It reaches every skill with a PvP power, every class: a general finding (`docs/class-clinic.md`), not tuned around here.
 - **Healers** (Archmage 57%, Mystic Muse 66% after batch 1): most fights go to the time limit with the healer healing back 95%. The Storm Screamer wins all of them (Demon Wind blocks heals for 2 minutes, Silence on a caster). The Archmage and Mystic Muse have no heal block or silence in their kit.
-- **Balance.** After batch 1 the three are at 76 to 85%, among the strongest builds. That is the AI using the kit; whether robe nukers should be this strong is for `docs/class-balance-85.md`.
+- **Balance.** After the three batches the wizards win 82 to 91% of their duels, the strongest builds in the clinic so far (the next best finished classes are at 70 to 73%). That is the AI using the kit and a skill that now works; whether robe nukers should be this strong is a balance decision, written down in `docs/class-balance-85.md`. A 1v1 flatters them: nobody peels for the archer or heals the melee, and a real player's Arcane Shield costs MP that a fake player doesn't pay for its other casts.
 
 ## 6. What changed
 
 - `dist/game/data/FakePlayerPvp.xml`, the three wizards: Aura Blast in the attack list; "Opening burst" (Archmage, Mystic Muse) and "Silence and burst" (Storm Screamer, Silence on a caster only) open with the Elemental nuke, Aura Blast and the second 5 minute nuke; no Ice Bolt, no Curse Fear in `peel`, no Self Heal in `heal`.
 - `model/actor/status/NpcStatus.java`: Arcane Shield (the `manaShield` stat) for a fake player, as `PlayerStatus` does for a player. Batch 2.
+- `dist/game/data/FakePlayerPvp.xml`, batch 3: Arcane Shield in the three `buff` lists, no `heal` list, no "Slow and burn" combo (Archmage).
+- Guard: the build data reaches only these three builds; `NpcStatus` reaches only fake players with the `manaShield` stat, which only Arcane Shield (these three) gives. No guard run needed. Other builds' results against the wizards will be lower than in their own case files.
 
 ## 7. Next for this class
 
 - Soultaker and Dominator, the other two nukers not yet through the clinic.
-- The Archmage's Slow (2 casts a battle at 33%) and Count of Fire / Throne of Ice / Throne of Wind (75 s, 25 to 30% landed).
+- Count of Fire / Throne of Ice / Throne of Wind (75 s, 25 to 30% landed), still in the debuff lists.
 - Star Fall / Meteor (5 min, power 117 and a damage over time) and Diamond Dust (Mystic Muse, an aura slow) are learned and not in the builds.
