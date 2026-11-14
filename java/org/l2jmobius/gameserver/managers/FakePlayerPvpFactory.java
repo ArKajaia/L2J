@@ -400,10 +400,10 @@ public class FakePlayerPvpFactory
 			mDef += getStat(rightRing, Stat.MAGIC_DEFENCE) + defenceEnchantBonus(rightRingEnchant);
 		}
 		
-		// Weapon: its stats replace the unarmed ones (weapon "set" functions). A polearm (Dreadnoughts) also gives its Polearm Multi-attack while it holds it, and the weapon of a build that swaps to a magic weapon its special ability
-		// (a hybrid Soul Hound's rapier with Health), which it gives up while the other one is out.
+		// Weapon: its stats replace the unarmed ones (weapon "set" functions). Every weapon also gives its passive item skills while it holds it: its special ability (Health, Focus, Haste, Critical Damage, Acumen... see the kits of
+		// data/FakePlayerPvp.xml), a polearm's Polearm Multi-attack, the PvP damage of a dual sword. The weapons a build swaps between give theirs up while another one is out (a hybrid Soul Hound's rapier with Health, a tank's bow with Focus).
 		final boolean caster = FakePlayerPvpConfig.CASTER_SWAP_ENABLED && (build.getCasterKit() != null) && (level >= FakePlayerPvpConfig.CASTER_SWAP_MIN_LEVEL);
-		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant, (weapon != null) && ((weapon.getItemType() == WeaponType.POLE) || caster) ? getPassiveSkills(weapon) : Collections.emptyList());
+		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant, weapon != null ? getPassiveSkills(weapon) : Collections.emptyList());
 		
 		// Tanks and tyrants carry a bow for players they can't catch.
 		FakePlayerPvpWeapon bow = null;
@@ -414,7 +414,7 @@ public class FakePlayerPvpFactory
 			if ((bowItem instanceof Weapon) && ((Weapon) bowItem).isRange())
 			{
 				// A spare weapon is rarely enchanted as high as the main one.
-				bow = createWeapon(classTemplate, (Weapon) bowItem, null, enchanter.roll(bowItem, Kind.WEAPON) / 2);
+				bow = createWeapon(classTemplate, (Weapon) bowItem, null, enchanter.roll(bowItem, Kind.WEAPON) / 2, getPassiveSkills(bowItem));
 			}
 		}
 		
@@ -1049,7 +1049,7 @@ public class FakePlayerPvpFactory
 	
 	/**
 	 * @param item an item
-	 * @return the passive skills of {@code item} (a polearm's Polearm Multi-attack)
+	 * @return the passive skills of {@code item}: its special ability (Health, Focus...), a polearm's Polearm Multi-attack. Its chance and active skills (Critical Stun, Cheap Shot...) and its +4 enchant skill are not among them.
 	 */
 	private static List<Skill> getPassiveSkills(ItemTemplate item)
 	{

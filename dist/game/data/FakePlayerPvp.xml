@@ -8,6 +8,13 @@
 	     Tiers with the same minLevel are alternatives: each fake player gets one of them, picked by their
 	     weight (default 1), like players of a level that don't all wear the same set. List the best one
 	     last: the strong fake players of the PvP spots always wear it.
+	     Weapons of C grade and up (40) are the item with a special ability (SA, the soul crystal of a player's blacksmith), the one that suits the
+	     kit's class: Health for tanks and shield fighters, Focus for two-handed warriors, fists, archers and the Judicator, Critical Damage for daggers, Haste
+	     for polearms (Anger where a grade has no Haste), Acumen for mages (Mana Up at A grade where there is no Acumen). Where a grade has not the wanted SA, the
+	     next one of that kit's list is used (Haste or Guidance at C and B for most). Only the passive SAs count: Critical Stun, Critical Bleed, Magic Silence... are
+	     trigger skills a fake player doesn't use, so those tiers keep the plain weapon (the mages' staves of C and B grade). Dual swords and dual daggers have no
+	     SA in the item data.
+	     The weapon gives its SA while it is held (see FakePlayerPvpFactory#getPassiveSkills): a tank's bow with Focus counts only after it swaps to it.
 	     The ACCESSORIES kit holds the shirts and belts of every build, and the cloak elements the cloaks
 	     (see below). The enchant of every piece is rolled on its own (FakePvp*EnchantOdds in
 	     config/Custom/FakePlayerPvp.ini).
@@ -224,12 +231,12 @@
 	<kit name="SWORD_SHIELD">
 		<tier minLevel="1" rhand="68" lhand="102" /> <!-- Falchion / Round Shield -->
 		<tier minLevel="20" rhand="2499" lhand="2493" /> <!-- Elven Long Sword / Brigandine Shield -->
-		<tier minLevel="40" rhand="135" lhand="2497" /> <!-- Samurai Longsword / Full Plate Shield -->
-		<tier minLevel="52" rhand="79" lhand="110" /> <!-- Sword of Damascus / Doom Shield -->
-		<tier minLevel="61" rhand="2500" lhand="2498" /> <!-- Dark Legion's Edge / Shield of Nightmare -->
-		<tier minLevel="76" rhand="6364" lhand="6377" /> <!-- Forgotten Blade / Imperial Crusader Shield -->
-		<tier minLevel="80" rhand="10215" lhand="9441" /> <!-- Icarus Sawsword / Dynasty Shield -->
-		<tier minLevel="84" rhand="13457" lhand="13471" /> <!-- Vesper Cutter / Vesper Shield -->
+		<tier minLevel="40" rhand="4710" lhand="2497" /> <!-- Samurai Longsword - Haste / Full Plate Shield -->
+		<tier minLevel="52" rhand="4719" lhand="110" /> <!-- Sword of Damascus - Haste / Doom Shield -->
+		<tier minLevel="61" rhand="5648" lhand="2498" /> <!-- Dark Legion's Edge - Health / Shield of Nightmare -->
+		<tier minLevel="76" rhand="6582" lhand="6377" /> <!-- Forgotten Blade - Health / Imperial Crusader Shield -->
+		<tier minLevel="80" rhand="10435" lhand="9441" /> <!-- Icarus Sawsword - Health / Dynasty Shield -->
+		<tier minLevel="84" rhand="14119" lhand="13471" /> <!-- Vesper Cutter - Health / Vesper Shield -->
 	</kit>
 	<kit name="DUAL">
 		<tier minLevel="1" rhand="68" /> <!-- Falchion -->
@@ -244,89 +251,99 @@
 	<kit name="BIGSWORD">
 		<tier minLevel="1" rhand="5284" /> <!-- Zweihander -->
 		<tier minLevel="20" rhand="70" /> <!-- Claymore -->
-		<tier minLevel="40" rhand="5286" /> <!-- Berserker Blade -->
-		<tier minLevel="52" rhand="7883" /> <!-- Guardian Sword -->
-		<tier minLevel="61" rhand="81" /> <!-- Dragon Slayer -->
-		<tier minLevel="76" rhand="6372" /> <!-- Heaven's Divider -->
-		<tier minLevel="80" rhand="10218" /> <!-- Icarus Heavy Arms -->
-		<tier minLevel="84" rhand="13458" /> <!-- Vesper Slasher -->
+		<tier minLevel="40" rhand="6347" /> <!-- Berserker Blade - Focus -->
+		<tier minLevel="52" rhand="8106" /> <!-- Guardian Sword - Health -->
+		<tier minLevel="61" rhand="5644" /> <!-- Dragon Slayer - Health -->
+		<tier minLevel="76" rhand="6607" /> <!-- Heaven's Divider - Focus -->
+		<tier minLevel="80" rhand="10437" /> <!-- Icarus Heavy Arms - Focus -->
+		<tier minLevel="84" rhand="14123" /> <!-- Vesper Slasher - Focus -->
 	</kit>
 	<kit name="FIST">
 		<tier minLevel="1" rhand="256" /> <!-- Cestus -->
 		<tier minLevel="20" rhand="262" /> <!-- Scallop Jamadhr -->
-		<tier minLevel="40" rhand="266" /> <!-- Great Pata -->
-		<tier minLevel="52" rhand="268" /> <!-- Bellion Cestus -->
-		<tier minLevel="61" rhand="270" /> <!-- Dragon Grinder -->
-		<tier minLevel="76" rhand="6371" /> <!-- Demon Splinter -->
-		<tier minLevel="80" rhand="10221" /> <!-- Icarus Hand -->
-		<tier minLevel="84" rhand="13461" /> <!-- Vesper Fighter -->
+		<tier minLevel="40" rhand="4797" /> <!-- Great Pata - Rsk. Haste -->
+		<tier minLevel="52" rhand="4806" /> <!-- Bellion Cestus - Rsk. Haste -->
+		<tier minLevel="61" rhand="5625" /> <!-- Dragon Grinder - Health -->
+		<tier minLevel="76" rhand="6602" /> <!-- Demon Splinter - Focus -->
+		<tier minLevel="80" rhand="10459" /> <!-- Icarus Hand - Focus -->
+		<tier minLevel="84" rhand="14130" /> <!-- Vesper Fighter - Focus -->
 	</kit>
 	<kit name="DAGGER">
 		<tier minLevel="1" rhand="219" /> <!-- Sword Breaker -->
 		<tier minLevel="20" rhand="225" /> <!-- Mithril Dagger -->
-		<tier minLevel="40" rhand="228" /> <!-- Crystal Dagger -->
-		<tier minLevel="52" rhand="234" /> <!-- Demon's Dagger -->
-		<tier minLevel="61" rhand="236" /> <!-- Soul Separator -->
-		<tier minLevel="76" rhand="6367" /> <!-- Angel Slayer -->
-		<tier minLevel="80" rhand="10216" /> <!-- Icarus Disperser -->
-		<tier minLevel="84" rhand="13460" /> <!-- Vesper Shaper -->
+		<tier minLevel="40" rhand="6358" /> <!-- Crystal Dagger - Critical Damage -->
+		<tier minLevel="52" rhand="6359" /> <!-- Demon's Dagger - Critical Damage -->
+		<tier minLevel="61" rhand="5618" /> <!-- Soul Separator - Critical Damage -->
+		<tier minLevel="76" rhand="6590" /> <!-- Angel Slayer - Critical Damage -->
+		<tier minLevel="80" rhand="10448" /> <!-- Icarus Disperser - Critical Damage -->
+		<tier minLevel="84" rhand="14127" /> <!-- Vesper Shaper - Critical Damage -->
 	</kit>
 	<kit name="BOW">
 		<tier minLevel="1" rhand="273" /> <!-- Composite Bow -->
 		<tier minLevel="20" rhand="280" /> <!-- Light Crossbow -->
-		<tier minLevel="40" rhand="286" /> <!-- Eminence Bow -->
-		<tier minLevel="52" rhand="287" /> <!-- Bow of Peril -->
-		<tier minLevel="61" rhand="289" /> <!-- Soul Bow -->
-		<tier minLevel="76" rhand="7575" /> <!-- Draconic Bow -->
-		<tier minLevel="80" rhand="10223" /> <!-- Icarus Spitter -->
-		<tier minLevel="84" rhand="13467" /> <!-- Vesper Thrower -->
+		<tier minLevel="40" rhand="4822" /> <!-- Eminence Bow - Guidance -->
+		<tier minLevel="52" rhand="4828" /> <!-- Bow of Peril - Guidance -->
+		<tier minLevel="61" rhand="5611" /> <!-- Soul Bow - Cheap Shot -->
+		<tier minLevel="76" rhand="7577" /> <!-- Draconic Bow - Focus -->
+		<tier minLevel="80" rhand="10445" /> <!-- Icarus Spitter - Focus -->
+		<tier minLevel="84" rhand="14149" /> <!-- Vesper Thrower - Focus -->
 	</kit>
 	<kit name="POLEARM">
 		<tier minLevel="1" rhand="16" /> <!-- Great Spear -->
 		<tier minLevel="20" rhand="93" /> <!-- Winged Spear -->
-		<tier minLevel="40" rhand="301" /> <!-- Scorpion -->
-		<tier minLevel="52" rhand="97" /> <!-- Lance -->
-		<tier minLevel="61" rhand="98" /> <!-- Halberd -->
-		<tier minLevel="76" rhand="6370" /> <!-- Saint Spear -->
-		<tier minLevel="80" rhand="10219" /> <!-- Icarus Trident -->
-		<tier minLevel="84" rhand="13462" /> <!-- Vesper Stormer -->
+		<tier minLevel="40" rhand="4846" /> <!-- Scorpion - Anger -->
+		<tier minLevel="52" rhand="4858" /> <!-- Lance - Anger -->
+		<tier minLevel="61" rhand="5626" /> <!-- Halberd - Haste -->
+		<tier minLevel="76" rhand="6601" /> <!-- Saint Spear - Haste -->
+		<tier minLevel="80" rhand="10449" /> <!-- Icarus Trident - Anger -->
+		<tier minLevel="84" rhand="14135" /> <!-- Vesper Stormer - Haste -->
 	</kit>
 	<kit name="MAGE">
 		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
 		<tier minLevel="20" rhand="188" /> <!-- Ghost Staff -->
 		<tier minLevel="40" rhand="206" /> <!-- Demon's Staff -->
 		<tier minLevel="52" rhand="210" /> <!-- Staff of Evil Spirits -->
-		<tier minLevel="61" rhand="151" /> <!-- Sword of Miracles -->
-		<tier minLevel="76" rhand="6579" /> <!-- Arcana Mace -->
-		<tier minLevel="80" rhand="10217" /> <!-- Icarus Spirit -->
-		<tier minLevel="84" rhand="13459" /> <!-- Vesper Buster -->
+		<tier minLevel="61" rhand="5643" /> <!-- Sword of Miracles - Acumen -->
+		<tier minLevel="76" rhand="6608" /> <!-- Arcana Mace - Acumen -->
+		<tier minLevel="80" rhand="10440" /> <!-- Icarus Spirit - Acumen -->
+		<tier minLevel="84" rhand="14125" /> <!-- Vesper Buster - Acumen -->
 	</kit>
 	<!-- Kamael (they can't use a shield) -->
 	<kit name="ANCIENT_SWORD">
 		<tier minLevel="1" rhand="68" /> <!-- Falchion -->
 		<tier minLevel="20" rhand="9223" /> <!-- Katzbalger -->
-		<tier minLevel="40" rhand="9296" /> <!-- Saber Tooth -->
-		<tier minLevel="52" rhand="9320" /> <!-- Dismantler -->
-		<tier minLevel="61" rhand="9356" /> <!-- Durendal -->
-		<tier minLevel="76" rhand="9368" /> <!-- Gram -->
-		<tier minLevel="80" rhand="10225" /> <!-- Icarus Wingblade -->
-		<tier minLevel="84" rhand="13470" /> <!-- Vesper Nagan -->
+		<tier minLevel="40" rhand="9297" /> <!-- Saber Tooth - Focus -->
+		<tier minLevel="52" rhand="9322" /> <!-- Dismantler - Health -->
+		<tier minLevel="61" rhand="9357" /> <!-- Durendal - Focus -->
+		<tier minLevel="76" rhand="9371" /> <!-- Gram - Focus -->
+		<tier minLevel="80" rhand="10464" /> <!-- Icarus Wingblade - Focus -->
+		<tier minLevel="84" rhand="14159" /> <!-- Vesper Nagan - Focus -->
 	</kit>
 	<kit name="RAPIER">
 		<tier minLevel="1" rhand="9720" /> <!-- Warrior's Sword -->
 		<tier minLevel="20" rhand="9222" /> <!-- Epee -->
-		<tier minLevel="40" rhand="9292" /> <!-- Admiral's Estoc -->
-		<tier minLevel="52" rhand="9316" /> <!-- Colichemarde -->
-		<tier minLevel="61" rhand="9352" /> <!-- Eclair Bijou -->
-		<tier minLevel="76" rhand="9364" /> <!-- Laevateinn -->
-		<tier minLevel="80" rhand="10224" /> <!-- Icarus Stinger -->
-		<tier minLevel="84" rhand="13468" /> <!-- Vesper Pincer -->
+		<tier minLevel="40" rhand="9295" /> <!-- Admiral's Estoc - Haste -->
+		<tier minLevel="52" rhand="9319" /> <!-- Colichemarde - Haste -->
+		<tier minLevel="61" rhand="9354" /> <!-- Eclair Bijou - Health -->
+		<tier minLevel="76" rhand="9366" /> <!-- Laevateinn - Health -->
+		<tier minLevel="80" rhand="10462" /> <!-- Icarus Stinger - Health -->
+		<tier minLevel="84" rhand="14152" /> <!-- Vesper Pincer - Health -->
+	</kit>
+	<kit name="RAPIER_FOCUS"> <!-- Judicator: the rapier of a fighter that lives on its skills and its crits (Focus, Haste where it has no Focus), where the Soul Hounds' RAPIER has Health. -->
+		<tier minLevel="1" rhand="9720" /> <!-- Warrior's Sword -->
+		<tier minLevel="20" rhand="9222" /> <!-- Epee -->
+		<tier minLevel="40" rhand="9293" /> <!-- Admiral's Estoc - Focus -->
+		<tier minLevel="52" rhand="9317" /> <!-- Colichemarde - Focus -->
+		<tier minLevel="61" rhand="9353" /> <!-- Eclair Bijou - Haste -->
+		<tier minLevel="76" rhand="9367" /> <!-- Laevateinn - Focus -->
+		<tier minLevel="80" rhand="10461" /> <!-- Icarus Stinger - Focus -->
+		<tier minLevel="84" rhand="14153" /> <!-- Vesper Pincer - Focus -->
 	</kit>
 	<kit name="RAPIER_HEALTH"> <!-- Hybrid Soul Hounds: the rapier with Health (+25% Max HP) where its grade has one, which counts only while they hold it (see the caster kit below). -->
 		<tier minLevel="1" rhand="9720" /> <!-- Warrior's Sword -->
 		<tier minLevel="20" rhand="9222" /> <!-- Epee -->
-		<tier minLevel="40" rhand="9292" /> <!-- Admiral's Estoc (no Health at C grade) -->
-		<tier minLevel="52" rhand="9316" /> <!-- Colichemarde (no Health at B grade) -->
+		<tier minLevel="40" rhand="9295" /> <!-- Admiral's Estoc - Haste (no Health at C grade) -->
+		<tier minLevel="52" rhand="9319" /> <!-- Colichemarde - Haste (no Health at B grade) -->
 		<tier minLevel="61" rhand="9354" /> <!-- Eclair Bijou - Health -->
 		<tier minLevel="76" rhand="9366" /> <!-- Laevateinn - Health -->
 		<tier minLevel="80" rhand="10462" /> <!-- Icarus Stinger - Health -->
@@ -344,43 +361,43 @@
 	<kit name="CROSSBOW">
 		<tier minLevel="1" rhand="9212" /> <!-- Field Gun -->
 		<tier minLevel="20" rhand="9224" /> <!-- Arm Breaker -->
-		<tier minLevel="40" rhand="9300" /> <!-- Sharpshooter -->
-		<tier minLevel="52" rhand="9324" /> <!-- Hell Hound -->
-		<tier minLevel="61" rhand="9360" /> <!-- Screaming Vengeance -->
-		<tier minLevel="76" rhand="9372" /> <!-- Sarunga -->
-		<tier minLevel="80" rhand="10226" /> <!-- Icarus Shooter -->
-		<tier minLevel="84" rhand="13469" /> <!-- Vesper Shooter -->
+		<tier minLevel="40" rhand="9301" /> <!-- Sharpshooter - Guidance -->
+		<tier minLevel="52" rhand="9325" /> <!-- Hell Hound - Guidance -->
+		<tier minLevel="61" rhand="9362" /> <!-- Screaming Vengeance - Focus -->
+		<tier minLevel="76" rhand="9374" /> <!-- Sarunga - Focus -->
+		<tier minLevel="80" rhand="10469" /> <!-- Icarus Shooter - Focus -->
+		<tier minLevel="84" rhand="14155" /> <!-- Vesper Shooter - Focus -->
 	</kit>
 	<kit name="MAGE_BLUNT"> <!-- Blunts only, for the Stun Attack and Hammer Crush of orc mystics. -->
 		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
 		<tier minLevel="20" rhand="188" /> <!-- Ghost Staff -->
 		<tier minLevel="40" rhand="206" /> <!-- Demon's Staff -->
 		<tier minLevel="52" rhand="210" /> <!-- Staff of Evil Spirits -->
-		<tier minLevel="61" rhand="8687" /> <!-- Cabrio's Hand -->
-		<tier minLevel="76" rhand="6579" /> <!-- Arcana Mace -->
-		<tier minLevel="80" rhand="10222" /> <!-- Icarus Hall -->
-		<tier minLevel="84" rhand="13465" /> <!-- Vesper Caster -->
+		<tier minLevel="61" rhand="8816" /> <!-- Cabrio's Hand - Mana Up -->
+		<tier minLevel="76" rhand="6608" /> <!-- Arcana Mace - Acumen -->
+		<tier minLevel="80" rhand="10457" /> <!-- Icarus Hall - Acumen -->
+		<tier minLevel="84" rhand="14142" /> <!-- Vesper Caster - Acumen -->
 	</kit>
 	<!-- Dwarves: fighter blunts for Stun Attack, Hammer Crush, Crushing Strike and Spoil Crush (see README "Dwarven Trades"). -->
 	<kit name="BLUNT_SHIELD">
 		<tier minLevel="1" rhand="87" lhand="102" /> <!-- Iron Hammer / Round Shield -->
 		<tier minLevel="20" rhand="159" lhand="2493" /> <!-- Bonebreaker / Brigandine Shield -->
-		<tier minLevel="40" rhand="2503" lhand="2497" /> <!-- Yaksa Mace / Full Plate Shield -->
-		<tier minLevel="52" rhand="175" lhand="110" /> <!-- Art of Battle Axe / Doom Shield -->
-		<tier minLevel="61" rhand="8680" lhand="2498" /> <!-- Barakiel's Axe / Shield of Nightmare -->
-		<tier minLevel="76" rhand="6365" lhand="6377" /> <!-- Basalt Battlehammer / Imperial Crusader Shield -->
-		<tier minLevel="80" rhand="10220" lhand="9441" /> <!-- Icarus Hammer / Dynasty Shield -->
-		<tier minLevel="84" rhand="13463" lhand="13471" /> <!-- Vesper Avenger / Vesper Shield -->
+		<tier minLevel="40" rhand="4745" lhand="2497" /> <!-- Yaksa Mace - Health / Full Plate Shield -->
+		<tier minLevel="52" rhand="4753" lhand="110" /> <!-- Art of Battle Axe - Health / Doom Shield -->
+		<tier minLevel="61" rhand="8794" lhand="2498" /> <!-- Barakiel's Axe - Health / Shield of Nightmare -->
+		<tier minLevel="76" rhand="6585" lhand="6377" /> <!-- Basalt Battlehammer - Health / Imperial Crusader Shield -->
+		<tier minLevel="80" rhand="10453" lhand="9441" /> <!-- Icarus Hammer - Health / Dynasty Shield -->
+		<tier minLevel="84" rhand="14137" lhand="13471" /> <!-- Vesper Avenger - Health / Vesper Shield -->
 	</kit>
 	<kit name="BIGBLUNT">
 		<tier minLevel="1" rhand="87" /> <!-- Iron Hammer (no two-handed blunt below D grade) -->
 		<tier minLevel="20" rhand="7896" /> <!-- Titan Hammer -->
-		<tier minLevel="40" rhand="7897" /> <!-- Dwarven Hammer -->
-		<tier minLevel="52" rhand="7901" /> <!-- Star Buster -->
-		<tier minLevel="61" rhand="8681" /> <!-- Behemoth's Tuning Fork -->
-		<tier minLevel="76" rhand="6369" /> <!-- Dragon Hunter Axe -->
-		<tier minLevel="80" rhand="10253" /> <!-- Dynasty Crusher -->
-		<tier minLevel="84" rhand="13464" /> <!-- Vesper Retributer -->
+		<tier minLevel="40" rhand="8120" /> <!-- Dwarven Hammer - Health -->
+		<tier minLevel="52" rhand="8133" /> <!-- Star Buster - Haste -->
+		<tier minLevel="61" rhand="8797" /> <!-- Behemoth's Tuning Fork - Focus -->
+		<tier minLevel="76" rhand="6597" /> <!-- Dragon Hunter Axe - Health -->
+		<tier minLevel="80" rhand="10531" /> <!-- Dynasty Crusher - Health -->
+		<tier minLevel="84" rhand="14140" /> <!-- Vesper Retributer - Health -->
 	</kit>
 
 	<!-- Second builds (see <variant>): other sets of the same grades, and "legacy" kits that keep their A grade gear through the S grade (76) tier and only move on at S80. -->
@@ -444,11 +461,11 @@
 	<kit name="SWORD_SHIELD_ALT"> <!-- Shields of the HEAVY_LEGACY sets. -->
 		<tier minLevel="1" rhand="68" lhand="102" /> <!-- Falchion / Round Shield -->
 		<tier minLevel="20" rhand="2499" lhand="2493" /> <!-- Elven Long Sword / Brigandine Shield -->
-		<tier minLevel="40" rhand="72" lhand="107" /> <!-- Stormbringer / Composite Shield -->
-		<tier minLevel="52" rhand="142" lhand="633" /> <!-- Keshanberk / Zubei's Shield -->
-		<tier minLevel="61" rhand="80" lhand="641" /> <!-- Tallum Blade / Dark Crystal Shield, kept at S grade -->
-		<tier minLevel="80" rhand="9442" lhand="9441" /> <!-- Dynasty Sword / Dynasty Shield -->
-		<tier minLevel="84" rhand="10215" lhand="13471" /> <!-- Icarus Sawsword / Vesper Shield -->
+		<tier minLevel="40" rhand="4682" lhand="107" /> <!-- Stormbringer - Focus / Composite Shield -->
+		<tier minLevel="52" rhand="4715" lhand="633" /> <!-- Keshanberk - Focus / Zubei's Shield -->
+		<tier minLevel="61" rhand="5636" lhand="641" /> <!-- Tallum Blade - Haste / Dark Crystal Shield, kept at S grade -->
+		<tier minLevel="80" rhand="9855" lhand="9441" /> <!-- Dynasty Sword - Health / Dynasty Shield -->
+		<tier minLevel="84" rhand="10435" lhand="13471" /> <!-- Icarus Sawsword - Health / Vesper Shield -->
 	</kit>
 	<kit name="DUAL_DAGGER"> <!-- The weapon of rich daggers (richWeapon, FakePvpRichWeaponWealth): dual daggers, which dagger classes hold from 81 like in retail (crafted from two daggers). No tier below 81: there they hold their dagger. -->
 		<tier minLevel="81" rhand="13883" /> <!-- Icarus Dual Daggers -->
@@ -457,49 +474,49 @@
 	<kit name="DAGGER_ALT">
 		<tier minLevel="1" rhand="219" /> <!-- Sword Breaker -->
 		<tier minLevel="20" rhand="225" /> <!-- Mithril Dagger -->
-		<tier minLevel="40" rhand="233" /> <!-- Dark Screamer -->
-		<tier minLevel="52" rhand="229" /> <!-- Kris -->
-		<tier minLevel="61" rhand="235" /> <!-- Bloody Orchid -->
-		<tier minLevel="76" rhand="8682" /> <!-- Naga Storm, kept at S grade -->
-		<tier minLevel="80" rhand="9446" /> <!-- Dynasty Knife -->
-		<tier minLevel="84" rhand="10216" /> <!-- Icarus Disperser -->
+		<tier minLevel="40" rhand="4772" /> <!-- Dark Screamer - Focus -->
+		<tier minLevel="52" rhand="4778" /> <!-- Kris - Focus -->
+		<tier minLevel="61" rhand="5614" /> <!-- Bloody Orchid - Focus -->
+		<tier minLevel="76" rhand="8801" /> <!-- Naga Storm - Critical Damage, kept at S grade -->
+		<tier minLevel="80" rhand="9868" /> <!-- Dynasty Knife - Critical Damage -->
+		<tier minLevel="84" rhand="10448" /> <!-- Icarus Disperser - Critical Damage -->
 	</kit>
 	<kit name="BOW_ALT">
 		<tier minLevel="1" rhand="273" /> <!-- Composite Bow -->
 		<tier minLevel="20" rhand="280" /> <!-- Light Crossbow -->
-		<tier minLevel="40" rhand="283" /> <!-- Akat Long Bow -->
-		<tier minLevel="52" rhand="284" /> <!-- Dark Elven Long Bow -->
-		<tier minLevel="61" rhand="288" /> <!-- Carnage Bow -->
-		<tier minLevel="76" rhand="8684" /> <!-- Shyeed's Bow, kept at S grade -->
-		<tier minLevel="80" rhand="9445" /> <!-- Dynasty Bow -->
-		<tier minLevel="84" rhand="10223" /> <!-- Icarus Spitter -->
+		<tier minLevel="40" rhand="4819" /> <!-- Akat Long Bow - Guidance -->
+		<tier minLevel="52" rhand="4825" /> <!-- Dark Elven Long Bow - Evasion -->
+		<tier minLevel="61" rhand="5610" /> <!-- Carnage Bow - Mana Up -->
+		<tier minLevel="76" rhand="8807" /> <!-- Shyeed's Bow - Focus, kept at S grade -->
+		<tier minLevel="80" rhand="9865" /> <!-- Dynasty Bow - Focus -->
+		<tier minLevel="84" rhand="10445" /> <!-- Icarus Spitter - Focus -->
 	</kit>
 	<kit name="MAGE_ALT">
 		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
 		<tier minLevel="20" rhand="188" /> <!-- Ghost Staff -->
-		<tier minLevel="40" rhand="198" /> <!-- Inferno Staff -->
+		<tier minLevel="40" rhand="7716" /> <!-- Inferno Staff - Acumen -->
 		<tier minLevel="52" rhand="92" /> <!-- Sprite's Staff -->
-		<tier minLevel="61" rhand="213" /> <!-- Branch of the Mother Tree, kept at S grade -->
-		<tier minLevel="80" rhand="10252" /> <!-- Dynasty Staff -->
-		<tier minLevel="84" rhand="10217" /> <!-- Icarus Spirit -->
+		<tier minLevel="61" rhand="5607" /> <!-- Branch of the Mother Tree - Acumen, kept at S grade -->
+		<tier minLevel="80" rhand="10529" /> <!-- Dynasty Staff - Acumen -->
+		<tier minLevel="84" rhand="10440" /> <!-- Icarus Spirit - Acumen -->
 	</kit>
 	<kit name="BIGSWORD_ALT">
 		<tier minLevel="1" rhand="5284" /> <!-- Zweihander -->
 		<tier minLevel="20" rhand="70" /> <!-- Claymore -->
-		<tier minLevel="40" rhand="71" /> <!-- Flamberge -->
-		<tier minLevel="52" rhand="78" /> <!-- Great Sword -->
-		<tier minLevel="61" rhand="8679" /> <!-- Sword of Ipos, kept at S grade -->
-		<tier minLevel="80" rhand="9443" /> <!-- Dynasty Blade -->
-		<tier minLevel="84" rhand="10218" /> <!-- Icarus Heavy Arms -->
+		<tier minLevel="40" rhand="4712" /> <!-- Flamberge - Focus -->
+		<tier minLevel="52" rhand="4725" /> <!-- Great Sword - Focus -->
+		<tier minLevel="61" rhand="8791" /> <!-- Sword of Ipos - Focus, kept at S grade -->
+		<tier minLevel="80" rhand="9857" /> <!-- Dynasty Blade - Focus -->
+		<tier minLevel="84" rhand="10437" /> <!-- Icarus Heavy Arms - Focus -->
 	</kit>
 	<kit name="POLEARM_ALT">
 		<tier minLevel="1" rhand="16" /> <!-- Great Spear -->
 		<tier minLevel="20" rhand="93" /> <!-- Winged Spear -->
 		<tier minLevel="40" rhand="303" /> <!-- Widow Maker -->
-		<tier minLevel="52" rhand="300" /> <!-- Great Axe -->
-		<tier minLevel="61" rhand="305" /> <!-- Tallum Glaive, kept at S grade -->
-		<tier minLevel="80" rhand="9447" /> <!-- Dynasty Halberd -->
-		<tier minLevel="84" rhand="10219" /> <!-- Icarus Trident -->
+		<tier minLevel="52" rhand="4855" /> <!-- Great Axe - Anger -->
+		<tier minLevel="61" rhand="5633" /> <!-- Tallum Glaive - Health, kept at S grade -->
+		<tier minLevel="80" rhand="9869" /> <!-- Dynasty Halberd - Anger -->
+		<tier minLevel="84" rhand="10449" /> <!-- Icarus Trident - Anger -->
 	</kit>
 
 	<!-- Cloaks: a full armor set whose set skill opens the cloak slot (Dynasty, Moirai, Vesper Noble..., not the plain Vesper sets) lets a fake
@@ -1264,7 +1281,7 @@
 		</combo>
 		<variant name="Female Soul Hound Hybrid Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Judicator" classId="136" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" weight="2" skillFighter="true"> <!-- Kamael, female (Warder, Inspector) -->
+	<build name="Judicator" classId="136" role="FIGHTER" weapon="RAPIER_FOCUS" armor="LIGHT_DAGGER" weight="2" skillFighter="true"> <!-- Kamael, female (Warder, Inspector) -->
 		<attack>505,504,939,478,492,1433,1434,468,1431</attack>
 		<debuff>1482,1483,1484,1485,1486,1435,1445</debuff> <!-- Curses that trigger when the target takes damage -->
 		<buff>469,482,1476,1515</buff> <!-- Appetite for Destruction: the instincts share one slot -->

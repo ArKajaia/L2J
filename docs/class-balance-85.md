@@ -676,3 +676,33 @@ Not a balance change: the AI and a game mechanic, recorded here because it moves
 They are now the strongest builds in the clinic (the other finished classes are at 41 to 73%). Options, if they are too strong: the PvP power fix first (it is a correction, and it lowers Aura Blast and Aura Cannon by 30 to 40%), then charging a fake player MP under Arcane Shield as a player pays it, before touching their stats.
 
 **PvP power done (same day):** fake players now use PvP power and the PvP stats against players and fake players (`Formulas.isPvp` / `isPve`). Archmage 85.4% → 77.4% (`matrix-20261114-045130`), tanks 90 → 69. It reaches every build through the PvP damage and defence stats (PvP armour sets, weapon special abilities, Final Secret): a full matrix before and after is still to do.
+
+## Special ability weapons for every build (2026-11-14)
+
+Before, only the hybrid Soul Hounds (Health rapier, Acumen mace) and polearm holders had item skills: every other build held the plain weapon. Now every weapon of C grade (level 40) and up in `data/FakePlayerPvp.xml` is the item with a special ability (SA), and `FakePlayerPvpFactory` gives a fake player the passive skills of the weapon it holds, the main weapon, the bow and the polearm it swaps to, and the mace. Swapping weapons swaps the SA (a tank's Health sword gives up its +25% max HP while it holds the bow).
+
+**Which SA, and why.** The list per kit is in the order of preference; the first SA a grade has is used. The numbers are from this repo's item and skill data (S84: Focus +133 critical, Haste +11% Atk. Spd., Health +25% max HP, Critical Damage on a dagger +906, Acumen +15% Casting Spd.; every S grade SA also gives +5% PvP damage):
+
+| Kit (builds) | SA list | C 40 | B 52 | A 61 | S 76 | S80 | S84 |
+|---|---|---|---|---|---|---|---|
+| `SWORD_SHIELD` (Phoenix Knight, Eva's Templar, Hell Knight, Shillien Templar, Battle Bard, Sword Muse) | Health, Haste, Focus | Haste | Haste | Health | Health | Health | Health |
+| `SWORD_SHIELD_ALT` (their Legacy builds) | Health, Haste, Focus | Focus | Focus | Haste | (A grade) | Health | Health |
+| `BLUNT_SHIELD` (Fortune Seeker, Maestro) | Health, Haste, Focus | Health | Health | Health | Health | Health | Health |
+| `BIGBLUNT` (Fortune Seeker and Maestro Crusher) | Focus, Haste, Health | Health | Haste | Focus | Health | Health | Health |
+| `BIGSWORD` (Titan) | Focus, Haste, Critical Damage, Health | Focus | Health (no Focus at B) | Health | Focus | Focus | Focus |
+| `BIGSWORD_ALT` (Titan Light) | Focus, Haste, Critical Damage, Health | Focus | Focus | Focus | (A grade) | Focus | Focus |
+| `ANCIENT_SWORD` (Doombringer) | Focus, Haste, Critical Damage, Health | Focus | Health | Focus | Focus | Focus | Focus |
+| `FIST` (Grand Khavatari) | Focus, Haste, Rsk. Haste, Health | Rsk. Haste | Rsk. Haste | Health | Focus | Focus | Focus |
+| `POLEARM`, `POLEARM_ALT` (Dreadnought; the polearm of the warriors) | Haste, Anger, Health | Anger | Anger | Haste / Health | Haste | Anger | Haste |
+| `DAGGER` (Adventurer, Wind Rider, Ghost Hunter) | Critical Damage, Focus, Haste | Critical Damage | Critical Damage | Critical Damage | Critical Damage | Critical Damage | Critical Damage |
+| `DAGGER_ALT` (Heavy / Legacy daggers) | Critical Damage, Focus, Haste | Focus | Focus | Focus | Critical Damage | Critical Damage | Critical Damage |
+| `BOW`, `BOW_ALT`, `CROSSBOW` (archers, Trickster, the bow of tanks and tyrants) | Focus, Guidance, Mana Up, Cheap Shot | Guidance | Guidance / Evasion | Cheap Shot / Mana Up / Focus | Focus | Focus | Focus |
+| `MAGE`, `MAGE_ALT`, `MAGE_BLUNT` (every mage, healer and support) | Acumen, Mana Up | none (Inferno Staff of `MAGE_ALT`: Acumen) | none | Acumen (Cabrio's Hand: Mana Up) | Acumen | Acumen | Acumen |
+| `RAPIER` (Soul Hounds) | Health, Haste | Haste | Haste | Health | Health | Health | Health |
+| `RAPIER_FOCUS` (Judicator, new) | Focus, Haste | Focus | Focus | Haste | Focus | Focus | Focus |
+| `RAPIER_HEALTH`, `SOUL_MACE` (hybrid Soul Hounds) | unchanged | Haste | Haste | Health | Health | Health | Health |
+
+- **Sources.** The class advice comes from the PMfun forum thread "Best SA, depending on the class" (2008, so Interlude / Kamael era, not High Five): Acumen for nukers and healers in PvP, Focus for archers, Critical Damage for daggers, Health for tanks and shield fighters. It has no clear answer for the warriors ("Warlord, no"; a Destroyer wants Focus on a two-handed weapon), so the two-handed warriors and the fists got Focus and the polearms Haste from the numbers above, and nothing measured them. Where posters disagree on a nuker (Empower, Acumen or Magic Power) Acumen was taken, the one most of them name for PvP. The SA names and effects of each weapon are those of this repo's item and skill data (`data/stats`); PMfun's SA list and l2gamerguide.com's weapon list turned up in the search but were not compared line by line. lineage2dex.com names no chronicle and lists SAs (Duel, Leech) that no weapon here has, so it was not used.
+- **Not modelled.** Only the passive SAs count. Critical Stun, Critical Bleed/Poison/Slow/Drain, Magic Silence/Hold/Paralyze are trigger skills a fake player does not use, so a grade that has only those keeps the plain weapon (the C and B staves, Widow Maker). The +4 enchant skills (Maximum Ability, a dual sword's Haste) are not applied; neither are the masterwork and elemental variants (Thunder, Lightning, Destruction), the PvP weapons and the Concentration / Clairvoyance ones.
+- **No SA exists** for dual swords (Duelist, War Dancer, Spectral Dancer) and dual daggers in the item data, so those builds keep their weapon. They do get the PvP damage skill of the item now (`Tallum Blade*Dark Legion's Edge` has `PvP Damage`), which the polearm and caster gate kept out before.
+- **Not measured.** No matrix was run with these weapons: the choices are by the data and the advice above. A fighter that swaps weapons loses what is above the lower max HP when it swaps off a Health weapon, as before for the hybrids. Run the matrix against the last one (`matrix_compare.py`) before tuning a build's SA further.
