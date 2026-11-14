@@ -36,7 +36,6 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
-import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -71,7 +70,7 @@ public class FakePlayerPvpProfile
 	// Kamael souls, used by the soul skills like a player's (see Creature#getChargedSouls()).
 	private final AtomicInteger _souls = new AtomicInteger();
 	private final List<FakePlayerPvpCombo.Chain> _combos = new ArrayList<>();
-	private final List<ItemEnchantHolder> _equipment;
+	private final List<FakePlayerPvpPiece> _equipment;
 	
 	// The monster this fake player replaced and the spawn it came from (null for admin spawns).
 	private Npc _replacedMonster;
@@ -157,14 +156,14 @@ public class FakePlayerPvpProfile
 	 * @param armorWornMask the item mask of the armor it wears (like {@code Inventory#getWearedMask()}, without the weapon and shield)
 	 * @param armorMask the item mask of its body armor, 0 if it wears none
 	 * @param maxCharges the most Sonic/Force energy charges its class can hold
-	 * @param equipment every item it wears or carries, with its enchant level
+	 * @param equipment every item it wears or carries, with its enchant level, its attributes and whether it is augmented
 	 * @param mainWeapon its weapon (and shield)
 	 * @param bow the bow it carries besides its weapon, {@code null} for none
 	 * @param polearm the polearm it carries besides its weapon, {@code null} for none
 	 * @param caster the magic weapon it carries besides its weapon, {@code null} for none
 	 * @param personality its temper (see {@link FakePlayerPvpPersonality}); it runs away from a PvP it is losing with its own flee chance, otherwise it fights to the death
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, FakePlayerPvpWeapon polearm, FakePlayerPvpWeapon caster, FakePlayerPvpPersonality personality)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<FakePlayerPvpPiece> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, FakePlayerPvpWeapon polearm, FakePlayerPvpWeapon caster, FakePlayerPvpPersonality personality)
 	{
 		_build = build;
 		_playerClass = playerClass;
@@ -494,9 +493,9 @@ public class FakePlayerPvpProfile
 	}
 	
 	/**
-	 * @return every item it wears or carries, with its enchant level
+	 * @return every item it wears or carries, with its enchant level, its attributes and whether it is augmented; the first weapon is its main one, which has the attribute and the augment of its weapon
 	 */
-	public List<ItemEnchantHolder> getEquipment()
+	public List<FakePlayerPvpPiece> getEquipment()
 	{
 		return _equipment;
 	}

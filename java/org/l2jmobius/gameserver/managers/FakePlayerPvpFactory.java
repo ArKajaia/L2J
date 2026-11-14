@@ -50,6 +50,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpGearTier;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPiece;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -60,7 +61,6 @@ import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.enums.BodyPart;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
-import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
@@ -669,15 +669,16 @@ public class FakePlayerPvpFactory
 		// How many energy charges the class can hold: the Sonic Focus/Focused Force level, or Sonic/Force Mastery for 3rd classes.
 		final int maxCharges = Math.max(Math.max(learned.getOrDefault(8, 0), learned.getOrDefault(50, 0)), Math.max(learned.getOrDefault(992, 0), learned.getOrDefault(993, 0)));
 		
-		// What it wears, for the equipment drop.
-		final List<ItemEnchantHolder> equipment = new ArrayList<>();
-		addEquipment(equipment, weapon, weaponEnchant);
+		// What it wears, for the equipment drop: every piece as it has it, so what a kill drops is that item. Its weapon has the attribute and the augment rolled for it (an augmented one never drops, see FakePlayerPvpPiece#isDropable), the armor pieces their own attributes.
+		// The spare weapons it carries have neither.
+		final List<FakePlayerPvpPiece> equipment = new ArrayList<>();
+		addEquipment(equipment, weapon, weaponEnchant, refine.getWeaponAttributes(), refine.getAugmentationId() != 0);
 		addEquipment(equipment, shield, shieldEnchant);
-		addEquipment(equipment, chest, chestEnchant);
-		addEquipment(equipment, legs, legsEnchant);
-		addEquipment(equipment, head, headEnchant);
-		addEquipment(equipment, gloves, glovesEnchant);
-		addEquipment(equipment, feet, feetEnchant);
+		addArmor(equipment, chest, chestEnchant, refine);
+		addArmor(equipment, legs, legsEnchant, refine);
+		addArmor(equipment, head, headEnchant, refine);
+		addArmor(equipment, gloves, glovesEnchant, refine);
+		addArmor(equipment, feet, feetEnchant, refine);
 		// Not its raid boss jewels: a kill must not make them out of thin air (every one in the world comes from its boss).
 		addEquipment(equipment, epicJewels.contains(leftEarring) ? null : leftEarring, leftEarringEnchant);
 		addEquipment(equipment, epicJewels.contains(rightEarring) ? null : rightEarring, rightEarringEnchant);
@@ -689,15 +690,15 @@ public class FakePlayerPvpFactory
 		addEquipment(equipment, cloak, 0);
 		if (bow != null)
 		{
-			equipment.add(new ItemEnchantHolder(bow.getWeaponId(), 1, bow.getEnchant()));
+			equipment.add(new FakePlayerPvpPiece(bow.getWeaponId(), bow.getEnchant()));
 		}
 		if (polearm != null)
 		{
-			equipment.add(new ItemEnchantHolder(polearm.getWeaponId(), 1, polearm.getEnchant()));
+			equipment.add(new FakePlayerPvpPiece(polearm.getWeaponId(), polearm.getEnchant()));
 		}
 		if (casterWeapon != null)
 		{
-			equipment.add(new ItemEnchantHolder(casterWeapon.getWeaponId(), 1, casterWeapon.getEnchant()));
+			equipment.add(new FakePlayerPvpPiece(casterWeapon.getWeaponId(), casterWeapon.getEnchant()));
 		}
 		
 		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, casterWeapon, elite ? FakePlayerPvpPersonality.elite() : FakePlayerPvpPersonality.random());
@@ -973,11 +974,27 @@ public class FakePlayerPvpFactory
 		return result;
 	}
 	
-	private static void addEquipment(List<ItemEnchantHolder> equipment, ItemTemplate item, int enchant)
+	private static void addEquipment(List<FakePlayerPvpPiece> equipment, ItemTemplate item, int enchant)
+	{
+		addEquipment(equipment, item, enchant, null, false);
+	}
+	
+	private static void addEquipment(List<FakePlayerPvpPiece> equipment, ItemTemplate item, int enchant, int[] attributes, boolean augmented)
 	{
 		if (item != null)
 		{
-			equipment.add(new ItemEnchantHolder(item.getId(), 1, enchant));
+			equipment.add(new FakePlayerPvpPiece(item.getId(), enchant, attributes, augmented));
+		}
+	}
+	
+	/**
+	 * Adds a piece of armor with the attributes {@code refine} gave it.
+	 */
+	private static void addArmor(List<FakePlayerPvpPiece> equipment, ItemTemplate item, int enchant, FakePlayerPvpRefine refine)
+	{
+		if (item != null)
+		{
+			addEquipment(equipment, item, enchant, refine.getArmorAttributes(item.getId()), false);
 		}
 	}
 	

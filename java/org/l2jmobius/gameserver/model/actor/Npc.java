@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import org.l2jmobius.commons.threads.ThreadPool;
@@ -1971,6 +1972,19 @@ public class Npc extends Creature
 	 */
 	public Item dropItem(Creature creature, int itemId, long itemCount)
 	{
+		return dropItem(creature, itemId, itemCount, null);
+	}
+	
+	/**
+	 * Drops an item, after {@code beforeDrop} changed it.
+	 * @param creature the last attacker or main damage dealer
+	 * @param itemId the item ID
+	 * @param itemCount the item count
+	 * @param beforeDrop what to do with each item made, before it is on the ground where it can be picked up (to give it an enchant level or attributes); {@code null} for nothing
+	 * @return the dropped item
+	 */
+	public Item dropItem(Creature creature, int itemId, long itemCount, Consumer<Item> beforeDrop)
+	{
 		Item item = null;
 		for (int i = 0; i < itemCount; i++)
 		{
@@ -1989,6 +2003,11 @@ public class Npc extends Creature
 			if (creature != null)
 			{
 				item.getDropProtection().protect(creature);
+			}
+			
+			if (beforeDrop != null)
+			{
+				beforeDrop.accept(item);
 			}
 			
 			// Randomize drop position.
