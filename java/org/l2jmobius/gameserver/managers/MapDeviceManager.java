@@ -63,6 +63,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
 import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
+import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -191,6 +192,59 @@ public class MapDeviceManager
 	private static final double SHIELD_DEF_SHARE = 0.5;
 	/** Linked Souls: true while damage is being passed on to a partner, so it isn't shared (or reduced) twice. */
 	private static final ThreadLocal<Boolean> SHARING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+	/** Set while a Chain Reaction burst deals its damage: a monster that dies of it is a chain kill. */
+	private static final ThreadLocal<Boolean> BURSTING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+	private static final int CHAIN_DELAY = 400;
+	private static final int CHAIN_RADIUS = 300;
+	private static final double CHAIN_MONSTER_DAMAGE = 0.20;
+	private static final double CHAIN_PLAYER_DAMAGE = 0.04;
+	private static final double CULL_HP = 0.12;
+	private static final double STAKES_REWARD_PER_STEP = 0.04;
+	private static final double STAKES_ATTACK_PER_STEP = 0.02;
+	private static final int RAMPAGE_EVERY = 25;
+	private static final int RAMPAGE_SECONDS = 15;
+	private static final double RAMPAGE_DAMAGE = 2.0;
+	private static final double RAMPAGE_SPEED = 1.5;
+	private static final int MOMENTUM_SECONDS = 8;
+	private static final int MOMENTUM_MAX_STACKS = 10;
+	private static final double MOMENTUM_SPEED_PER_STACK = 0.04;
+	private static final double MOMENTUM_ATTACK_SPEED_PER_STACK = 0.03;
+	private static final double LENS_AGGRO_MULT = 1.25;
+	/** Cartographer's Lens: how near two monsters stand to count as one pack. */
+	private static final int LENS_PACK_RANGE = 800;
+	/** Cartographer's Lens: a pack this far away counts half as much as one beside you. */
+	private static final int LENS_DISTANCE_HALF = 3000;
+	private static final int GRAVITY_RANGE = 600;
+	private static final int GRAVITY_MAX_PULLED = 6;
+	private static final int GRAVITY_COOLDOWN = 6000;
+	private static final int GRAVITY_LAND_RANGE = 150;
+	private static final int GRAVITY_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
+	/** Waystones: a waystone, the Obelisk's model (data/stats/npcs/custom/MapDevice.xml). */
+	public static final int WAYSTONE_NPC_ID = 900718;
+	/** Nests: a Nest Heart, the Bizarre Cocoon's model, a monster that never moves. */
+	public static final int NEST_HEART_NPC_ID = 900719;
+	/** Sealed Coffers: a coffer, the Imperial Coffer's model. */
+	public static final int COFFER_NPC_ID = 900720;
+	private static final double WAYSTONE_SHARE = 0.8;
+	private static final int WAYSTONE_USE_RANGE = 400; // The Obelisk's model has a radius of 229.
+	private static final String NEST_VAR = "MAP_NEST";
+	private static final String NEST_HEART_VAR = "MAP_NEST_HEART";
+	private static final String HEART_HP_VAR = "MAP_HEART_HP";
+	private static final int NEST_COUNT = 6;
+	private static final int NEST_RADIUS = 700;
+	/** A Nest Heart has this many times the HP of its nest's average monster. */
+	private static final double NEST_HEART_HP = 8.0;
+	private static final double NEST_SHIELD = 0.8;
+	private static final double NEST_FRENZY = 1.3;
+	private static final double NEST_DROP = 2.0;
+	private static final String COFFER_VAR = "MAP_COFFER";
+	private static final int COFFER_COUNT = 3;
+	private static final int COFFER_SPACING = 2500;
+	private static final int COFFER_USE_RANGE = 250;
+	private static final int COFFER_FIRST_WAVE = 6;
+	private static final int COFFER_SECOND_WAVE = 8;
+	private static final int COFFER_MAP_CHANCE = 15;
+	private static final int GEMSTONE_S = 2134;
 	/** When this few monsters are left, they hunt the players down (none stays hidden in a corner of the field). */
 	private static final int LAST_HUNT_COUNT = 10;
 	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
@@ -303,6 +357,21 @@ public class MapDeviceManager
 				multiplier *= stat == MonsterStat.HP ? 0.5 : MINION_ATTACK;
 			}
 		}
+		if (run.isNests())
+		{
+			if (stat == MonsterStat.HP)
+			{
+				multiplier *= monster.getVariables().getDouble(HEART_HP_VAR, 1.0);
+			}
+			else if ((stat == MonsterStat.P_ATK) || (stat == MonsterStat.M_ATK))
+			{
+				final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+				if ((nest >= 0) && run.isNestBroken(nest))
+				{
+					multiplier *= NEST_FRENZY;
+				}
+			}
+		}
 		switch (stat)
 		{
 			case P_ATK, M_ATK ->
@@ -310,6 +379,10 @@ public class MapDeviceManager
 				if (run.isRisingDread())
 				{
 					multiplier *= 1.0 + Math.min(0.5, (run.getKills() / 10) * 0.05);
+				}
+				if (run.isRisingStakes())
+				{
+					multiplier *= 1.0 + (run.getStakesSteps() * STAKES_ATTACK_PER_STEP);
 				}
 				if (run.isSoulEaters())
 				{
@@ -348,7 +421,7 @@ public class MapDeviceManager
 	public static double getXpMultiplier(Monster monster)
 	{
 		final MapRun run = getMonsterRun(monster);
-		return run != null ? run.getXpMultiplier() * getSpawnlingReward(run, monster) : 1.0;
+		return run != null ? run.getXpMultiplier() * getSpawnlingReward(run, monster) * getStakesReward(run) : 1.0;
 	}
 
 	/**
@@ -364,7 +437,25 @@ public class MapDeviceManager
 			return 1.0;
 		}
 		final double bounty = isBountyTarget(run, monster) ? BOUNTY_DROP : 1.0;
-		return run.getDropMultiplier() * getSpawnlingReward(run, monster) * bounty;
+		final double nest = run.isNests() && isInBrokenNest(run, monster) ? NEST_DROP : 1.0;
+		return run.getDropMultiplier() * getSpawnlingReward(run, monster) * bounty * getStakesReward(run) * nest;
+	}
+
+	/**
+	 * @return {@code true} if the monster belongs to a nest whose heart is broken
+	 */
+	private static boolean isInBrokenNest(MapRun run, Monster monster)
+	{
+		final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+		return (nest >= 0) && run.isNestBroken(nest);
+	}
+
+	/**
+	 * @return Rising Stakes' experience and drop multiplier, 1.0 without it
+	 */
+	private static double getStakesReward(MapRun run)
+	{
+		return 1.0 + (run.getStakesSteps() * STAKES_REWARD_PER_STEP);
 	}
 
 	/**
@@ -416,6 +507,18 @@ public class MapDeviceManager
 		if ((attacker != null) && attacker.isPlayable())
 		{
 			damage *= run.getPlayerDamage();
+			if (run.isRampaging())
+			{
+				damage *= RAMPAGE_DAMAGE;
+			}
+		}
+		if (run.isNests())
+		{
+			final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+			if ((nest >= 0) && !run.isNestBroken(nest))
+			{
+				damage *= NEST_SHIELD;
+			}
 		}
 		if (run.isUnique())
 		{
@@ -423,6 +526,18 @@ public class MapDeviceManager
 			if (damage <= 0)
 			{
 				return 0;
+			}
+		}
+
+		// Gravity Well: the monsters round the one hit are pulled to it (once in a while per monster).
+		if (run.isGravityWell() && (attacker != null) && attacker.isPlayable() && (run.getStatus() == Status.OPEN))
+		{
+			final long now = System.currentTimeMillis();
+			final Long next = run.getGravityCooldowns().get(monster.getObjectId());
+			if ((next == null) || (now >= next))
+			{
+				run.getGravityCooldowns().put(monster.getObjectId(), now + GRAVITY_COOLDOWN);
+				ThreadPool.execute(() -> gravityPull(run, monster, attacker));
 			}
 		}
 
@@ -449,6 +564,17 @@ public class MapDeviceManager
 					SHARING.set(Boolean.FALSE);
 				}
 				damage -= share;
+			}
+		}
+
+		// Culling Strike: a hit that leaves the monster below the line finishes it.
+		if (run.isCullingStrike() && (attacker != null) && attacker.isPlayable())
+		{
+			final double left = monster.getCurrentHp() - damage;
+			if ((left > 0) && (left < (monster.getMaxHp() * CULL_HP)))
+			{
+				damage = monster.getCurrentHp() + 1;
+				run.probeLog("Culling Strike finishes the " + monster.getName() + ".");
 			}
 		}
 		return damage;
@@ -608,16 +734,22 @@ public class MapDeviceManager
 	 */
 	public static int getAggroRange(Monster monster, int aggroRange)
 	{
-		if (!isForcedAggressive(monster))
+		final MapRun run = getMonsterRun(monster);
+		if (run == null)
 		{
 			return aggroRange;
 		}
-		final MapRun run = getMonsterRun(monster);
+		// Cartographer's Lens: the monsters that were aggressive anyway notice you from farther.
+		final int range = run.isLens() && (aggroRange > 0) ? (int) (aggroRange * LENS_AGGRO_MULT) : aggroRange;
+		if (!isForcedAggressive(monster))
+		{
+			return range;
+		}
 		if (isLastHunt(run))
 		{
-			return Math.max(aggroRange, LAST_HUNT_AGGRO_RANGE);
+			return Math.max(range, LAST_HUNT_AGGRO_RANGE);
 		}
-		return (int) ((aggroRange > 0 ? aggroRange : FORCED_AGGRO_RANGE) * AGGRO_RANGE_MULT);
+		return (int) ((range > 0 ? range : FORCED_AGGRO_RANGE) * AGGRO_RANGE_MULT);
 	}
 
 	/**
@@ -1071,12 +1203,89 @@ public class MapDeviceManager
 	 */
 	public String openTestMap(Player gm, String arenaId, int tierId, int medals)
 	{
+		return openTestMap(gm, arenaId, tierId, medals, null);
+	}
+
+	/**
+	 * Opens a test map with the modifiers a GM names, instead of rolled ones.
+	 * @param gm the GM, in their own hideout
+	 * @param arenaId where
+	 * @param tierId the tier
+	 * @param medals the medals (their experience and drop bonus; the modifiers are {@code forced})
+	 * @param forced the modifiers, {@code null} to roll them as usual
+	 * @return why it didn't open, {@code null} if it opened
+	 */
+	public String openTestMap(Player gm, String arenaId, int tierId, int medals, List<MapModifier> forced)
+	{
 		final MapArena arena = findArena(arenaId);
 		if (arena == null)
 		{
 			return "No place " + arenaId + ": name an event map with a fence and an entry (//mapdevice list), or an arena of data/MapDevice.xml.";
 		}
-		return openMap(gm, tierId, medals, arena, true);
+		return openMap(gm, tierId, medals, arena, true, forced);
+	}
+
+	/**
+	 * @param names modifier names (the enum's, or their display names), comma separated
+	 * @param unknown filled with the names that match no modifier
+	 * @return the modifiers named, in the enum's order, each once
+	 */
+	public static List<MapModifier> parseModifiers(String names, List<String> unknown)
+	{
+		final Set<MapModifier> found = new HashSet<>();
+		for (String token : names.split(","))
+		{
+			final String name = token.trim();
+			if (name.isEmpty())
+			{
+				continue;
+			}
+			MapModifier match = null;
+			for (MapModifier modifier : MapModifier.values())
+			{
+				if (modifier.name().equalsIgnoreCase(name.replace(' ', '_').replace('-', '_').replace("'", "")) || modifier.getDisplayName().equalsIgnoreCase(name))
+				{
+					match = modifier;
+					break;
+				}
+			}
+			if (match != null)
+			{
+				found.add(match);
+			}
+			else
+			{
+				unknown.add(name);
+			}
+		}
+		final List<MapModifier> modifiers = new ArrayList<>(found);
+		modifiers.sort(null);
+		return modifiers;
+	}
+
+	/**
+	 * Opens a map with no hideout and no portals, for the web API's map probe ({@link MapProbe}): the probe player is put inside by the caller.
+	 * @param probe the player the run belongs to
+	 * @param arena where
+	 * @param tierId the tier
+	 * @param modifiers its modifiers
+	 * @return the run
+	 */
+	public MapRun openProbeRun(Player probe, MapArena arena, int tierId, List<MapModifier> modifiers)
+	{
+		final MapTier tier = MapDeviceData.getInstance().getTier(tierId);
+		if (tier == null)
+		{
+			throw new IllegalArgumentException("No tier " + tierId + ".");
+		}
+		final List<NpcTemplate> pool = getArenaMonsters(arena, tier);
+		if (pool.isEmpty())
+		{
+			throw new IllegalArgumentException("No monster fits a tier " + tierId + " map in " + arena.name() + ".");
+		}
+		final MapRun run = createRun(probe, null, tier, 0, modifiers, null, arena, pool, null, true);
+		LOGGER.info(getClass().getSimpleName() + ": Probe map: tier " + tierId + " in " + arena.name() + " (instance " + run.getInstanceId() + ") with " + modifiers + ".");
+		return run;
 	}
 	
 	/**
@@ -1256,6 +1465,14 @@ public class MapDeviceManager
 	
 	private String openMap(Player player, int tierId, int medals, MapArena forcedArena, boolean free)
 	{
+		return openMap(player, tierId, medals, forcedArena, free, null);
+	}
+
+	/**
+	 * @param forced the modifiers of a GM's test map, {@code null} to roll them
+	 */
+	private String openMap(Player player, int tierId, int medals, MapArena forcedArena, boolean free, List<MapModifier> forced)
+	{
 		if (!MapDeviceConfig.ENABLED)
 		{
 			return "Maps are disabled.";
@@ -1325,7 +1542,7 @@ public class MapDeviceManager
 				return "You don't have " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
 			}
 
-			final List<MapModifier> modifiers = rollModifiers(medals);
+			final List<MapModifier> modifiers = forced != null ? forced : rollModifiers(medals);
 			final HotzoneModifier hotzone = rollHotzoneEffect(tier);
 			try
 			{
@@ -1398,13 +1615,23 @@ public class MapDeviceManager
 
 	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool)
 	{
-		return createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool, null);
+		return createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool, null, false);
 	}
 
 	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique)
 	{
+		return createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool, unique, false);
+	}
+
+	/**
+	 * @param hideout the hideout it opens from, {@code null} for a probe run (no portals)
+	 * @param probe {@code true} for a probe run of the web API, which logs what its map says
+	 */
+	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique, boolean probe)
+	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
 		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, hotzone, arena, instance.getId(), unique);
+		run.setProbe(probe);
 		instance.setExitLoc(getReturnLocation(player));
 		instance.setEjectTime(0);
 		instance.setAllowSummon(false);
@@ -1416,7 +1643,10 @@ public class MapDeviceManager
 		{
 			HotzoneModifierManager.getInstance().setInstanceModifier(instance.getId(), hotzone);
 		}
-		hideout.setRun(run);
+		if (hideout != null)
+		{
+			hideout.setRun(run);
+		}
 
 		try
 		{
@@ -1427,7 +1657,14 @@ public class MapDeviceManager
 			}
 			spawnMonsters(run, pool);
 			spawnReturnPortal(run);
-			spawnPortals(run, hideout);
+			if (run.isWaystones())
+			{
+				spawnWaystones(run);
+			}
+			if (hideout != null)
+			{
+				spawnPortals(run, hideout);
+			}
 		}
 		catch (RuntimeException e)
 		{
@@ -1659,7 +1896,27 @@ public class MapDeviceManager
 
 		final int baseCount = run.isUnique() ? run.getUnique().monsterCount() : arena.monsterCount() > 0 ? arena.monsterCount() : MapDeviceConfig.MONSTER_COUNT;
 		final int count = Math.max(1, (int) Math.round(baseCount * run.getPackSize()));
-		final List<Location> spots = !arena.packs().isEmpty() ? arenaPackSpots(run, count) : run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
+		// Nests: the centres of the nests (on a map of the event map page, its first monster spots).
+		final List<Location> nestCenters = new ArrayList<>();
+		final List<Location> spots;
+		if (run.isNests() && arena.packs().isEmpty())
+		{
+			spots = nestSpots(run, count, nestCenters);
+		}
+		else
+		{
+			spots = !arena.packs().isEmpty() ? arenaPackSpots(run, count) : run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
+			if (run.isNests())
+			{
+				for (EventMapDevice.Pack pack : arena.packs())
+				{
+					if (nestCenters.size() < NEST_COUNT)
+					{
+						nestCenters.add(getGroundLocation(new Location(pack.x(), pack.y(), pack.z())));
+					}
+				}
+			}
+		}
 
 		// Gauntlet: which monsters are wave challenges.
 		final Set<Integer> waveIndexes = new HashSet<>();
@@ -1680,6 +1937,10 @@ public class MapDeviceManager
 			if (monster != null)
 			{
 				applyVariants(run, monster, waveIndexes.contains(i));
+				if (!nestCenters.isEmpty())
+				{
+					monster.getVariables().set(NEST_VAR, nearestIndex(nestCenters, monster));
+				}
 				if (twin)
 				{
 					run.getPartners().put(monster.getObjectId(), previous.getObjectId());
@@ -1697,6 +1958,16 @@ public class MapDeviceManager
 		}
 
 		run.setMonsterTotal(run.getMonsters().size());
+
+		// Nest Hearts and Sealed Coffers count for nothing: they come after the count.
+		if (!nestCenters.isEmpty())
+		{
+			spawnNestHearts(run, nestCenters);
+		}
+		if (run.isCoffers())
+		{
+			spawnCoffers(run);
+		}
 	}
 
 	/**
@@ -1736,6 +2007,135 @@ public class MapDeviceManager
 			spots.add(spacedSpot(() -> randomFieldSpot(run, 0.92, true), spots, MapDeviceConfig.MONSTER_SPACING));
 		}
 		return spots;
+	}
+
+	/**
+	 * Nests: {@value #NEST_COUNT} centres far apart on the field (fewer on a small map), the monsters shared out among them, each within {@value #NEST_RADIUS} of its centre.
+	 * @param centers filled with the nests' centres
+	 */
+	private static List<Location> nestSpots(MapRun run, int count, List<Location> centers)
+	{
+		final int nests = Math.max(1, Math.min(NEST_COUNT, count / 4));
+		final int gap = (2 * NEST_RADIUS) + MapDeviceConfig.MONSTER_SPACING;
+		for (int n = 0; n < nests; n++)
+		{
+			centers.add(spacedSpot(() -> randomFieldSpot(run, 0.8, true), centers, gap));
+		}
+		final GeoEngine geo = GeoEngine.getInstance();
+		final List<List<Location>> byNest = new ArrayList<>();
+		for (int n = 0; n < nests; n++)
+		{
+			byNest.add(new ArrayList<>());
+		}
+		final List<Location> spots = new ArrayList<>(count);
+		for (int i = 0; i < count; i++)
+		{
+			final Location center = centers.get(i % nests);
+			final List<Location> nest = byNest.get(i % nests);
+			final Location spot = spacedSpot(() ->
+			{
+				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+				final double distance = 150 + (Math.sqrt(Rnd.nextDouble()) * (NEST_RADIUS - 150)); // Room for the heart.
+				final int x = center.getX() + (int) (Math.cos(angle) * distance);
+				final int y = center.getY() + (int) (Math.sin(angle) * distance);
+				return geo.getValidLocation(center.getX(), center.getY(), center.getZ(), x, y, geo.getHeight(x, y, center.getZ()), run.getInstanceId());
+			}, nest, PACK_SPACING);
+			nest.add(spot);
+			spots.add(spot);
+		}
+		return spots;
+	}
+
+	/**
+	 * @return the index of the location nearest the creature
+	 */
+	private static int nearestIndex(List<Location> locations, Creature creature)
+	{
+		int nearest = 0;
+		double best = Double.MAX_VALUE;
+		for (int i = 0; i < locations.size(); i++)
+		{
+			final double distance = creature.calculateDistance2D(locations.get(i));
+			if (distance < best)
+			{
+				best = distance;
+				nearest = i;
+			}
+		}
+		return nearest;
+	}
+
+	/**
+	 * Nests: a Nest Heart in the middle of each nest, {@value #NEST_HEART_HP} times as tough as its nest's average monster. Hearts don't count for the map.
+	 */
+	private void spawnNestHearts(MapRun run, List<Location> centers)
+	{
+		final NpcTemplate template = NpcData.getInstance().getTemplate(NEST_HEART_NPC_ID);
+		if (template == null)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": No Nest Heart npc " + NEST_HEART_NPC_ID + " (data/stats/npcs/custom/MapDevice.xml).");
+			return;
+		}
+		final double[] hpSum = new double[centers.size()];
+		final int[] members = new int[centers.size()];
+		for (int objectId : run.getMonsters())
+		{
+			if ((World.getInstance().findObject(objectId) instanceof Monster monster))
+			{
+				final int nest = monster.getVariables().getInt(NEST_VAR, -1);
+				if ((nest >= 0) && (nest < centers.size()))
+				{
+					hpSum[nest] += monster.getMaxHp();
+					members[nest]++;
+				}
+			}
+		}
+		for (int i = 0; i < centers.size(); i++)
+		{
+			if (members[i] == 0)
+			{
+				continue; // Nothing to guard.
+			}
+			final Monster heart = spawnMapMonster(run, template, getGroundLocation(centers.get(i)));
+			if (heart == null)
+			{
+				continue;
+			}
+			run.getMonsters().remove(heart.getObjectId());
+			heart.getVariables().set(NEST_HEART_VAR, i);
+			heart.getVariables().set(HEART_HP_VAR, Math.max(1.0, (NEST_HEART_HP * (hpSum[i] / members[i])) / Math.max(1, heart.getMaxHp())));
+			heart.setEventTitleTag("[Nest Heart]");
+			heart.setCurrentHpMp(heart.getMaxHp(), heart.getMaxMp());
+			heart.broadcastInfo();
+			run.getNestHearts().put(i, heart.getObjectId());
+		}
+	}
+
+	/**
+	 * Nests: a heart broke. Its nest frenzies, and comes for whoever broke it.
+	 */
+	private static void breakNest(MapRun run, int nest, Player breaker)
+	{
+		if (!run.breakNest(nest))
+		{
+			return;
+		}
+		final boolean inside = (breaker != null) && !breaker.isDead() && (breaker.getInstanceId() == run.getInstanceId());
+		int frenzied = 0;
+		for (int objectId : run.getMonsters())
+		{
+			if ((World.getInstance().findObject(objectId) instanceof Monster monster) && !monster.isDead() && (monster.getVariables().getInt(NEST_VAR, -1) == nest))
+			{
+				frenzied++;
+				monster.broadcastPacket(new MagicSkillUse(monster, monster, VOLATILE_SKILL_ID, 1, 0, 0));
+				if (inside)
+				{
+					monster.addDamageHate(breaker, 0, 300);
+					monster.getAI().setIntention(Intention.ATTACK, breaker);
+				}
+			}
+		}
+		sendScreenToMap(run, "A Nest Heart breaks! Its " + frenzied + " monsters frenzy (+" + Math.round((NEST_FRENZY - 1) * 100) + "% damage), but drop double.");
 	}
 
 	/**
@@ -2092,6 +2492,281 @@ public class MapDeviceManager
 		run.setReturnPortal(portal);
 	}
 
+	// =========================================================================
+	// Waystones
+	// =========================================================================
+
+	/**
+	 * Waystones: one in the middle of the field and three at the fence, a quarter turn apart from the entry.
+	 */
+	private static void spawnWaystones(MapRun run)
+	{
+		final MapArena arena = run.getArena();
+		final GeoEngine geo = GeoEngine.getInstance();
+		final int centerZ = geo.getHeight(arena.x(), arena.y(), arena.z());
+		final double entryAngle = Math.atan2((arena.getEntryY() - arena.y()) / (double) Math.max(1, arena.radiusY()), (arena.getEntryX() - arena.x()) / (double) Math.max(1, arena.radiusX()));
+		for (int i = 0; i < 4; i++)
+		{
+			int x = arena.x();
+			int y = arena.y();
+			if (i > 0)
+			{
+				final double angle = entryAngle + ((i * Math.PI) / 2);
+				x += (int) Math.round(Math.cos(angle) * arena.radiusX() * WAYSTONE_SHARE);
+				y += (int) Math.round(Math.sin(angle) * arena.radiusY() * WAYSTONE_SHARE);
+			}
+			final Location spot = geo.getValidLocation(arena.x(), arena.y(), centerZ, x, y, geo.getHeight(x, y, centerZ), run.getInstanceId());
+			final Npc waystone = Quest.addSpawn(WAYSTONE_NPC_ID, spot.getX(), spot.getY(), spot.getZ(), 0, false, 0, false, run.getInstanceId());
+			if (waystone != null)
+			{
+				waystone.setTitle(i == 0 ? "The Middle" : compass(spot.getX() - arena.x(), spot.getY() - arena.y()));
+				waystone.broadcastInfo();
+				run.getWaystones().add(waystone);
+			}
+		}
+	}
+
+	/**
+	 * @return the direction of a vector, e.g. "North-East"
+	 */
+	private static String compass(int dx, int dy)
+	{
+		final String[] directions =
+		{
+			"East",
+			"South-East",
+			"South",
+			"South-West",
+			"West",
+			"North-West",
+			"North",
+			"North-East"
+		};
+		return directions[(int) Math.round(Math.toDegrees(Math.atan2(dy, dx)) / 45.0) & 7]; // y grows to the south.
+	}
+
+	/**
+	 * @param run a run
+	 * @return the names of a run's waystone destinations: 0 the entry, then each waystone
+	 */
+	public static List<String> getWaystoneNames(MapRun run)
+	{
+		final List<String> names = new ArrayList<>();
+		names.add("The Entry");
+		for (Npc waystone : run.getWaystones())
+		{
+			names.add(waystone.getTitle());
+		}
+		return names;
+	}
+
+	/**
+	 * Waystones: a player beside a waystone travels to the entry (0) or another waystone (1 and up).
+	 * @param player the player
+	 * @param waystone the waystone they touched
+	 * @param destination where to
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String useWaystone(Player player, Npc waystone, int destination)
+	{
+		final MapRun run = getRun(player.getInstanceId());
+		if ((run == null) || run.isClosed() || !run.isWaystones() || !run.getWaystones().contains(waystone))
+		{
+			return "The waystone is silent.";
+		}
+		if (player.isDead())
+		{
+			return "You are dead.";
+		}
+		if (player.calculateDistance2D(waystone) > WAYSTONE_USE_RANGE)
+		{
+			return "Come closer to the waystone.";
+		}
+		final List<Npc> waystones = run.getWaystones();
+		if ((destination < 0) || (destination > waystones.size()))
+		{
+			return "The waystone knows no such place.";
+		}
+		final Location to;
+		if (destination == 0)
+		{
+			to = getGroundLocation(run.getArena().entry());
+		}
+		else
+		{
+			final Npc target = waystones.get(destination - 1);
+			if (target == waystone)
+			{
+				return "You are already here.";
+			}
+			to = new Location(target.getX(), target.getY(), target.getZ(), 0);
+		}
+		player.teleToLocation(to.getX(), to.getY(), to.getZ(), to.getHeading(), run.getInstanceId(), 60);
+		run.probeLog("Waystone: " + player.getName() + " travels to " + getWaystoneNames(run).get(destination) + ".");
+		return null;
+	}
+
+	// =========================================================================
+	// Sealed Coffers
+	// =========================================================================
+
+	/**
+	 * Sealed Coffers: {@value #COFFER_COUNT} coffers far apart on the field.
+	 */
+	private static void spawnCoffers(MapRun run)
+	{
+		final List<Location> taken = new ArrayList<>();
+		for (int i = 0; i < COFFER_COUNT; i++)
+		{
+			final Location spot = spacedSpot(() -> randomFieldSpot(run, 0.7, true), taken, COFFER_SPACING);
+			taken.add(spot);
+			final Npc npc = Quest.addSpawn(COFFER_NPC_ID, spot.getX(), spot.getY(), spot.getZ(), Rnd.get(65536), false, 0, false, run.getInstanceId());
+			if (npc != null)
+			{
+				npc.setTitle("Sealed");
+				npc.broadcastInfo();
+				run.getCoffers().put(npc.getObjectId(), new MapRun.Coffer(npc));
+			}
+		}
+	}
+
+	/**
+	 * @param npc a coffer
+	 * @return 0 sealed, 1 or 2 the wave its guards are on, -1 for no coffer (paid, or gone)
+	 */
+	public static int getCofferWave(Npc npc)
+	{
+		final MapRun run = getRun(npc.getInstanceId());
+		final MapRun.Coffer coffer = run != null ? run.getCoffers().get(npc.getObjectId()) : null;
+		return coffer != null ? coffer.getWave() : -1;
+	}
+
+	/**
+	 * Sealed Coffers: a player breaks a coffer's seal, and its first wave of guards wakes.
+	 * @param player the player
+	 * @param npc the coffer
+	 * @return why it didn't open, {@code null} if it did
+	 */
+	public String openCoffer(Player player, Npc npc)
+	{
+		final MapRun run = getRun(npc.getInstanceId());
+		final MapRun.Coffer coffer = run != null ? run.getCoffers().get(npc.getObjectId()) : null;
+		if ((coffer == null) || (run.getStatus() == Status.CLOSED))
+		{
+			return "The coffer is empty.";
+		}
+		if (player.isDead() || (player.getInstanceId() != run.getInstanceId()))
+		{
+			return "You can't reach the coffer.";
+		}
+		if (player.calculateDistance2D(npc) > COFFER_USE_RANGE)
+		{
+			return "Come closer to the coffer.";
+		}
+		synchronized (coffer)
+		{
+			if (coffer.getWave() != 0)
+			{
+				return "Its seal is already broken.";
+			}
+			coffer.setWave(1);
+			coffer.setOpenerId(player.getObjectId());
+		}
+		spawnCofferWave(run, coffer, player, COFFER_FIRST_WAVE, false);
+		npc.setTitle("Wave 1 of 2");
+		npc.broadcastInfo();
+		sendScreenToMap(run, player.getName() + " breaks the seal of a Sealed Coffer: its guards wake!");
+		return null;
+	}
+
+	/**
+	 * A wave of coffer guards: the map's kinds, round the coffer, after the player. They don't count for the map.
+	 * @param leader {@code true} to make the first a tier 2 Champion
+	 */
+	private void spawnCofferWave(MapRun run, MapRun.Coffer coffer, Player target, int size, boolean leader)
+	{
+		final List<NpcTemplate> pool = run.getMonsterKinds().isEmpty() ? getMonsterPool(run.getTier()) : run.getMonsterKinds();
+		if (pool.isEmpty())
+		{
+			return;
+		}
+		final Npc npc = coffer.getNpc();
+		final boolean chase = (target != null) && !target.isDead() && (target.getInstanceId() == run.getInstanceId());
+		for (int i = 0; i < size; i++)
+		{
+			final Monster guard = spawnMapMonster(run, pool.get(Rnd.get(pool.size())), nearSpot(run, npc, 400));
+			if (guard == null)
+			{
+				continue;
+			}
+			run.getMonsters().remove(guard.getObjectId());
+			guard.getVariables().set(COFFER_VAR, npc.getObjectId());
+			if (leader && (i == 0) && ChampionMonstersConfig.CHAMPION_ENABLE)
+			{
+				guard.setChampionTier(2);
+			}
+			guard.setEventTitleTag("[Coffer Guard]");
+			guard.setCurrentHpMp(guard.getMaxHp(), guard.getMaxMp());
+			guard.broadcastInfo();
+			coffer.getGuards().add(guard.getObjectId());
+			if (chase)
+			{
+				guard.addDamageHate(target, 0, 500);
+				guard.getAI().setIntention(Intention.ATTACK, target);
+			}
+		}
+	}
+
+	/**
+	 * Sealed Coffers: a guard fell. The last of the first wave calls the second; the last of the second opens the coffer.
+	 */
+	private void onCofferGuardDied(MapRun run, int cofferId, Monster victim, Player player)
+	{
+		final MapRun.Coffer coffer = run.getCoffers().get(cofferId);
+		if (coffer == null)
+		{
+			return;
+		}
+		final int wave;
+		synchronized (coffer)
+		{
+			coffer.getGuards().remove(victim.getObjectId());
+			if (!coffer.getGuards().isEmpty() || (coffer.getWave() < 1) || (coffer.getWave() > 2))
+			{
+				return;
+			}
+			wave = coffer.getWave();
+			coffer.setWave(wave + 1);
+		}
+		final Player opener = World.getInstance().getPlayer(coffer.getOpenerId());
+		final Player payee = player != null ? player : (opener != null) && (opener.getInstanceId() == run.getInstanceId()) ? opener : null;
+		final Npc npc = coffer.getNpc();
+		if (wave == 1)
+		{
+			spawnCofferWave(run, coffer, payee, COFFER_SECOND_WAVE, true);
+			npc.setTitle("Wave 2 of 2");
+			npc.broadcastInfo();
+			sendScreenToMap(run, "The coffer's second wave comes, led by a Champion!");
+			return;
+		}
+
+		// The coffer opens.
+		run.getCoffers().remove(cofferId);
+		npc.broadcastPacket(new MagicSkillUse(npc, npc, VOLATILE_SKILL_ID, 1, 0, 0));
+		npc.deleteMe();
+		if (payee == null)
+		{
+			sendToMap(run, "A Sealed Coffer opens, but nobody is there to take its spoils.");
+			return;
+		}
+		final int medals = Rnd.get(2, 4);
+		final int gems = Rnd.get(5, 15);
+		victim.dropOrAutoLoot(payee, new ItemHolder(MapDeviceConfig.MEDAL_ITEM_ID, medals));
+		victim.dropOrAutoLoot(payee, new ItemHolder(GEMSTONE_S, gems));
+		final boolean map = (Rnd.get(100) < COFFER_MAP_CHANCE) && dropRunMap(run, victim, payee, rollInMapTier(run));
+		sendScreenToMap(run, "A Sealed Coffer opens: " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s, " + gems + " " + getItemName(GEMSTONE_S) + (map ? " and a map!" : "!"));
+	}
+
 	/**
 	 * @param player a player
 	 * @param run a run
@@ -2293,6 +2968,10 @@ public class MapDeviceManager
 		{
 			player.addStatFuncs(functions);
 		}
+		if (run.isRampaging())
+		{
+			applyRampage(run, player);
+		}
 		applyHotzoneBuff(player, run.getHotzoneEffect());
 		ThreadPool.schedule(() -> refreshPlayer(player), 500);
 	}
@@ -2303,6 +2982,11 @@ public class MapDeviceManager
 		if (run.getCurses().remove(player.getObjectId()) != null)
 		{
 			player.removeStatsOwner(run.getCurseFuncOwner());
+		}
+		player.removeStatsOwner(run.getRampageFuncOwner());
+		if (run.getMomentum().remove(player.getObjectId()) != null)
+		{
+			player.removeStatsOwner(run.getMomentumFuncOwner());
 		}
 		final HotzoneModifier hotzone = run.getHotzoneEffect();
 		if (hotzone != null)
@@ -2439,6 +3123,7 @@ public class MapDeviceManager
 
 	static void sendToMap(MapRun run, String message)
 	{
+		run.probeLog(message);
 		for (Player player : getPlayersInside(run))
 		{
 			player.sendMessage(message);
@@ -2447,6 +3132,7 @@ public class MapDeviceManager
 
 	static void sendScreenToMap(MapRun run, String message)
 	{
+		run.probeLog("[screen] " + message);
 		final ExShowScreenMessage packet = new ExShowScreenMessage(message, 4000);
 		for (Player player : getPlayersInside(run))
 		{
@@ -2555,6 +3241,28 @@ public class MapDeviceManager
 		{
 			run.addKill();
 		}
+		if (BURSTING.get())
+		{
+			run.addChainKill();
+		}
+		if (run.isGravityWell())
+		{
+			run.getGravityCooldowns().remove(victim.getObjectId());
+		}
+		final boolean killerInside = (player != null) && (player.getInstanceId() == run.getInstanceId());
+		if (run.isNests())
+		{
+			final int heart = victim.getVariables().getInt(NEST_HEART_VAR, -1);
+			if (heart >= 0)
+			{
+				breakNest(run, heart, killerInside ? player : null);
+			}
+		}
+		final int cofferId = victim.getVariables().getInt(COFFER_VAR, 0);
+		if (cofferId != 0)
+		{
+			onCofferGuardDied(run, cofferId, victim, killerInside ? player : null);
+		}
 
 		final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
 		final boolean encounter = UniqueMapManager.isEncounterMonster(victim);
@@ -2588,6 +3296,30 @@ public class MapDeviceManager
 		if (run.isSoulEaters())
 		{
 			devourSoul(run, victim);
+		}
+
+		if (run.isChainReaction())
+		{
+			ThreadPool.schedule(() -> chainBurst(run, victim, corpse, killerInside ? player : null), CHAIN_DELAY);
+		}
+
+		if (run.isMomentum() && killerInside)
+		{
+			addMomentum(run, player);
+		}
+
+		if (counted && (run.getStatus() == Status.OPEN))
+		{
+			final int kills = run.getKills();
+			if (run.isRisingStakes() && ((kills % 10) == 0) && (kills <= 150))
+			{
+				final int steps = run.getStakesSteps();
+				sendScreenToMap(run, "The stakes rise: experience and drops +" + Math.round(steps * STAKES_REWARD_PER_STEP * 100) + "%, monsters +" + Math.round(steps * STAKES_ATTACK_PER_STEP * 100) + "% damage.");
+			}
+			if (run.isRampage() && ((kills % RAMPAGE_EVERY) == 0))
+			{
+				startRampage(run);
+			}
 		}
 
 		if (victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (player != null))
@@ -2649,7 +3381,8 @@ public class MapDeviceManager
 		synchronized (run.getRadarMarks())
 		{
 			final int toGo = getMonstersToGo(run);
-			if (run.isUnique() || (run.getStatus() != Status.OPEN) || (toGo == 0) || (toGo > LAST_HUNT_COUNT))
+			final boolean lastHunt = toGo <= LAST_HUNT_COUNT;
+			if (run.isUnique() || (run.getStatus() != Status.OPEN) || (toGo == 0) || (!lastHunt && !run.isLens()))
 			{
 				clearLastHuntRadar(run);
 				return;
@@ -2687,7 +3420,31 @@ public class MapDeviceManager
 				}
 
 				final boolean next = target == null;
-				if (next)
+				int pack = 0;
+				if (next && !lastHunt)
+				{
+					// Cartographer's Lens, before the last hunt: the best pack, the most monsters for the walk.
+					double best = -1;
+					for (Monster monster : alive)
+					{
+						int neighbours = 0;
+						for (Monster other : alive)
+						{
+							if ((other != monster) && (monster.calculateDistance2D(other) <= LENS_PACK_RANGE))
+							{
+								neighbours++;
+							}
+						}
+						final double score = (neighbours + 1) / (1.0 + (player.calculateDistance2D(monster) / LENS_DISTANCE_HALF));
+						if (score > best)
+						{
+							best = score;
+							target = monster;
+							pack = neighbours + 1;
+						}
+					}
+				}
+				else if (next)
 				{
 					double nearest = Double.MAX_VALUE;
 					for (Monster monster : alive)
@@ -2710,7 +3467,9 @@ public class MapDeviceManager
 				QuestSpawnUtil.moveMarker(player, mark != null ? mark.spot() : null, spot);
 				if (next)
 				{
-					player.sendMessage("Radar: " + toGo + (toGo == 1 ? " monster" : " monsters") + " to go. The nearest, a " + target.getName() + ", is " + describeWay(player, target) + ".");
+					final String line = lastHunt ? "Radar: " + toGo + (toGo == 1 ? " monster" : " monsters") + " to go. The nearest, a " + target.getName() + ", is " + describeWay(player, target) + "." : "Lens: a pack of " + pack + (pack == 1 ? " monster" : " monsters") + " round a " + target.getName() + ", " + describeWay(player, target) + ".";
+					player.sendMessage(line);
+					run.probeLog(line);
 				}
 			}
 		}
@@ -2758,6 +3517,208 @@ public class MapDeviceManager
 			{
 				player.reduceCurrentHp(player.getMaxHp() * VOLATILE_DAMAGE, null, false, false, null);
 				player.sendMessage("The " + victim.getName() + " explodes!");
+			}
+		}
+	}
+
+	/**
+	 * Gravity Well: the monsters round the one a player hit fly to its side and join the fight, the nearest first.
+	 */
+	private static void gravityPull(MapRun run, Monster center, Creature attacker)
+	{
+		if (run.isClosed() || center.isDead() || attacker.isDead() || (attacker.getInstanceId() != run.getInstanceId()))
+		{
+			return;
+		}
+		final List<Monster> pulled = new ArrayList<>();
+		for (Monster monster : World.getInstance().getVisibleObjectsInRange(center, Monster.class, GRAVITY_RANGE))
+		{
+			if ((monster != center) && !monster.isDead() && (monster.getInstanceId() == run.getInstanceId()) && !monster.isFakePlayer() && !monster.isPvpFakePlayer() && !(monster instanceof Chest) && !monster.isMovementDisabled() && !monster.getVariables().getBoolean(GUARDIAN_VAR, false) && (monster.getVariables().getInt(NEST_HEART_VAR, -1) < 0) && (monster.getAI().getIntention() != Intention.ATTACK))
+			{
+				pulled.add(monster);
+			}
+		}
+		if (pulled.isEmpty())
+		{
+			return;
+		}
+		pulled.sort(Comparator.comparingDouble(center::calculateDistance2D));
+		int count = 0;
+		for (Monster monster : pulled)
+		{
+			if (count >= GRAVITY_MAX_PULLED)
+			{
+				break;
+			}
+			final Location spot = nearSpot(run, center, GRAVITY_LAND_RANGE);
+			AreaTargets.flyTo(monster, spot.getX(), spot.getY(), spot.getZ());
+			monster.addDamageHate(attacker, 0, 200);
+			monster.getAI().setIntention(Intention.ATTACK, attacker);
+			count++;
+			if (run.isProbe())
+			{
+				run.probeLog("Gravity Well: the " + monster.getName() + " lands " + (int) monster.calculateDistance2D(center) + " from the " + center.getName() + ", " + (monster.getAI().getIntention() == Intention.ATTACK ? "attacking." : "not attacking!"));
+			}
+		}
+		center.broadcastPacket(new MagicSkillUse(center, center, GRAVITY_SKILL_ID, 1, 0, 0));
+		run.addPulled(count);
+	}
+
+	/**
+	 * Chain Reaction: the corpse bursts, hurting the monsters round it (credited to the killer, so a monster it slays bursts in turn) and, less, the players.
+	 * @param killer the player credited with the burst's kills, {@code null} for none
+	 */
+	private static void chainBurst(MapRun run, Monster victim, Location corpse, Player killer)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+		victim.broadcastPacket(new MagicSkillUse(victim, victim, VOLATILE_SKILL_ID, 1, 0, 0));
+		final Player credited = (killer != null) && !killer.isDead() && (killer.getInstanceId() == run.getInstanceId()) ? killer : null;
+		int hit = 0;
+		BURSTING.set(Boolean.TRUE);
+		try
+		{
+			for (Monster monster : World.getInstance().getVisibleObjectsInRange(victim, Monster.class, CHAIN_RADIUS + 200))
+			{
+				if (monster.isDead() || (monster == victim) || (monster.getInstanceId() != run.getInstanceId()) || monster.isPvpFakePlayer() || monster.isFakePlayer() || (monster.calculateDistance2D(corpse) > CHAIN_RADIUS))
+				{
+					continue;
+				}
+				monster.reduceCurrentHp(monster.getMaxHp() * CHAIN_MONSTER_DAMAGE, credited, true, false, null);
+				hit++;
+			}
+		}
+		finally
+		{
+			BURSTING.set(Boolean.FALSE);
+		}
+		for (Player player : getPlayersInside(run))
+		{
+			if (!player.isDead() && !player.isInvul() && (player.calculateDistance2D(corpse) <= CHAIN_RADIUS))
+			{
+				player.reduceCurrentHp(player.getMaxHp() * CHAIN_PLAYER_DAMAGE, null, false, false, null);
+			}
+		}
+		if (hit > 0)
+		{
+			run.probeLog("Chain Reaction: the " + victim.getName() + " bursts, hitting " + hit + " monsters.");
+		}
+	}
+
+	/**
+	 * Rampage: everyone inside deals double damage and runs half again as fast, for a while.
+	 */
+	private static void startRampage(MapRun run)
+	{
+		final boolean already = run.isRampaging();
+		run.setRampageUntil(System.currentTimeMillis() + (RAMPAGE_SECONDS * 1000L));
+		for (Player player : getPlayersInside(run))
+		{
+			if (!already)
+			{
+				applyRampage(run, player);
+			}
+			player.broadcastPacket(new MagicSkillUse(player, player, VOLATILE_SKILL_ID, 1, 0, 0));
+		}
+		sendScreenToMap(run, "RAMPAGE! Double damage and +" + Math.round((RAMPAGE_SPEED - 1) * 100) + "% run speed for " + RAMPAGE_SECONDS + " seconds!");
+	}
+
+	private static void applyRampage(MapRun run, Player player)
+	{
+		final Object owner = run.getRampageFuncOwner();
+		player.removeStatsOwner(owner);
+		final List<AbstractFunction> functions = new ArrayList<>();
+		mul(functions, Stat.MOVE_SPEED, RAMPAGE_SPEED, owner);
+		player.addStatFuncs(functions);
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * Rampage: its time is up.
+	 */
+	private static void endRampage(MapRun run)
+	{
+		run.setRampageUntil(0);
+		for (Player player : getPlayersInside(run))
+		{
+			player.removeStatsOwner(run.getRampageFuncOwner());
+			player.broadcastUserInfo();
+		}
+		sendToMap(run, "The rampage ends.");
+	}
+
+	/**
+	 * Momentum: a kill adds a stack while the chain holds, else starts it again.
+	 */
+	private static void addMomentum(MapRun run, Player player)
+	{
+		final long now = System.currentTimeMillis();
+		final long[] momentum = run.getMomentum().computeIfAbsent(player.getObjectId(), _ -> new long[2]);
+		final int stacks;
+		synchronized (momentum)
+		{
+			final boolean chained = (momentum[0] > 0) && ((now - momentum[1]) <= (MOMENTUM_SECONDS * 1000L));
+			stacks = (int) (chained ? Math.min(MOMENTUM_MAX_STACKS, momentum[0] + 1) : 1);
+			final boolean changed = stacks != momentum[0];
+			momentum[0] = stacks;
+			momentum[1] = now;
+			if (!changed)
+			{
+				return; // Already full: the clock starts again.
+			}
+		}
+		applyMomentum(run, player, stacks);
+		if ((stacks == 5) || (stacks == MOMENTUM_MAX_STACKS))
+		{
+			player.sendPacket(new ExShowScreenMessage("Momentum x" + stacks + (stacks == MOMENTUM_MAX_STACKS ? ": full speed!" : "!"), 2500));
+			run.probeLog("Momentum x" + stacks + " for " + player.getName() + ".");
+		}
+	}
+
+	private static void applyMomentum(MapRun run, Player player, int stacks)
+	{
+		final Object owner = run.getMomentumFuncOwner();
+		player.removeStatsOwner(owner);
+		if (stacks > 0)
+		{
+			final List<AbstractFunction> functions = new ArrayList<>();
+			mul(functions, Stat.MOVE_SPEED, 1.0 + (stacks * MOMENTUM_SPEED_PER_STACK), owner);
+			mul(functions, Stat.POWER_ATTACK_SPEED, 1.0 + (stacks * MOMENTUM_ATTACK_SPEED_PER_STACK), owner);
+			mul(functions, Stat.MAGIC_ATTACK_SPEED, 1.0 + (stacks * MOMENTUM_ATTACK_SPEED_PER_STACK), owner);
+			player.addStatFuncs(functions);
+		}
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * Momentum: the chains that went too long without a kill break.
+	 */
+	private static void breakMomentum(MapRun run, long now)
+	{
+		for (Map.Entry<Integer, long[]> entry : run.getMomentum().entrySet())
+		{
+			final long[] momentum = entry.getValue();
+			final int stacks;
+			synchronized (momentum)
+			{
+				if ((now - momentum[1]) <= (MOMENTUM_SECONDS * 1000L))
+				{
+					continue;
+				}
+				stacks = (int) momentum[0];
+			}
+			run.getMomentum().remove(entry.getKey());
+			final Player player = World.getInstance().getPlayer(entry.getKey());
+			if (player != null)
+			{
+				applyMomentum(run, player, 0);
+				if (stacks >= 3)
+				{
+					player.sendMessage("Your momentum fades (x" + stacks + ").");
+				}
+				run.probeLog("Momentum x" + stacks + " fades for " + player.getName() + ".");
 			}
 		}
 	}
@@ -3314,6 +4275,14 @@ public class MapDeviceManager
 			{
 				liftCurses(_run, now);
 			}
+			if (!_run.getMomentum().isEmpty())
+			{
+				breakMomentum(_run, now);
+			}
+			if ((_run.getRampageUntil() > 0) && (now >= _run.getRampageUntil()))
+			{
+				endRampage(_run);
+			}
 
 			if (_run.isUnique())
 			{
@@ -3451,6 +4420,15 @@ public class MapDeviceManager
 			{
 				run.getReturnPortal().deleteMe();
 			}
+			for (Npc waystone : run.getWaystones())
+			{
+				waystone.deleteMe();
+			}
+			for (MapRun.Coffer coffer : run.getCoffers().values())
+			{
+				coffer.getNpc().deleteMe();
+			}
+			run.getCoffers().clear();
 			TeamVsTeamBarrier.remove(run.getFences());
 		}
 		finally

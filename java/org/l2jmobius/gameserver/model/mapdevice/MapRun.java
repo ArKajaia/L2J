@@ -119,6 +119,31 @@ public class MapRun
 	private volatile ScheduledFuture<?> _tickTask;
 	/** The kinds of monster the map was filled with (its theme), for the monsters that join later (Ambush). */
 	private volatile List<NpcTemplate> _monsterKinds = List.of();
+	/** Rampage: when the running rampage ends (ms), 0 for none. */
+	private volatile long _rampageUntil;
+	/** Owns Rampage's run speed on the players. */
+	private final Object _rampageFuncOwner = new Object();
+	/** Momentum: player object id -> {stacks, time of their last kill (ms)}. */
+	private final Map<Integer, long[]> _momentumStacks = new ConcurrentHashMap<>();
+	/** Owns Momentum's stat functions on the players. */
+	private final Object _momentumFuncOwner = new Object();
+	/** Gravity Well: monster object id -> when it may pull again (ms). */
+	private final Map<Integer, Long> _gravityCooldowns = new ConcurrentHashMap<>();
+	/** Gravity Well: monsters pulled so far. */
+	private final AtomicInteger _pulled = new AtomicInteger();
+	/** Waystones: the waystones of the field, in order (the entry is destination 0, these 1 and up). */
+	private final List<Npc> _waystoneNpcs = new CopyOnWriteArrayList<>();
+	/** Nests: nest index -> its heart's object id. */
+	private final Map<Integer, Integer> _nestHearts = new ConcurrentHashMap<>();
+	/** Nests: the nests whose heart is broken. */
+	private final Set<Integer> _brokenNests = ConcurrentHashMap.newKeySet();
+	/** Sealed Coffers: coffer npc object id -> its state. */
+	private final Map<Integer, Coffer> _cofferStates = new ConcurrentHashMap<>();
+	/** Chain Reaction: monsters slain by a burst. */
+	private final AtomicInteger _chainKills = new AtomicInteger();
+	/** A test run of the web API's map probe (no hideout, no portals): it keeps a log of what its map says. */
+	private volatile boolean _probe;
+	private final List<String> _probeLog = Collections.synchronizedList(new ArrayList<>());
 
 	// Combined effect of the modifiers.
 	private final double _monsterMoveSpeed;
@@ -180,6 +205,16 @@ public class MapRun
 	private final boolean _deathCurse;
 	private final boolean _bounty;
 	private final int _speedrunMinutes;
+	private final boolean _chainReaction;
+	private final boolean _cullingStrike;
+	private final boolean _risingStakes;
+	private final boolean _rampage;
+	private final boolean _momentum;
+	private final boolean _lens;
+	private final boolean _gravityWell;
+	private final boolean _waystones;
+	private final boolean _nests;
+	private final boolean _coffers;
 	private final int _portalCount;
 	private final double _xpMultiplier;
 	private final double _dropMultiplier;
@@ -239,6 +274,16 @@ public class MapRun
 		boolean deathCurse = false;
 		boolean bounty = false;
 		int speedrunMinutes = 0;
+		boolean chainReaction = false;
+		boolean cullingStrike = false;
+		boolean risingStakes = false;
+		boolean rampage = false;
+		boolean momentum = false;
+		boolean lens = false;
+		boolean gravityWell = false;
+		boolean waystones = false;
+		boolean nests = false;
+		boolean coffers = false;
 		double playerMaxHp = 1;
 		double playerDef = 1;
 		double playerMpRegen = 1;
@@ -308,6 +353,16 @@ public class MapRun
 			splitters |= modifier.isSplitters();
 			deathCurse |= modifier.isDeathCurse();
 			bounty |= modifier.isBounty();
+			chainReaction |= modifier.isChainReaction();
+			cullingStrike |= modifier.isCullingStrike();
+			risingStakes |= modifier.isRisingStakes();
+			rampage |= modifier.isRampage();
+			momentum |= modifier.isMomentum();
+			lens |= modifier.isLens();
+			gravityWell |= modifier.isGravityWell();
+			waystones |= modifier.isWaystones();
+			nests |= modifier.isNests();
+			coffers |= modifier.isCoffers();
 			if (modifier.getSpeedrunMinutes() > 0)
 			{
 				speedrunMinutes = speedrunMinutes > 0 ? Math.min(speedrunMinutes, modifier.getSpeedrunMinutes()) : modifier.getSpeedrunMinutes();
@@ -398,6 +453,16 @@ public class MapRun
 		_deathCurse = deathCurse;
 		_bounty = bounty;
 		_speedrunMinutes = speedrunMinutes;
+		_chainReaction = chainReaction;
+		_cullingStrike = cullingStrike;
+		_risingStakes = risingStakes;
+		_rampage = rampage;
+		_momentum = momentum;
+		_lens = lens;
+		_gravityWell = gravityWell;
+		_waystones = waystones;
+		_nests = nests;
+		_coffers = coffers;
 		_playerMaxHp = playerMaxHp;
 		_playerDef = playerDef;
 		_playerMpRegen = playerMpRegen;
@@ -1092,5 +1157,235 @@ public class MapRun
 	public boolean isSpeedrunMade()
 	{
 		return (_speedrunMinutes > 0) && (_completedAt > 0) && ((_completedAt - _openedAt) <= (_speedrunMinutes * 60000L));
+	}
+
+	public boolean isChainReaction()
+	{
+		return _chainReaction;
+	}
+
+	public boolean isCullingStrike()
+	{
+		return _cullingStrike;
+	}
+
+	public boolean isRisingStakes()
+	{
+		return _risingStakes;
+	}
+
+	/**
+	 * Rising Stakes: one step every 10 kills, up to 15.
+	 * @return how many steps the stakes have risen
+	 */
+	public int getStakesSteps()
+	{
+		return _risingStakes ? Math.min(15, getKills() / 10) : 0;
+	}
+
+	public boolean isRampage()
+	{
+		return _rampage;
+	}
+
+	public long getRampageUntil()
+	{
+		return _rampageUntil;
+	}
+
+	public void setRampageUntil(long until)
+	{
+		_rampageUntil = until;
+	}
+
+	/**
+	 * @return {@code true} while a rampage runs
+	 */
+	public boolean isRampaging()
+	{
+		return _rampage && (System.currentTimeMillis() < _rampageUntil);
+	}
+
+	public Object getRampageFuncOwner()
+	{
+		return _rampageFuncOwner;
+	}
+
+	public boolean isMomentum()
+	{
+		return _momentum;
+	}
+
+	public Map<Integer, long[]> getMomentum()
+	{
+		return _momentumStacks;
+	}
+
+	public Object getMomentumFuncOwner()
+	{
+		return _momentumFuncOwner;
+	}
+
+	public boolean isLens()
+	{
+		return _lens;
+	}
+
+	public boolean isGravityWell()
+	{
+		return _gravityWell;
+	}
+
+	public boolean isWaystones()
+	{
+		return _waystones;
+	}
+
+	public List<Npc> getWaystones()
+	{
+		return _waystoneNpcs;
+	}
+
+	public boolean isNests()
+	{
+		return _nests;
+	}
+
+	public Map<Integer, Integer> getNestHearts()
+	{
+		return _nestHearts;
+	}
+
+	/**
+	 * @param nest a nest index
+	 * @return {@code true} if its heart is broken
+	 */
+	public boolean isNestBroken(int nest)
+	{
+		return _brokenNests.contains(nest);
+	}
+
+	/**
+	 * @param nest a nest index
+	 * @return {@code true} if this broke it, {@code false} if it was already broken
+	 */
+	public boolean breakNest(int nest)
+	{
+		return _brokenNests.add(nest);
+	}
+
+	public boolean isCoffers()
+	{
+		return _coffers;
+	}
+
+	public Map<Integer, Coffer> getCoffers()
+	{
+		return _cofferStates;
+	}
+
+	/**
+	 * Sealed Coffers: one coffer of a run, and the fight its seal started.
+	 */
+	public static class Coffer
+	{
+		private final Npc _npc;
+		/** 0 sealed, 1 and 2 its waves, 3 paid. */
+		private int _wave;
+		private int _openerId;
+		private final Set<Integer> _guards = ConcurrentHashMap.newKeySet();
+
+		public Coffer(Npc npc)
+		{
+			_npc = npc;
+		}
+
+		public Npc getNpc()
+		{
+			return _npc;
+		}
+
+		public synchronized int getWave()
+		{
+			return _wave;
+		}
+
+		public synchronized void setWave(int wave)
+		{
+			_wave = wave;
+		}
+
+		public synchronized int getOpenerId()
+		{
+			return _openerId;
+		}
+
+		public synchronized void setOpenerId(int openerId)
+		{
+			_openerId = openerId;
+		}
+
+		/**
+		 * @return the object ids of the guards of its wave still standing
+		 */
+		public Set<Integer> getGuards()
+		{
+			return _guards;
+		}
+	}
+
+	public Map<Integer, Long> getGravityCooldowns()
+	{
+		return _gravityCooldowns;
+	}
+
+	public int getPulled()
+	{
+		return _pulled.get();
+	}
+
+	public void addPulled(int count)
+	{
+		_pulled.addAndGet(count);
+	}
+
+	public int getChainKills()
+	{
+		return _chainKills.get();
+	}
+
+	public void addChainKill()
+	{
+		_chainKills.incrementAndGet();
+	}
+
+	public boolean isProbe()
+	{
+		return _probe;
+	}
+
+	public void setProbe(boolean probe)
+	{
+		_probe = probe;
+	}
+
+	/**
+	 * @return what a probe run's map said, in order (empty for a real run)
+	 */
+	public List<String> getProbeLog()
+	{
+		return _probeLog;
+	}
+
+	/**
+	 * Logs a line of a probe run; nothing for a real run.
+	 * @param line what happened
+	 */
+	public void probeLog(String line)
+	{
+		if (_probe && (_probeLog.size() < 2000))
+		{
+			_probeLog.add(((System.currentTimeMillis() - _openedAt) / 100) / 10.0 + "s " + line);
+		}
 	}
 }

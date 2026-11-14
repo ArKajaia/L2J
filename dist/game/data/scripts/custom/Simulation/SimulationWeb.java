@@ -33,6 +33,7 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.config.custom.FakeSkillWeightsConfig;
+import org.l2jmobius.gameserver.managers.MapProbe;
 import org.l2jmobius.gameserver.managers.MayhemPassiveRanking;
 import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
@@ -73,6 +74,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * place: the GM's own, else the Cruma Marshlands field)</li>
  * <li>GET /api/simulation/arena/battles - the arena running now, its status lines and the battles that run, each with its teams; GET /arena/list - the arenas run so far with their summary; POST /arena/watch (run: a battle, blank for the next one) and
  * /arena/leave - take the GM of the link into a battle's instance to watch it, or back out</li>
+ * <li>POST /api/mapdevice/probe (arena, tier, mods, kills, seconds, pace, hit, after, invul, keep) - tries map modifiers without a game client (MapProbe)</li>
  * <li>GET /api/racewars/status, POST /api/racewars/simulate (level, map), /open, /close, /stop - Race Wars, like //racewars</li>
  * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, or all at once (mode=ffa), the dead coming back (start: races, mode, power, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
  * place, the Cruma Marshlands field by default)</li>
@@ -190,6 +192,7 @@ public class SimulationWeb
 		server.addRoute("/api/simulation/matrix/status", "GET", false, this::handleMatrixStatus);
 		server.addRoute("/api/simulation/weights/reload", "POST", true, this::handleWeightsReload);
 		server.addRoute("/api/tvt/status", "GET", false, this::handleTvtStatus);
+		server.addRoute("/api/mapdevice/probe", "POST", true, this::handleMapProbe);
 		server.addRoute("/api/tvt/simulate", "POST", true, this::handleTvtSimulate);
 		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
 		server.addRoute("/api/tvt/batch", "POST", true, this::handleTvtBatch);
@@ -1392,6 +1395,21 @@ public class SimulationWeb
 	// ---------------------------------------------------------------------------------------------
 	// Team vs Team (see TeamVsTeamManager): matches of fake players only, to watch the event
 	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * The map probe (see MapProbe): opens a map with the modifiers named, has a client-less player slay its monsters, and answers what the map did. Blocks until it is done.
+	 */
+	private void handleMapProbe(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, MapProbe.run(params));
+	}
 
 	private void handleTvtStatus(HttpExchange exchange) throws IOException
 	{

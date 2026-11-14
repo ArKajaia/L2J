@@ -20,6 +20,7 @@
  */
 package handlers.chat.commands.admin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -36,6 +37,7 @@ import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
+import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
 import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
@@ -52,7 +54,7 @@ import custom.EventMaps.EventMapWeb;
  * <li>{@code //mapdevice} or {@code //mapdevice editor} - the event map page, on the Map Device points: tick a map for the Map Device, give it a fence, an entry, monster spots, a Map Guardian spot, its tiers and monsters.</li>
  * <li>{@code //mapdevice list} - every place a map can open in, from the page and from data/MapDevice.xml, and whether it is ready.</li>
  * <li>{@code //mapdevice show <map>} - draws a map's Map Device points in game ({@code //mapdevice hide} takes them away).</li>
- * <li>{@code //mapdevice test <map> [tier] [medals]} - opens a map there at the device of your own hideout, for nothing, to try it out.</li>
+ * <li>{@code //mapdevice test <map> [tier] [medals] [mods=A,B]} - opens a map there at the device of your own hideout, for nothing, to try it out; {@code mods=} names its modifiers (MapModifier names, comma separated) instead of rolling them.</li>
  * <li>{@code //mapdevice give <tier> [count]} - gives maps to your target (or you).</li>
  * <li>{@code //mapdevice pool <tier>} - the monsters a map of that tier may hold, with their strength score; {@code //mapdevice score} - the strength of your target.</li>
  * <li>{@code //mapdevice runs} - the maps open right now; {@code //mapdevice close <instance>} closes one.</li>
@@ -122,13 +124,37 @@ public class AdminMapDevice implements IAdminCommandHandler
 			{
 				if (!st.hasMoreTokens())
 				{
-					activeChar.sendSysMessage("Usage: //mapdevice test <map> [tier] [medals] - in your own hideout (.hideout)");
+					activeChar.sendSysMessage("Usage: //mapdevice test <map> [tier] [medals] [mods=A,B] - in your own hideout (.hideout)");
 					return false;
 				}
 				final String arenaId = st.nextToken();
-				final int tier = st.hasMoreTokens() ? parse(st.nextToken(), 1) : 1;
-				final int medals = st.hasMoreTokens() ? parse(st.nextToken(), 0) : 0;
-				final String denied = manager.openTestMap(activeChar, arenaId, tier, medals);
+				int tier = 1;
+				int medals = 0;
+				List<MapModifier> forced = null;
+				int number = 0;
+				while (st.hasMoreTokens())
+				{
+					final String token = st.nextToken();
+					if (token.toLowerCase(Locale.ROOT).startsWith("mods="))
+					{
+						final List<String> unknown = new ArrayList<>();
+						forced = MapDeviceManager.parseModifiers(token.substring(5), unknown);
+						if (!unknown.isEmpty())
+						{
+							activeChar.sendSysMessage("Unknown modifiers: " + String.join(", ", unknown) + ".");
+							return false;
+						}
+					}
+					else if (number++ == 0)
+					{
+						tier = parse(token, 1);
+					}
+					else
+					{
+						medals = parse(token, 0);
+					}
+				}
+				final String denied = manager.openTestMap(activeChar, arenaId, tier, medals, forced);
 				activeChar.sendSysMessage(denied != null ? denied : "Opened a tier " + tier + " test map in " + arenaId + ": take a portal round your device.");
 				break;
 			}

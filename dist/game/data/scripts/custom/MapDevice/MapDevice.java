@@ -34,7 +34,7 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 /**
  * The NPCs of the Map Device (see {@link MapDeviceManager}): the device in a hideout opens its window, a portal round it takes the player into the map, and the return portal of a map takes them back to the hideout.
  * The Dealer of the unique map The Gambler's Den takes bets on its Pot ({@link UniqueMapManager#placeBet}). The War Banner, the envoys and the war totems of the Ketra-Varka Front open its window ({@link KetraVarkaFrontManager}), and so do the reliquaries
- * and pedestals of the Tomb Raiders ({@link TombRaidersManager}).
+ * and pedestals of the Tomb Raiders ({@link TombRaidersManager}). The waystones of the Waystones modifier and the coffers of the Sealed Coffers modifier have windows of their own.
  * @author Mobius
  */
 public class MapDevice extends Quest
@@ -59,6 +59,8 @@ public class MapDevice extends Quest
 		addTalkId(FRONT_NPCS);
 		addFirstTalkId(TombRaidersManager.RELIQUARY, TombRaidersManager.PEDESTAL);
 		addTalkId(TombRaidersManager.RELIQUARY, TombRaidersManager.PEDESTAL);
+		addFirstTalkId(MapDeviceManager.WAYSTONE_NPC_ID, MapDeviceManager.COFFER_NPC_ID);
+		addTalkId(MapDeviceManager.WAYSTONE_NPC_ID, MapDeviceManager.COFFER_NPC_ID);
 	}
 
 	@Override
@@ -69,7 +71,94 @@ public class MapDevice extends Quest
 			final String refused = UniqueMapManager.getInstance().placeBet(player);
 			showDealer(npc, player, refused);
 		}
+		else if ((npc != null) && (npc.getId() == MapDeviceManager.WAYSTONE_NPC_ID) && event.startsWith("waystone "))
+		{
+			int destination = -1;
+			try
+			{
+				destination = Integer.parseInt(event.substring(9).trim());
+			}
+			catch (NumberFormatException e)
+			{
+				// Shown as no such place.
+			}
+			final String refused = MapDeviceManager.getInstance().useWaystone(player, npc, destination);
+			if (refused != null)
+			{
+				showWaystone(npc, player, refused);
+			}
+		}
+		else if ((npc != null) && (npc.getId() == MapDeviceManager.COFFER_NPC_ID) && "coffer_open".equals(event))
+		{
+			final String refused = MapDeviceManager.getInstance().openCoffer(player, npc);
+			if (refused != null)
+			{
+				showCoffer(npc, player, refused);
+			}
+		}
 		return null;
+	}
+
+	/**
+	 * A waystone of the Waystones modifier: a button for every other place it can take the player to.
+	 */
+	private void showWaystone(Npc npc, Player player, String note)
+	{
+		final MapRun run = MapDeviceManager.getRun(npc.getInstanceId());
+		final StringBuilder sb = new StringBuilder(1024);
+		sb.append("<html><body><center><font color=\"LEVEL\">Waystone</font><br>");
+		sb.append("<font color=\"A0A0A0\">").append(npc.getTitle()).append("</font></center><br>");
+		if (note != null)
+		{
+			sb.append("<font color=\"FF6666\">").append(note).append("</font><br><br>");
+		}
+		if ((run == null) || run.isClosed())
+		{
+			sb.append("The stone is cold.</body></html>");
+			sendHtml(npc, player, sb.toString());
+			return;
+		}
+		sb.append("The runes glow at your touch. Where to?<br><br><center>");
+		final java.util.List<String> names = MapDeviceManager.getWaystoneNames(run);
+		for (int i = 0; i < names.size(); i++)
+		{
+			if ((i > 0) && (run.getWaystones().get(i - 1) == npc))
+			{
+				continue; // Here.
+			}
+			sb.append("<button value=\"").append(names.get(i)).append("\" action=\"bypass -h Quest ").append(getClass().getSimpleName()).append(" waystone ").append(i).append("\" width=150 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"><br1>");
+		}
+		sb.append("</center></body></html>");
+		sendHtml(npc, player, sb.toString());
+	}
+
+	/**
+	 * A coffer of the Sealed Coffers modifier: its seal, or the fight going on round it.
+	 */
+	private void showCoffer(Npc npc, Player player, String note)
+	{
+		final int wave = MapDeviceManager.getCofferWave(npc);
+		final StringBuilder sb = new StringBuilder(1024);
+		sb.append("<html><body><center><font color=\"LEVEL\">Sealed Coffer</font></center><br>");
+		if (note != null)
+		{
+			sb.append("<font color=\"FF6666\">").append(note).append("</font><br><br>");
+		}
+		if (wave == 0)
+		{
+			sb.append("A heavy coffer under a guardian's seal. Break it, and its guards wake: two waves, the second led by a Champion. Slay them all and the coffer opens: Champion Medals, Gemstones, and sometimes a map.<br><br>");
+			sb.append("<center><button value=\"Break the seal\" action=\"bypass -h Quest ").append(getClass().getSimpleName()).append(" coffer_open\" width=150 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center>");
+		}
+		else if (wave > 0)
+		{
+			sb.append("The seal is broken. Its guards fight on: wave ").append(Math.min(wave, 2)).append(" of 2.");
+		}
+		else
+		{
+			sb.append("The coffer is empty.");
+		}
+		sb.append("</body></html>");
+		sendHtml(npc, player, sb.toString());
 	}
 
 	/**
@@ -161,6 +250,16 @@ public class MapDevice extends Quest
 		if ((npcId == TombRaidersManager.RELIQUARY) || (npcId == TombRaidersManager.PEDESTAL))
 		{
 			TombRaidersManager.showWindow(player);
+			return null;
+		}
+		if (npcId == MapDeviceManager.WAYSTONE_NPC_ID)
+		{
+			showWaystone(npc, player, null);
+			return null;
+		}
+		if (npcId == MapDeviceManager.COFFER_NPC_ID)
+		{
+			showCoffer(npc, player, null);
 			return null;
 		}
 		if (npcId == MapDeviceConfig.RETURN_PORTAL_NPC_ID)

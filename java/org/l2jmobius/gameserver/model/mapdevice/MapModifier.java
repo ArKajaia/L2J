@@ -486,6 +486,79 @@ public enum MapModifier
 		{
 			speedrunMinutes = 10;
 		}
+	},
+
+	// =========================================================================
+	// Big moments: they pay off a fast clear, each at a price
+	// =========================================================================
+	CHAIN_REACTION("Chain Reaction", "Slain monsters burst: monsters within 300 take 20% of their max HP, players within 300 take 4% of theirs.")
+	{
+		{
+			chainReaction = true;
+		}
+	},
+	CULLING_STRIKE("Culling Strike", "A monster below 12% HP dies from any hit you land. Monsters deal 10% more damage.")
+	{
+		{
+			cullingStrike = true;
+			monsterPAtk = 1.10;
+			monsterMAtk = 1.10;
+		}
+	},
+	RISING_STAKES("Rising Stakes", "Every 10 kills: +4% experience and drops (up to +60%), but monsters deal 2% more damage (up to +30%).")
+	{
+		{
+			risingStakes = true;
+		}
+	},
+	RAMPAGE("Rampage", "Every 25 kills: 15 seconds of double damage and +50% run speed for everyone inside. Monsters have 20% more HP.")
+	{
+		{
+			rampage = true;
+			monsterHp = 1.20;
+		}
+	},
+	MOMENTUM("Momentum", "Each kill within 8 seconds of the last: +4% run speed and +3% attack and cast speed, up to 10 stacks. Monsters attack 10% faster.")
+	{
+		{
+			momentum = true;
+			monsterAtkSpd = 1.10;
+		}
+	},
+
+	// =========================================================================
+	// Less walking, less searching
+	// =========================================================================
+	CARTOGRAPHERS_LENS("Cartographer's Lens", "Your radar works from the start and points at the best pack nearby. Aggressive monsters notice you from 25% farther.")
+	{
+		{
+			lens = true;
+		}
+	},
+	GRAVITY_WELL("Gravity Well", "Hitting a monster pulls up to 6 monsters within 600 to its side, and they join the fight.")
+	{
+		{
+			gravityWell = true;
+		}
+	},
+	WAYSTONES("Waystones", "4 waystones stand on the field: touch one to travel to another or to the entry. Monsters move 15% faster.")
+	{
+		{
+			waystones = true;
+			monsterMoveSpeed = 1.15;
+		}
+	},
+	NESTS("Nests", "The monsters stand in 6 nests round a Nest Heart. While its heart stands a nest takes 20% less damage; break the heart and the nest frenzies (+30% damage) but drops double.")
+	{
+		{
+			nests = true;
+		}
+	},
+	SEALED_COFFERS("Sealed Coffers", "3 Sealed Coffers stand on the field. Breaking a seal calls two waves of guards, the second led by a Champion; then the coffer pays Champion Medals, Gemstones and maybe a map.")
+	{
+		{
+			coffers = true;
+		}
 	};
 
 	/** How many of these only change numbers: the first ones of the enum. The rest change how the map plays. */
@@ -584,6 +657,20 @@ public enum MapModifier
 	/** How long the map stays open at most, 0 for the configured time. */
 	protected int timeLimitMinutes = 0;
 	protected int speedrunMinutes = 0;
+
+	// Big moments.
+	protected boolean chainReaction = false;
+	protected boolean cullingStrike = false;
+	protected boolean risingStakes = false;
+	protected boolean rampage = false;
+	protected boolean momentum = false;
+
+	// Less walking.
+	protected boolean lens = false;
+	protected boolean gravityWell = false;
+	protected boolean waystones = false;
+	protected boolean nests = false;
+	protected boolean coffers = false;
 
 	MapModifier(String displayName, String description)
 	{
@@ -967,5 +1054,55 @@ public enum MapModifier
 	public int getSpeedrunMinutes()
 	{
 		return speedrunMinutes;
+	}
+
+	public boolean isChainReaction()
+	{
+		return chainReaction;
+	}
+
+	public boolean isCullingStrike()
+	{
+		return cullingStrike;
+	}
+
+	public boolean isRisingStakes()
+	{
+		return risingStakes;
+	}
+
+	public boolean isRampage()
+	{
+		return rampage;
+	}
+
+	public boolean isMomentum()
+	{
+		return momentum;
+	}
+
+	public boolean isLens()
+	{
+		return lens;
+	}
+
+	public boolean isGravityWell()
+	{
+		return gravityWell;
+	}
+
+	public boolean isWaystones()
+	{
+		return waystones;
+	}
+
+	public boolean isNests()
+	{
+		return nests;
+	}
+
+	public boolean isCoffers()
+	{
+		return coffers;
 	}
 }

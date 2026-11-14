@@ -64,6 +64,10 @@ public class PrisonGuards extends Script
 		}
 		else if (event.equals("CHECK_HOME"))
 		{
+			if (npc.getSpawn() == null)
+			{
+				return super.onEvent(event, npc, player); // Spawned without a home (by a script or an event): nowhere to go back to.
+			}
 			if ((npc.calculateDistance2D(npc.getSpawn().getLocation()) > 10) && !npc.isInCombat() && !npc.isDead())
 			{
 				npc.teleToLocation(npc.getSpawn().getLocation());
@@ -98,7 +102,7 @@ public class PrisonGuards extends Script
 		}
 		else
 		{
-			if (!player.isAffectedBySkill(TIMER) && (npc.calculateDistance2D(npc.getSpawn().getLocation()) < 2000))
+			if (!player.isAffectedBySkill(TIMER) && ((npc.getSpawn() == null) || (npc.calculateDistance2D(npc.getSpawn().getLocation()) < 2000)))
 			{
 				npc.setTarget(player);
 				npc.doCast(STONE.getSkill());

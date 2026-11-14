@@ -278,5 +278,7 @@
 		<drop group="boss" id="57" min="1500000" max="2500000" chance="100" /> <!-- Adena -->
 	</uniqueMap>
 
-	<excludedNpcs></excludedNpcs>
+	<!-- The Prison Guards of the Isle of Prayer houses (ai/others/PrisonGuards): Rignos's Race Event (the Hellbound access quests), not fighters. They petrify
+	     whoever lacks the race's Event Timer, and their script needs their home spawn. -->
+	<excludedNpcs>18367,18368</excludedNpcs>
 </list>
