@@ -32,6 +32,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
+import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 import org.l2jmobius.gameserver.model.actor.instance.Fence;
@@ -100,6 +101,8 @@ public class MapRun
 	private volatile boolean _ambushed;
 	/** Object ids of the players inside right now. */
 	private final Set<Integer> _playersInside = ConcurrentHashMap.newKeySet();
+	/** The last hunt: player object id -> the monster their radar points at, and where. */
+	private final Map<Integer, RadarMark> _radarMarks = new ConcurrentHashMap<>();
 	/** Owners of the stat functions a run adds to its monsters and players. */
 	private final Object _monsterFuncOwner = new Object();
 	/** Owns the stat functions of Death Curse on the players (apart from the map's own, which are put back on every arrival). */
@@ -620,6 +623,23 @@ public class MapRun
 	public Set<Integer> getPlayersInside()
 	{
 		return _playersInside;
+	}
+
+	/**
+	 * @return player object id -> the monster their last hunt radar points at
+	 */
+	public Map<Integer, RadarMark> getRadarMarks()
+	{
+		return _radarMarks;
+	}
+
+	/**
+	 * A player's last hunt radar mark.
+	 * @param monsterId the object id of the monster it points at
+	 * @param spot where the marker stands
+	 */
+	public record RadarMark(int monsterId, Location spot)
+	{
 	}
 
 	public Object getMonsterFuncOwner()

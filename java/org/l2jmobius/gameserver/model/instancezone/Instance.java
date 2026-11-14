@@ -81,6 +81,7 @@ public class Instance
 	private long _instanceStartTime = -1;
 	private long _instanceEndTime = -1;
 	private boolean _isPvP = false;
+	private boolean _isPeace = false;
 	private boolean _showTimer = false;
 	private boolean _isTimerIncrease = true;
 	private String _timerText = "";
@@ -168,6 +169,23 @@ public class Instance
 	public void setPvP(boolean value)
 	{
 		_isPvP = value;
+	}
+	
+	/**
+	 * @return {@code true} if the entire instance is a peace zone (no PvP, as in a town), unless it is a PvP instance
+	 */
+	public boolean isPeace()
+	{
+		return _isPeace;
+	}
+	
+	/**
+	 * Makes the entire instance a peace zone, as a town is.
+	 * @param value {@code true} for a peace zone
+	 */
+	public void setPeace(boolean value)
+	{
+		_isPeace = value;
 	}
 	
 	/**
