@@ -63,6 +63,8 @@ public class FightReadFeed
 	private static final long CC_CHECK_DELAY = 300;
 	private static final Set<Integer> INVULNERABLE_SKILLS = Set.of(442, 443, 1418);
 	private static final Set<Integer> REFLECT_SKILLS = Set.of(351, 916, 6282);
+	/** From this physical skill reflect chance on the target (Physical Mirror, Riposte Stance) a physical debuff or stun is not worth casting on it; Magical Mirror's 10% is not enough. */
+	public static final double MIRROR_REFLECT_CHANCE = 20;
 	/** Tenacity's buff (passive tree keystone): no stun, sleep or root for a moment. */
 	private static final int TENACITY_SKILL = 27479;
 	
@@ -357,6 +359,17 @@ public class FightReadFeed
 	public static boolean isPhysicallyReflectable(Skill skill)
 	{
 		return skill.isDebuff() && (skill.getActivateRate() != -1) && !skill.isMagic();
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @param target its target
+	 * @return {@code true} if all the skill would do to the target is come back on its caster: a physical debuff or stun without damage (Shock Stomp, Hamstring) on a target under Physical Mirror.
+	 *         One with damage (Armor Crush, Rush Impact) is still worth its damage: the scorer leaves its debuff out ({@link SkillOption#reflected()}).
+	 */
+	public static boolean isWastedOnMirror(Skill skill, Creature target)
+	{
+		return isPhysicallyReflectable(skill) && !SkillMeanings.classify(SkillFactsReader.of(skill)).contains(SkillMeaning.NUKE) && (physicalReflectChance(target) >= MIRROR_REFLECT_CHANCE);
 	}
 	
 	/**

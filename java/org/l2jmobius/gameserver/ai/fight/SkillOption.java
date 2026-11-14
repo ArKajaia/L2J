@@ -27,9 +27,18 @@ package org.l2jmobius.gameserver.ai.fight;
  * @param expectedDamage the damage it expects the skill to deal (from the fake player's own damage estimate), 0 for none
  * @param inReach {@code true} if it reaches the target from where the fake player stands
  * @param castMs how long the fake player takes to cast it (its cast bar, with its casting or attack speed), 0 for none
+ * @param reflected {@code true} if its debuff or stun would come back on the caster (a physical one on a target under Physical Mirror): only its damage counts
  */
-public record SkillOption(Kind kind, SkillFacts skill, double expectedDamage, boolean inReach, int castMs)
+public record SkillOption(Kind kind, SkillFacts skill, double expectedDamage, boolean inReach, int castMs, boolean reflected)
 {
+	/**
+	 * An option whose debuff, if it has one, gets through.
+	 */
+	public SkillOption(Kind kind, SkillFacts skill, double expectedDamage, boolean inReach, int castMs)
+	{
+		this(kind, skill, expectedDamage, inReach, castMs, false);
+	}
+	
 	/**
 	 * An option timed by the skill's data (cast time and pause after it).
 	 */
