@@ -13,7 +13,16 @@ From `skill_cards.py` and the builds in `dist/game/data/FakePlayerPvp.xml`:
 - Defence: Ultimate Defense (P. Def +3,600, M. Def +3,240 for 30 s, 15 min reuse, **it roots its caster**), Angelic Icon (at 30% HP, Phoenix Knight), Anti Magic Armor, the mirrors, Deflect Arrow (on before the fight), Shield Fortress.
 - Not usable by a fake player: the Templars' cubics (`SummonCubic` works on a player only).
 
-Retail play: no High Five PvP guide for these classes turned up (the search found Interlude guides and Freya-era skill tables on linedia.ru); as for the Battle Bard, the kit is the yardstick.
+Retail play: the web search found no High Five PvP guide (Interlude guides, Freya-era skill tables on linedia.ru). One Eva's Templar guide from April 2012 (High Five time on Russian servers; it doesn't name the chronicle), on the shock-world.org forum ("Гайд по Temple Knight/Eva's Templar", Olympiad and PvP sections), says:
+
+- **No Ultimate Defense at the start of a fight**: "while you have CP your heal cubic sleeps". The exception is an enemy under short burst buffs that strips its CP fast (a Destroyer under Frenzy and Zealot): stand in Ultimate Defense while it is on you, take it off and walk away when it steps back, and so outlast its buffs. Take Ultimate Defense off at once when it starts a buff steal.
+- **Shield Bash on cooldown from the first second**, against everyone: "the stun is weak but it knocks the target off reliably". Its Chance route is the first enchant of the guide; Arrest, Entangle and Tribunal on anything *but* Chance.
+- **Its sustain is the Life Cubic** (heals HP once CP is gone), Touch of Life and **Touch of Eva** (50% HP, 50 HP a second and +30% heals received for 60 s, after Eva's Will has stacked): "use Touch of Life as soon as it is up in a long fight (tanks, daggers)". The Storm Cubic hits a mage for 300 to 400, often.
+- It kills with its normal attack: "almost no attack skills". Against daggers, which it misses, Tribunal and Power Strike; a bow and Power Shot against one that runs.
+- Against a mage: start as close as it can, Shield Bash on cooldown, Anti Magic Armor when the mage casts Enlightenment, then just hit.
+- Against a Doombringer: stop hitting while Eye for Eye is on (10 s).
+
+The kit stays the yardstick for the other three.
 
 ## 2. Baselines
 
