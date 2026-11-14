@@ -317,6 +317,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static final double LIST_RANK_FACTOR = 0.85;
 	/** Most critical hit chance counted for normal attacks. */
 	private static final double MAX_CRIT_CHANCE = 0.8;
+	/** The most of a normal attack's worth that damage reflection takes off (see {@link #estimateAutoAttackDps}). */
+	private static final double REFLECT_CAP = 0.9;
 	/** Within this gap a melee fake player counts its enemy as on it (its long casts risk an interrupt). */
 	private static final double MELEE_NEAR = 150;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
@@ -6114,6 +6116,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return true;
 		}
 		final boolean magic = castsMagic(target);
+		// A mage's damage is its spells: P. Def (Guts) only meets its staff. Against a hybrid (Soul Hound with its rapier out) it still counts.
+		final boolean spellsOnly = isMage(target);
 		final TraitType weapon = target.getAttackType().getTraitType();
 		for (AbstractEffect effect : effects)
 		{
@@ -6127,7 +6131,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				}
 				for (FuncTemplate func : funcs)
 				{
-					if ((func.getStat() != Stat.MAGIC_DEFENCE) || magic)
+					if (((func.getStat() != Stat.MAGIC_DEFENCE) || magic) && ((func.getStat() != Stat.POWER_DEFENCE) || !spellsOnly))
 					{
 						return true;
 					}
@@ -8505,6 +8509,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final StringBuilder note = new StringBuilder(best.option().kind() == SkillOption.Kind.SKILL ? skills.get(best.option()).getName() + " (" + best.option().skill().id() + ")" : best.option().kind().name());
 		note.append(";value=").append(String.format(Locale.ROOT, "%.2f", best.value()));
 		best.terms().entrySet().stream().sorted((a, b) -> Double.compare(Math.abs(b.getValue()), Math.abs(a.getValue()))).limit(3).forEach(term -> note.append(';').append(term.getKey()).append('=').append(String.format(Locale.ROOT, "%.2f", term.getValue())));
+		// What the value stands on: the damage it expects from the skill and its cast time, against its normal attack's damage a second.
+		if (best.option().kind() == SkillOption.Kind.SKILL)
+		{
+			note.append(";est=").append(Math.round(best.option().expectedDamage())).append('/').append(best.option().castMs()).append("ms");
+		}
+		note.append(";auto=").append(Math.round(ctx.autoAttackDps())).append("/s");
 		if (scored.size() > 1)
 		{
 			final Scored second = scored.get(1);
@@ -8814,7 +8824,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final double critChance = Math.min(MAX_CRIT_CHANCE, npc.getCriticalHit(target, null) / 1000.0);
 		final double damage = Formulas.calcPhysDam(npc, target, null, (byte) 0, false, true) * (1 + critChance);
 		final int interval = Math.max(npc.calculateTimeBetweenAttacks(), npc.getActiveWeaponItem() != null ? npc.calculateReuseTime(npc.getActiveWeaponItem()) : 0);
-		return (damage * 1000) / Math.max(200, interval);
+		// Damage reflection (a tank's passives, Vengeance) sends a share of every melee normal attack back to it, and none of its skills' damage (Creature.onHitTimer): a Titan's hits on a Hell Knight
+		// came back at 44%. That share is HP it loses for the damage, so the normal attack is worth that much less against such a target. Arrows are not reflected.
+		final boolean bow = (npc.getActiveWeaponItem() != null) && ((npc.getActiveWeaponItem().getItemType() == WeaponType.BOW) || (npc.getActiveWeaponItem().getItemType() == WeaponType.CROSSBOW));
+		final double reflect = (bow || target.isInvul()) ? 0 : Math.min(REFLECT_CAP, target.getStat().calcStat(Stat.REFLECT_DAMAGE_PERCENT, 0, null, null) / 100.0);
+		return ((damage * 1000) / Math.max(200, interval)) * (1 - reflect);
 	}
 	
 	/**

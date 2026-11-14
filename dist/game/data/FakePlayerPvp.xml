@@ -1059,10 +1059,10 @@
 		<variant name="Grand Khavatari Light" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
 	<build name="Titan" classId="113" role="FIGHTER" weapon="BIGSWORD" armor="HEAVY" polearm="POLEARM" weight="2">
-		<attack>777,315,190,255,3</attack>
+		<attack>777,315,190</attack> <!-- no Power Smash or Power Strike: the list's floor valued them near Fatal Strike, they hit like a normal attack (docs/class-clinic/titan.md) -->
 		<debuff>362</debuff>
-		<buff>94,176|139,287,420,917</buff>
-		<heal>121</heal>
+		<buff>94,176,139,287,420,917</buff> <!-- Frenzy from 60% HP, then Guts (P. Def x3) from 30%: they share an abnormal type, so Guts takes Frenzy's place -->
+		<heal>121,440</heal>
 		<emergency>536</emergency>
 		<toggle>312,424,335</toggle>
 		<rush>994</rush>
