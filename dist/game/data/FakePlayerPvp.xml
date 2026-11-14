@@ -1311,7 +1311,7 @@
 		</combo>
 		<variant name="Trickster Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Dreadnought" classId="89" role="FIGHTER" weapon="POLEARM" armor="HEAVY" weight="2"> <!-- Warlord line -->
+	<build name="Dreadnought" classId="89" role="FIGHTER" weapon="POLEARM" armor="HEAVY" bow="BOW" weight="2"> <!-- Warlord line -->
 		<attack>921,920,320,347,36,245,255,3</attack>
 		<debuff>361,452,48,100,116</debuff>
 		<buff>78,287,917</buff>
