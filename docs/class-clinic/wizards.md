@@ -6,7 +6,7 @@ A case of `docs/class-clinic.md`, 2026-11-14. Level 85, brain A, seed 4040, 30 b
 
 | Build | Before | After | Difference (95%) |
 |---|---|---|---|
-| Archmage | 63.2% | BATCH2_AM | |
+| Archmage | 63.2% | 77.6% (batches 1 and 2) | +14.4 |
 | Mystic Muse | 54.1% | 76.1% (batch 1) | +22.0 (+18.2 to +25.8), **better** |
 | Storm Screamer | 56.2% | 84.7% (batch 1) | +28.5 (+25.0 to +32.1), **better** |
 
@@ -75,7 +75,24 @@ Skill use moved as meant: Aura Blast 0 → 3.7 casts a battle (Archmage, 2,500 a
 
 The Archmage's "Slow and burn" combo (chance 50) now runs where "Surrender burst" used to come first: Slow 0.05 → 2 casts a battle, 33% landed. Not changed in this batch.
 
-BATCH2
+### Batch 2: Arcane Shield works for a fake player (`matrix-20261114-002158`, Archmage, against batch 1)
+
+`NpcStatus.reduceHp` now does what `PlayerStatus` does under the `manaShield` stat: a hit costs 30% of its damage in MP and no HP, and when MP runs out the shield ends and the rest goes to HP. Only the three wizards have the skill (1556); fake players don't pay MP for skills, so their MP lasts the 10 s.
+
+| Against | Before | After | Difference (95%) | Verdict |
+|---|---|---|---|---|
+| **tank** | 79.2% | 85.0% | +5.8 (−3.8 to +15.5) | no clear change |
+| **melee** | 84.6% | 87.5% | +2.9 (−2.1 to +8.0) | no clear change |
+| **dagger** | 83.3% | 91.1% | +7.8 (−1.9 to +17.5) | no clear change |
+| **archer** | 56.7% | 55.0% | −1.7 (−14.2 to +10.9) | no clear change |
+| **nuker** | 65.0% | 63.3% | −1.7 (−10.2 to +6.9) | no clear change |
+| **healer** | 56.7% | 53.3% | −3.3 (−17.9 to +11.2) | no clear change |
+| **buffer** | 93.3% | 95.3% | +2.0 (−3.2 to +7.2) | no clear change |
+| **all** | 76.0% | 77.6% | +1.6 (−1.8 to +5.0) | no clear change |
+
+Its own measure moved: the fights it casts Arcane Shield in are won **48%** of the time (26% in batch 1, 15% in the baseline). It is cast 0.2 times a battle, as the HP crash reflex, at about 10% HP (`battles/000012-Archmage-vs-Sagittarius`: shield at 8.3 s, then a 1,689 hit moves its HP by 1%): too late to turn many fights. Kept, as a correction of the game's mechanics with no kind clearly worse (the exception in `docs/class-clinic.md`, step 5). The same fight shows Heal restoring 479 HP for a cast.
+
+BATCH3
 
 ## 5. Not fixed here
 
