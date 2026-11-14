@@ -1129,7 +1129,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 
-		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
+		// healOnCooldown: in the reuse of its attacks ("heal CP / hit"), hurt enough for the heal not to be wasted and with no enemy close enough to need a kite step; otherwise below half its HP, half the time.
+		if ((((hpRatio < 0.5) && (Rnd.get(100) < 50)) || (profile.getBuild().isHealOnCooldown() && (hpRatio < HEAL_ON_COOLDOWN_BELOW) && areAttacksOnReuse(npc, profile) && !isEnemyOnMe(npc, HEAL_ON_COOLDOWN_CLEAR))) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "HEAL");
 			return;
@@ -3231,6 +3232,30 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		npc.setHeading((LocationUtil.calculateHeadingFrom(npc, target) - (int) ((skill.getFlyCourse() * 65536) / 360)) & 0xFFFF);
 	}
 	
+	/** healOnCooldown: it heals in its attacks' reuse when under this share of its HP (above it, a heal of 687 on 20,000 HP is partly wasted), with no enemy this close (a melee walking in: it kite steps instead). */
+	private static final double HEAL_ON_COOLDOWN_BELOW = 0.9;
+	private static final int HEAL_ON_COOLDOWN_CLEAR = 300;
+	
+	/**
+	 * @return {@code true} if every skill of its attack list is on reuse: a moment its attacks can't fill (the Dominator's Steal Essence has a 2 s reuse after a cast of about 0.55 s)
+	 */
+	private static boolean areAttacksOnReuse(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		final List<Skill> attacks = profile.getSkills(SkillCategory.ATTACK);
+		if (attacks.isEmpty())
+		{
+			return false;
+		}
+		for (Skill skill : attacks)
+		{
+			if (!npc.isSkillDisabled(skill))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	/** Outrun: how much faster than the melee on it a caster has to be. */
 	private static final double OUTRUN_SPEED_RATIO = 1.2;
 	/** Outrun: it starts running with the melee this close, and runs until it is this far. */
@@ -5166,10 +5191,36 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				{
 					return false;
 				}
+				// A ranged build doesn't walk in to open with a seal around itself (an aura of 200 with no reach): the Dominator walked from 900 into a mage's or an archer's reach for a Seal of Despair. It opens with it once the
+				// target is in its area: a melee on it.
+				if (!step.isSelf() && profile.getRole().isRanged() && isAuraAround(skill) && (npc.calculateDistance2D(target) > (skill.getAffectRange() + npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius())))
+				{
+					return false;
+				}
 			}
 		}
 		
 		return firstChecked && (profile.getCharges() >= chargesNeeded);
+	}
+	
+	/**
+	 * @return {@code true} for a skill that hits around its caster and has no reach of its own (an AURA: the Dominator's seals)
+	 */
+	private static boolean isAuraAround(Skill skill)
+	{
+		switch (skill.getTargetType())
+		{
+			case AURA:
+			case FRONT_AURA:
+			case BEHIND_AURA:
+			{
+				return skill.getAffectRange() > 0;
+			}
+			default:
+			{
+				return false;
+			}
+		}
 	}
 	
 	private void nextComboStep(long now)
@@ -5502,8 +5553,9 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				continue;
 			}
 			
+			// PARTY_CLAN takes in the caster too: the Dominator's Honor of Pa'agrio (a CP heal, so its HP) heals it alone.
 			final TargetType targetType = skill.getTargetType();
-			if ((targetType != TargetType.SELF) && (targetType != TargetType.ONE) && (targetType != TargetType.PARTY) && (targetType != TargetType.AURA))
+			if ((targetType != TargetType.SELF) && (targetType != TargetType.ONE) && (targetType != TargetType.PARTY) && (targetType != TargetType.PARTY_CLAN) && (targetType != TargetType.AURA))
 			{
 				continue;
 			}

@@ -3517,6 +3517,44 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * The CP a fake player has: its class CP is the top part of its HP pool (FakePvpIncludeCpInHp), so this is that part of its max HP.
+	 * @param creature anyone
+	 * @return its max CP inside its HP, or 0 for a player, a monster, or a fake player whose CP isn't counted in its HP
+	 */
+	public static double getFoldedMaxCp(Creature creature)
+	{
+		if ((creature == null) || !creature.isNpc())
+		{
+			return 0;
+		}
+		final FakePlayerPvpProfile profile = creature.asNpc().getTemplate().getFakePlayerPvpProfile();
+		return (profile == null) || (profile.getCpShare() <= 0) ? 0 : creature.getMaxHp() * profile.getCpShare();
+	}
+	
+	/**
+	 * CP restored to a fake player (CpHeal, CpHealPercent, CpHealOverTime: Ritual of Life, the Honor of Pa'agrio...) goes to its HP, as its CP is part of its HP pool. Without it, every CP heal did nothing for a fake player. One heal restores at most its
+	 * max CP, and its HP stays under what it may recover (Seal of Limit).
+	 * @param creature the one healed
+	 * @param amount the CP the skill restores
+	 * @return the HP restored, or -1 if {@code creature} keeps its CP apart (a player): the caller restores CP as usual
+	 */
+	public static double restoreCpAsHp(Creature creature, double amount)
+	{
+		final double maxCp = getFoldedMaxCp(creature);
+		if (maxCp <= 0)
+		{
+			return -1;
+		}
+		final double hp = creature.getCurrentHp();
+		final double healed = Math.max(0, Math.min(Math.min(amount, maxCp), creature.getMaxRecoverableHp() - hp));
+		if (healed > 0)
+		{
+			creature.setCurrentHp(hp + healed);
+		}
+		return healed;
+	}
+	
+	/**
 	 * A CP potion, like players drink them non stop in a PvP (see {@link PvpSpotsConfig#CP_POTIONS}): a Greater CP Potion (200 CP) from level {@link #GREATER_CP_POTION_LEVEL}, a CP Potion (50 CP) below, once every {@link PvpSpotsConfig#CP_POTION_REUSE} ms. Its CP is the top part of its
 	 * HP pool (FakePvpIncludeCpInHp), so a potion only refills that part: once its CP is gone, CP potions don't help anymore.
 	 * @param fake the fake player
