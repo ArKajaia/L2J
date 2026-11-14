@@ -486,6 +486,44 @@ public enum MapModifier
 		{
 			speedrunMinutes = 10;
 		}
+	},
+
+	// =========================================================================
+	// Big moments: they pay off a fast clear, each at a price
+	// =========================================================================
+	CHAIN_REACTION("Chain Reaction", "Slain monsters burst: monsters within 300 take 20% of their max HP, players within 300 take 4% of theirs.")
+	{
+		{
+			chainReaction = true;
+		}
+	},
+	CULLING_STRIKE("Culling Strike", "A monster below 12% HP dies from any hit you land. Monsters deal 10% more damage.")
+	{
+		{
+			cullingStrike = true;
+			monsterPAtk = 1.10;
+			monsterMAtk = 1.10;
+		}
+	},
+	RISING_STAKES("Rising Stakes", "Every 10 kills: +4% experience and drops (up to +60%), but monsters deal 2% more damage (up to +30%).")
+	{
+		{
+			risingStakes = true;
+		}
+	},
+	RAMPAGE("Rampage", "Every 25 kills: 15 seconds of double damage and +50% run speed for everyone inside. Monsters have 20% more HP.")
+	{
+		{
+			rampage = true;
+			monsterHp = 1.20;
+		}
+	},
+	MOMENTUM("Momentum", "Each kill within 8 seconds of the last: +4% run speed and +3% attack and cast speed, up to 10 stacks. Monsters attack 10% faster.")
+	{
+		{
+			momentum = true;
+			monsterAtkSpd = 1.10;
+		}
 	};
 
 	/** How many of these only change numbers: the first ones of the enum. The rest change how the map plays. */
@@ -584,6 +622,13 @@ public enum MapModifier
 	/** How long the map stays open at most, 0 for the configured time. */
 	protected int timeLimitMinutes = 0;
 	protected int speedrunMinutes = 0;
+
+	// Big moments.
+	protected boolean chainReaction = false;
+	protected boolean cullingStrike = false;
+	protected boolean risingStakes = false;
+	protected boolean rampage = false;
+	protected boolean momentum = false;
 
 	MapModifier(String displayName, String description)
 	{
@@ -967,5 +1012,30 @@ public enum MapModifier
 	public int getSpeedrunMinutes()
 	{
 		return speedrunMinutes;
+	}
+
+	public boolean isChainReaction()
+	{
+		return chainReaction;
+	}
+
+	public boolean isCullingStrike()
+	{
+		return cullingStrike;
+	}
+
+	public boolean isRisingStakes()
+	{
+		return risingStakes;
+	}
+
+	public boolean isRampage()
+	{
+		return rampage;
+	}
+
+	public boolean isMomentum()
+	{
+		return momentum;
 	}
 }

@@ -115,3 +115,11 @@ python tools/simulation/matrix_compare.py log/simulation-matrix/matrix-20261108-
 - With `repeats=2` every pair is fought twice, the races changing sides.
 - `power=race=attack[/defence],...` multiplies a race's fighters' stats for this war only: P.Atk by the attack and M.Atk by its square (magic damage goes with the square root of M.Atk), P.Def and M.Def by the defence. One number sets both. Kill share between two armies moved with about the 3rd power of the multiplier in the runs of 2026-10-31.
 - Output goes to `log/simulation-war/war-<time>/`: `results.csv` (one line per army per battle: race, power, kills, deaths, K/D, place, damage and healing), `members.csv` (one line per fighter per battle: build, role, kills, deaths, damage, healing), `summary.txt` (standings with K/D, who killed whom, the race-vs-race kill shares, and every build's kills, deaths, damage and healing per battle; rewritten after every battle) and `battles/` with the full logs of each battle.
+
+## Map probe: map modifiers without a game client
+
+`POST /api/mapdevice/probe` opens a Map Device map with the modifiers you name and has a client-less player (the character MapProbe) slay its monsters, then answers what the map did as JSON: kills, chain kills, Rising Stakes, Rampage, Momentum, speeds, a sample monster's multipliers and every line the map said. Details and parameters in `docs/map-device.md` (the map probe).
+
+```
+curl -X POST http://127.0.0.1:8788/api/mapdevice/probe -d 'tier=3&mods=RAMPAGE&kills=55&seconds=120&pace=40&after=17'
+```

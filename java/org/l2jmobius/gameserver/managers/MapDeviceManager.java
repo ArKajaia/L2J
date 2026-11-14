@@ -191,6 +191,23 @@ public class MapDeviceManager
 	private static final double SHIELD_DEF_SHARE = 0.5;
 	/** Linked Souls: true while damage is being passed on to a partner, so it isn't shared (or reduced) twice. */
 	private static final ThreadLocal<Boolean> SHARING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+	/** Set while a Chain Reaction burst deals its damage: a monster that dies of it is a chain kill. */
+	private static final ThreadLocal<Boolean> BURSTING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+	private static final int CHAIN_DELAY = 400;
+	private static final int CHAIN_RADIUS = 300;
+	private static final double CHAIN_MONSTER_DAMAGE = 0.20;
+	private static final double CHAIN_PLAYER_DAMAGE = 0.04;
+	private static final double CULL_HP = 0.12;
+	private static final double STAKES_REWARD_PER_STEP = 0.04;
+	private static final double STAKES_ATTACK_PER_STEP = 0.02;
+	private static final int RAMPAGE_EVERY = 25;
+	private static final int RAMPAGE_SECONDS = 15;
+	private static final double RAMPAGE_DAMAGE = 2.0;
+	private static final double RAMPAGE_SPEED = 1.5;
+	private static final int MOMENTUM_SECONDS = 8;
+	private static final int MOMENTUM_MAX_STACKS = 10;
+	private static final double MOMENTUM_SPEED_PER_STACK = 0.04;
+	private static final double MOMENTUM_ATTACK_SPEED_PER_STACK = 0.03;
 	/** When this few monsters are left, they hunt the players down (none stays hidden in a corner of the field). */
 	private static final int LAST_HUNT_COUNT = 10;
 	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
@@ -311,6 +328,10 @@ public class MapDeviceManager
 				{
 					multiplier *= 1.0 + Math.min(0.5, (run.getKills() / 10) * 0.05);
 				}
+				if (run.isRisingStakes())
+				{
+					multiplier *= 1.0 + (run.getStakesSteps() * STAKES_ATTACK_PER_STEP);
+				}
 				if (run.isSoulEaters())
 				{
 					multiplier *= 1.0 + (0.10 * monster.getVariables().getInt(SOULS_VAR, 0));
@@ -348,7 +369,7 @@ public class MapDeviceManager
 	public static double getXpMultiplier(Monster monster)
 	{
 		final MapRun run = getMonsterRun(monster);
-		return run != null ? run.getXpMultiplier() * getSpawnlingReward(run, monster) : 1.0;
+		return run != null ? run.getXpMultiplier() * getSpawnlingReward(run, monster) * getStakesReward(run) : 1.0;
 	}
 
 	/**
@@ -364,7 +385,15 @@ public class MapDeviceManager
 			return 1.0;
 		}
 		final double bounty = isBountyTarget(run, monster) ? BOUNTY_DROP : 1.0;
-		return run.getDropMultiplier() * getSpawnlingReward(run, monster) * bounty;
+		return run.getDropMultiplier() * getSpawnlingReward(run, monster) * bounty * getStakesReward(run);
+	}
+
+	/**
+	 * @return Rising Stakes' experience and drop multiplier, 1.0 without it
+	 */
+	private static double getStakesReward(MapRun run)
+	{
+		return 1.0 + (run.getStakesSteps() * STAKES_REWARD_PER_STEP);
 	}
 
 	/**
@@ -416,6 +445,10 @@ public class MapDeviceManager
 		if ((attacker != null) && attacker.isPlayable())
 		{
 			damage *= run.getPlayerDamage();
+			if (run.isRampaging())
+			{
+				damage *= RAMPAGE_DAMAGE;
+			}
 		}
 		if (run.isUnique())
 		{
@@ -449,6 +482,17 @@ public class MapDeviceManager
 					SHARING.set(Boolean.FALSE);
 				}
 				damage -= share;
+			}
+		}
+
+		// Culling Strike: a hit that leaves the monster below the line finishes it.
+		if (run.isCullingStrike() && (attacker != null) && attacker.isPlayable())
+		{
+			final double left = monster.getCurrentHp() - damage;
+			if ((left > 0) && (left < (monster.getMaxHp() * CULL_HP)))
+			{
+				damage = monster.getCurrentHp() + 1;
+				run.probeLog("Culling Strike finishes the " + monster.getName() + ".");
 			}
 		}
 		return damage;
@@ -1071,12 +1115,89 @@ public class MapDeviceManager
 	 */
 	public String openTestMap(Player gm, String arenaId, int tierId, int medals)
 	{
+		return openTestMap(gm, arenaId, tierId, medals, null);
+	}
+
+	/**
+	 * Opens a test map with the modifiers a GM names, instead of rolled ones.
+	 * @param gm the GM, in their own hideout
+	 * @param arenaId where
+	 * @param tierId the tier
+	 * @param medals the medals (their experience and drop bonus; the modifiers are {@code forced})
+	 * @param forced the modifiers, {@code null} to roll them as usual
+	 * @return why it didn't open, {@code null} if it opened
+	 */
+	public String openTestMap(Player gm, String arenaId, int tierId, int medals, List<MapModifier> forced)
+	{
 		final MapArena arena = findArena(arenaId);
 		if (arena == null)
 		{
 			return "No place " + arenaId + ": name an event map with a fence and an entry (//mapdevice list), or an arena of data/MapDevice.xml.";
 		}
-		return openMap(gm, tierId, medals, arena, true);
+		return openMap(gm, tierId, medals, arena, true, forced);
+	}
+
+	/**
+	 * @param names modifier names (the enum's, or their display names), comma separated
+	 * @param unknown filled with the names that match no modifier
+	 * @return the modifiers named, in the enum's order, each once
+	 */
+	public static List<MapModifier> parseModifiers(String names, List<String> unknown)
+	{
+		final Set<MapModifier> found = new HashSet<>();
+		for (String token : names.split(","))
+		{
+			final String name = token.trim();
+			if (name.isEmpty())
+			{
+				continue;
+			}
+			MapModifier match = null;
+			for (MapModifier modifier : MapModifier.values())
+			{
+				if (modifier.name().equalsIgnoreCase(name.replace(' ', '_').replace('-', '_').replace("'", "")) || modifier.getDisplayName().equalsIgnoreCase(name))
+				{
+					match = modifier;
+					break;
+				}
+			}
+			if (match != null)
+			{
+				found.add(match);
+			}
+			else
+			{
+				unknown.add(name);
+			}
+		}
+		final List<MapModifier> modifiers = new ArrayList<>(found);
+		modifiers.sort(null);
+		return modifiers;
+	}
+
+	/**
+	 * Opens a map with no hideout and no portals, for the web API's map probe ({@link MapProbe}): the probe player is put inside by the caller.
+	 * @param probe the player the run belongs to
+	 * @param arena where
+	 * @param tierId the tier
+	 * @param modifiers its modifiers
+	 * @return the run
+	 */
+	public MapRun openProbeRun(Player probe, MapArena arena, int tierId, List<MapModifier> modifiers)
+	{
+		final MapTier tier = MapDeviceData.getInstance().getTier(tierId);
+		if (tier == null)
+		{
+			throw new IllegalArgumentException("No tier " + tierId + ".");
+		}
+		final List<NpcTemplate> pool = getArenaMonsters(arena, tier);
+		if (pool.isEmpty())
+		{
+			throw new IllegalArgumentException("No monster fits a tier " + tierId + " map in " + arena.name() + ".");
+		}
+		final MapRun run = createRun(probe, null, tier, 0, modifiers, null, arena, pool, null, true);
+		LOGGER.info(getClass().getSimpleName() + ": Probe map: tier " + tierId + " in " + arena.name() + " (instance " + run.getInstanceId() + ") with " + modifiers + ".");
+		return run;
 	}
 	
 	/**
@@ -1256,6 +1377,14 @@ public class MapDeviceManager
 	
 	private String openMap(Player player, int tierId, int medals, MapArena forcedArena, boolean free)
 	{
+		return openMap(player, tierId, medals, forcedArena, free, null);
+	}
+
+	/**
+	 * @param forced the modifiers of a GM's test map, {@code null} to roll them
+	 */
+	private String openMap(Player player, int tierId, int medals, MapArena forcedArena, boolean free, List<MapModifier> forced)
+	{
 		if (!MapDeviceConfig.ENABLED)
 		{
 			return "Maps are disabled.";
@@ -1325,7 +1454,7 @@ public class MapDeviceManager
 				return "You don't have " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
 			}
 
-			final List<MapModifier> modifiers = rollModifiers(medals);
+			final List<MapModifier> modifiers = forced != null ? forced : rollModifiers(medals);
 			final HotzoneModifier hotzone = rollHotzoneEffect(tier);
 			try
 			{
@@ -1398,13 +1527,23 @@ public class MapDeviceManager
 
 	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool)
 	{
-		return createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool, null);
+		return createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool, null, false);
 	}
 
 	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique)
 	{
+		return createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool, unique, false);
+	}
+
+	/**
+	 * @param hideout the hideout it opens from, {@code null} for a probe run (no portals)
+	 * @param probe {@code true} for a probe run of the web API, which logs what its map says
+	 */
+	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique, boolean probe)
+	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
 		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, hotzone, arena, instance.getId(), unique);
+		run.setProbe(probe);
 		instance.setExitLoc(getReturnLocation(player));
 		instance.setEjectTime(0);
 		instance.setAllowSummon(false);
@@ -1416,7 +1555,10 @@ public class MapDeviceManager
 		{
 			HotzoneModifierManager.getInstance().setInstanceModifier(instance.getId(), hotzone);
 		}
-		hideout.setRun(run);
+		if (hideout != null)
+		{
+			hideout.setRun(run);
+		}
 
 		try
 		{
@@ -1427,7 +1569,10 @@ public class MapDeviceManager
 			}
 			spawnMonsters(run, pool);
 			spawnReturnPortal(run);
-			spawnPortals(run, hideout);
+			if (hideout != null)
+			{
+				spawnPortals(run, hideout);
+			}
 		}
 		catch (RuntimeException e)
 		{
@@ -2293,6 +2438,10 @@ public class MapDeviceManager
 		{
 			player.addStatFuncs(functions);
 		}
+		if (run.isRampaging())
+		{
+			applyRampage(run, player);
+		}
 		applyHotzoneBuff(player, run.getHotzoneEffect());
 		ThreadPool.schedule(() -> refreshPlayer(player), 500);
 	}
@@ -2303,6 +2452,11 @@ public class MapDeviceManager
 		if (run.getCurses().remove(player.getObjectId()) != null)
 		{
 			player.removeStatsOwner(run.getCurseFuncOwner());
+		}
+		player.removeStatsOwner(run.getRampageFuncOwner());
+		if (run.getMomentum().remove(player.getObjectId()) != null)
+		{
+			player.removeStatsOwner(run.getMomentumFuncOwner());
 		}
 		final HotzoneModifier hotzone = run.getHotzoneEffect();
 		if (hotzone != null)
@@ -2439,6 +2593,7 @@ public class MapDeviceManager
 
 	static void sendToMap(MapRun run, String message)
 	{
+		run.probeLog(message);
 		for (Player player : getPlayersInside(run))
 		{
 			player.sendMessage(message);
@@ -2447,6 +2602,7 @@ public class MapDeviceManager
 
 	static void sendScreenToMap(MapRun run, String message)
 	{
+		run.probeLog("[screen] " + message);
 		final ExShowScreenMessage packet = new ExShowScreenMessage(message, 4000);
 		for (Player player : getPlayersInside(run))
 		{
@@ -2555,6 +2711,11 @@ public class MapDeviceManager
 		{
 			run.addKill();
 		}
+		if (BURSTING.get())
+		{
+			run.addChainKill();
+		}
+		final boolean killerInside = (player != null) && (player.getInstanceId() == run.getInstanceId());
 
 		final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
 		final boolean encounter = UniqueMapManager.isEncounterMonster(victim);
@@ -2588,6 +2749,30 @@ public class MapDeviceManager
 		if (run.isSoulEaters())
 		{
 			devourSoul(run, victim);
+		}
+
+		if (run.isChainReaction())
+		{
+			ThreadPool.schedule(() -> chainBurst(run, victim, corpse, killerInside ? player : null), CHAIN_DELAY);
+		}
+
+		if (run.isMomentum() && killerInside)
+		{
+			addMomentum(run, player);
+		}
+
+		if (counted && (run.getStatus() == Status.OPEN))
+		{
+			final int kills = run.getKills();
+			if (run.isRisingStakes() && ((kills % 10) == 0) && (kills <= 150))
+			{
+				final int steps = run.getStakesSteps();
+				sendScreenToMap(run, "The stakes rise: experience and drops +" + Math.round(steps * STAKES_REWARD_PER_STEP * 100) + "%, monsters +" + Math.round(steps * STAKES_ATTACK_PER_STEP * 100) + "% damage.");
+			}
+			if (run.isRampage() && ((kills % RAMPAGE_EVERY) == 0))
+			{
+				startRampage(run);
+			}
 		}
 
 		if (victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (player != null))
@@ -2758,6 +2943,165 @@ public class MapDeviceManager
 			{
 				player.reduceCurrentHp(player.getMaxHp() * VOLATILE_DAMAGE, null, false, false, null);
 				player.sendMessage("The " + victim.getName() + " explodes!");
+			}
+		}
+	}
+
+	/**
+	 * Chain Reaction: the corpse bursts, hurting the monsters round it (credited to the killer, so a monster it slays bursts in turn) and, less, the players.
+	 * @param killer the player credited with the burst's kills, {@code null} for none
+	 */
+	private static void chainBurst(MapRun run, Monster victim, Location corpse, Player killer)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+		victim.broadcastPacket(new MagicSkillUse(victim, victim, VOLATILE_SKILL_ID, 1, 0, 0));
+		final Player credited = (killer != null) && !killer.isDead() && (killer.getInstanceId() == run.getInstanceId()) ? killer : null;
+		int hit = 0;
+		BURSTING.set(Boolean.TRUE);
+		try
+		{
+			for (Monster monster : World.getInstance().getVisibleObjectsInRange(victim, Monster.class, CHAIN_RADIUS + 200))
+			{
+				if (monster.isDead() || (monster == victim) || (monster.getInstanceId() != run.getInstanceId()) || monster.isPvpFakePlayer() || monster.isFakePlayer() || (monster.calculateDistance2D(corpse) > CHAIN_RADIUS))
+				{
+					continue;
+				}
+				monster.reduceCurrentHp(monster.getMaxHp() * CHAIN_MONSTER_DAMAGE, credited, true, false, null);
+				hit++;
+			}
+		}
+		finally
+		{
+			BURSTING.set(Boolean.FALSE);
+		}
+		for (Player player : getPlayersInside(run))
+		{
+			if (!player.isDead() && !player.isInvul() && (player.calculateDistance2D(corpse) <= CHAIN_RADIUS))
+			{
+				player.reduceCurrentHp(player.getMaxHp() * CHAIN_PLAYER_DAMAGE, null, false, false, null);
+			}
+		}
+		if (hit > 0)
+		{
+			run.probeLog("Chain Reaction: the " + victim.getName() + " bursts, hitting " + hit + " monsters.");
+		}
+	}
+
+	/**
+	 * Rampage: everyone inside deals double damage and runs half again as fast, for a while.
+	 */
+	private static void startRampage(MapRun run)
+	{
+		final boolean already = run.isRampaging();
+		run.setRampageUntil(System.currentTimeMillis() + (RAMPAGE_SECONDS * 1000L));
+		for (Player player : getPlayersInside(run))
+		{
+			if (!already)
+			{
+				applyRampage(run, player);
+			}
+			player.broadcastPacket(new MagicSkillUse(player, player, VOLATILE_SKILL_ID, 1, 0, 0));
+		}
+		sendScreenToMap(run, "RAMPAGE! Double damage and +" + Math.round((RAMPAGE_SPEED - 1) * 100) + "% run speed for " + RAMPAGE_SECONDS + " seconds!");
+	}
+
+	private static void applyRampage(MapRun run, Player player)
+	{
+		final Object owner = run.getRampageFuncOwner();
+		player.removeStatsOwner(owner);
+		final List<AbstractFunction> functions = new ArrayList<>();
+		mul(functions, Stat.MOVE_SPEED, RAMPAGE_SPEED, owner);
+		player.addStatFuncs(functions);
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * Rampage: its time is up.
+	 */
+	private static void endRampage(MapRun run)
+	{
+		run.setRampageUntil(0);
+		for (Player player : getPlayersInside(run))
+		{
+			player.removeStatsOwner(run.getRampageFuncOwner());
+			player.broadcastUserInfo();
+		}
+		sendToMap(run, "The rampage ends.");
+	}
+
+	/**
+	 * Momentum: a kill adds a stack while the chain holds, else starts it again.
+	 */
+	private static void addMomentum(MapRun run, Player player)
+	{
+		final long now = System.currentTimeMillis();
+		final long[] momentum = run.getMomentum().computeIfAbsent(player.getObjectId(), _ -> new long[2]);
+		final int stacks;
+		synchronized (momentum)
+		{
+			final boolean chained = (momentum[0] > 0) && ((now - momentum[1]) <= (MOMENTUM_SECONDS * 1000L));
+			stacks = (int) (chained ? Math.min(MOMENTUM_MAX_STACKS, momentum[0] + 1) : 1);
+			final boolean changed = stacks != momentum[0];
+			momentum[0] = stacks;
+			momentum[1] = now;
+			if (!changed)
+			{
+				return; // Already full: the clock starts again.
+			}
+		}
+		applyMomentum(run, player, stacks);
+		if ((stacks == 5) || (stacks == MOMENTUM_MAX_STACKS))
+		{
+			player.sendPacket(new ExShowScreenMessage("Momentum x" + stacks + (stacks == MOMENTUM_MAX_STACKS ? ": full speed!" : "!"), 2500));
+			run.probeLog("Momentum x" + stacks + " for " + player.getName() + ".");
+		}
+	}
+
+	private static void applyMomentum(MapRun run, Player player, int stacks)
+	{
+		final Object owner = run.getMomentumFuncOwner();
+		player.removeStatsOwner(owner);
+		if (stacks > 0)
+		{
+			final List<AbstractFunction> functions = new ArrayList<>();
+			mul(functions, Stat.MOVE_SPEED, 1.0 + (stacks * MOMENTUM_SPEED_PER_STACK), owner);
+			mul(functions, Stat.POWER_ATTACK_SPEED, 1.0 + (stacks * MOMENTUM_ATTACK_SPEED_PER_STACK), owner);
+			mul(functions, Stat.MAGIC_ATTACK_SPEED, 1.0 + (stacks * MOMENTUM_ATTACK_SPEED_PER_STACK), owner);
+			player.addStatFuncs(functions);
+		}
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * Momentum: the chains that went too long without a kill break.
+	 */
+	private static void breakMomentum(MapRun run, long now)
+	{
+		for (Map.Entry<Integer, long[]> entry : run.getMomentum().entrySet())
+		{
+			final long[] momentum = entry.getValue();
+			final int stacks;
+			synchronized (momentum)
+			{
+				if ((now - momentum[1]) <= (MOMENTUM_SECONDS * 1000L))
+				{
+					continue;
+				}
+				stacks = (int) momentum[0];
+			}
+			run.getMomentum().remove(entry.getKey());
+			final Player player = World.getInstance().getPlayer(entry.getKey());
+			if (player != null)
+			{
+				applyMomentum(run, player, 0);
+				if (stacks >= 3)
+				{
+					player.sendMessage("Your momentum fades (x" + stacks + ").");
+				}
+				run.probeLog("Momentum x" + stacks + " fades for " + player.getName() + ".");
 			}
 		}
 	}
@@ -3313,6 +3657,14 @@ public class MapDeviceManager
 			if (!_run.getCurses().isEmpty())
 			{
 				liftCurses(_run, now);
+			}
+			if (!_run.getMomentum().isEmpty())
+			{
+				breakMomentum(_run, now);
+			}
+			if ((_run.getRampageUntil() > 0) && (now >= _run.getRampageUntil()))
+			{
+				endRampage(_run);
 			}
 
 			if (_run.isUnique())

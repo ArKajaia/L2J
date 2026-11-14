@@ -119,6 +119,19 @@ public class MapRun
 	private volatile ScheduledFuture<?> _tickTask;
 	/** The kinds of monster the map was filled with (its theme), for the monsters that join later (Ambush). */
 	private volatile List<NpcTemplate> _monsterKinds = List.of();
+	/** Rampage: when the running rampage ends (ms), 0 for none. */
+	private volatile long _rampageUntil;
+	/** Owns Rampage's run speed on the players. */
+	private final Object _rampageFuncOwner = new Object();
+	/** Momentum: player object id -> {stacks, time of their last kill (ms)}. */
+	private final Map<Integer, long[]> _momentumStacks = new ConcurrentHashMap<>();
+	/** Owns Momentum's stat functions on the players. */
+	private final Object _momentumFuncOwner = new Object();
+	/** Chain Reaction: monsters slain by a burst. */
+	private final AtomicInteger _chainKills = new AtomicInteger();
+	/** A test run of the web API's map probe (no hideout, no portals): it keeps a log of what its map says. */
+	private volatile boolean _probe;
+	private final List<String> _probeLog = Collections.synchronizedList(new ArrayList<>());
 
 	// Combined effect of the modifiers.
 	private final double _monsterMoveSpeed;
@@ -180,6 +193,11 @@ public class MapRun
 	private final boolean _deathCurse;
 	private final boolean _bounty;
 	private final int _speedrunMinutes;
+	private final boolean _chainReaction;
+	private final boolean _cullingStrike;
+	private final boolean _risingStakes;
+	private final boolean _rampage;
+	private final boolean _momentum;
 	private final int _portalCount;
 	private final double _xpMultiplier;
 	private final double _dropMultiplier;
@@ -239,6 +257,11 @@ public class MapRun
 		boolean deathCurse = false;
 		boolean bounty = false;
 		int speedrunMinutes = 0;
+		boolean chainReaction = false;
+		boolean cullingStrike = false;
+		boolean risingStakes = false;
+		boolean rampage = false;
+		boolean momentum = false;
 		double playerMaxHp = 1;
 		double playerDef = 1;
 		double playerMpRegen = 1;
@@ -308,6 +331,11 @@ public class MapRun
 			splitters |= modifier.isSplitters();
 			deathCurse |= modifier.isDeathCurse();
 			bounty |= modifier.isBounty();
+			chainReaction |= modifier.isChainReaction();
+			cullingStrike |= modifier.isCullingStrike();
+			risingStakes |= modifier.isRisingStakes();
+			rampage |= modifier.isRampage();
+			momentum |= modifier.isMomentum();
 			if (modifier.getSpeedrunMinutes() > 0)
 			{
 				speedrunMinutes = speedrunMinutes > 0 ? Math.min(speedrunMinutes, modifier.getSpeedrunMinutes()) : modifier.getSpeedrunMinutes();
@@ -398,6 +426,11 @@ public class MapRun
 		_deathCurse = deathCurse;
 		_bounty = bounty;
 		_speedrunMinutes = speedrunMinutes;
+		_chainReaction = chainReaction;
+		_cullingStrike = cullingStrike;
+		_risingStakes = risingStakes;
+		_rampage = rampage;
+		_momentum = momentum;
 		_playerMaxHp = playerMaxHp;
 		_playerDef = playerDef;
 		_playerMpRegen = playerMpRegen;
@@ -1092,5 +1125,112 @@ public class MapRun
 	public boolean isSpeedrunMade()
 	{
 		return (_speedrunMinutes > 0) && (_completedAt > 0) && ((_completedAt - _openedAt) <= (_speedrunMinutes * 60000L));
+	}
+
+	public boolean isChainReaction()
+	{
+		return _chainReaction;
+	}
+
+	public boolean isCullingStrike()
+	{
+		return _cullingStrike;
+	}
+
+	public boolean isRisingStakes()
+	{
+		return _risingStakes;
+	}
+
+	/**
+	 * Rising Stakes: one step every 10 kills, up to 15.
+	 * @return how many steps the stakes have risen
+	 */
+	public int getStakesSteps()
+	{
+		return _risingStakes ? Math.min(15, getKills() / 10) : 0;
+	}
+
+	public boolean isRampage()
+	{
+		return _rampage;
+	}
+
+	public long getRampageUntil()
+	{
+		return _rampageUntil;
+	}
+
+	public void setRampageUntil(long until)
+	{
+		_rampageUntil = until;
+	}
+
+	/**
+	 * @return {@code true} while a rampage runs
+	 */
+	public boolean isRampaging()
+	{
+		return _rampage && (System.currentTimeMillis() < _rampageUntil);
+	}
+
+	public Object getRampageFuncOwner()
+	{
+		return _rampageFuncOwner;
+	}
+
+	public boolean isMomentum()
+	{
+		return _momentum;
+	}
+
+	public Map<Integer, long[]> getMomentum()
+	{
+		return _momentumStacks;
+	}
+
+	public Object getMomentumFuncOwner()
+	{
+		return _momentumFuncOwner;
+	}
+
+	public int getChainKills()
+	{
+		return _chainKills.get();
+	}
+
+	public void addChainKill()
+	{
+		_chainKills.incrementAndGet();
+	}
+
+	public boolean isProbe()
+	{
+		return _probe;
+	}
+
+	public void setProbe(boolean probe)
+	{
+		_probe = probe;
+	}
+
+	/**
+	 * @return what a probe run's map said, in order (empty for a real run)
+	 */
+	public List<String> getProbeLog()
+	{
+		return _probeLog;
+	}
+
+	/**
+	 * Logs a line of a probe run; nothing for a real run.
+	 * @param line what happened
+	 */
+	public void probeLog(String line)
+	{
+		if (_probe && (_probeLog.size() < 2000))
+		{
+			_probeLog.add(((System.currentTimeMillis() - _openedAt) / 100) / 10.0 + "s " + line);
+		}
 	}
 }
