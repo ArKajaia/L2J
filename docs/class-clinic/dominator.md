@@ -2,7 +2,7 @@
 
 Taken through `docs/class-clinic.md` on 2026-11-14. Level 85, brain A, seed 4040, 30 battles against each of the 39 other builds (1,170 a run). The Dominator (classId 115) is the Overlord that fights; the Doomcryer is the Warcryer as a buffer.
 
-**Result: 30.0% → 67.0% overall (+37.0, 95% +33.2 to +40.8).** Clearly better against tanks (5% → 93%), melee (18% → 74%), daggers (8% → 49%), archers (10% → 53%) and buffers (65% → 91%); nukers (31% → 32%) and healers (98% → 97%) where they were. Build data, plus one class AI rule that only the Dominator reaches (no guard run).
+**Result: 30.0% → 69.7% overall (+39.7, 95% +36.0 to +43.4).** Clearly better against tanks (5% → 93%), melee (18% → 83%), daggers (8% → 46%), archers (10% → 55%) and buffers (65% → 92%); nukers (31% → 30%) and healers (98% → 96%) where they were. Build data, plus one class AI rule that only the Dominator reaches (no guard run).
 
 ## 1. The class
 
@@ -44,7 +44,7 @@ Openings: "Dreaming Spirit > Fear > Dreaming Spirit" against 62% of daggers and 
 | # | Fault | Evidence | Cause | Kind | Fix |
 |---|---|---|---|---|---|
 | 1 | Casts on spells of magic level 14 to 35 | Frost Flame 7.4 casts at 51 a cast, Chill Flame 23, Venom 6, Aura Sink none; Life Drain 278 against Steal Essence's 1,308 (same 4 s, reach 600 against 900) | `attack` listed them after Steal Essence; its 2 s reuse leaves a gap they filled | Build data | `<attack>1245</attack>`. Batch 1 |
-| 2 | Debuffs that land 10% take a third of its casting | Dreaming Spirit, Silence, Binding, Fear 6 to 15% landed over thousands of tries; `000639-Dominator-vs-Duelist`: Dreaming Spirit, Silence, Dreaming Spirit, Seal of Disease, Fear in 18 s with a Duelist on it, all resisted, dead at 21 s | `debuff`, `peel` and the "Silence and drain" / "Bind and drain" combos | Build data | `debuff` down to Blockade, Despair, Disease; `peel` down to Dreaming Spirit and Seal of Binding (batch 1), then Binding alone (batch 4); the two combos out |
+| 2 | Debuffs that land 10% take a third of its casting | Dreaming Spirit, Silence, Binding, Fear 6 to 15% landed over thousands of tries; `000639-Dominator-vs-Duelist`: Dreaming Spirit, Silence, Dreaming Spirit, Seal of Disease, Fear in 18 s with a Duelist on it, all resisted, dead at 21 s | `debuff`, `peel` and the "Silence and drain" / "Bind and drain" combos | Build data | `debuff` down to Blockade, Despair, Disease; `peel` down to Dreaming Spirit and Seal of Binding (batch 1), then Binding alone (batch 4), then none (batch 5); the two combos out |
 | 3 | A 7 s Chant of Life (heal over time, power 23) as its own heal, with a melee on it | 9 casts a battle against tanks; `000639`: cast at 50% HP with the Duelist at gap −16. Win 8.6% in the fights it is cast in | `heal` held it; the `groupHeal` copy kept casting it after batch 1 (3.4 a battle): every clinic fighter is in a party of one, and `supportParty` casts a group heal for one hurt member when the build has no `partyHeal` | Build data | Out of `heal` (batch 1) and `groupHeal` (batch 2). Only the Sword Muse also has a `groupHeal` without a `partyHeal`; the code was left alone |
 | 4 | It walks from 900 into a mage's or an archer's reach to open a combo with a seal around itself | `matrix-20261114-133553`, `000030-Dominator-vs-DoomOracle`: `APPROACH COMBO Seal of Despair` from 929 down to 210, Dryad Root and Doom Strike there; nukers 31% → 18% (clearly worse) once batch 1 left the Despair combo as its only one | `playCombo` walks to cast any first step; an AURA has reach 0 | Class AI | `isComboReady`: a ranged build doesn't start a combo whose first step is an aura around itself (`isAuraAround`) unless the target is in its area. Batch 3 (with the combo back) |
 | 5 | Soul Guard (P. Def +653) never used | "LEARNED BUT NOT IN THE BUILD"; it loses to physical damage with 1,300 P. Def | Build data | Build data | In `toggle` with Arcane Power. Batch 1 |
@@ -93,8 +93,25 @@ Code: `isComboReady` in `FakePlayerPvpAI` and `FakePlayerPvpAIExperimental` (`is
 | buffer | 65.3% | 90.7% | +25.3 (+16.4 to +34.3) |
 | **all** | **30.0%** | **67.0%** | **+37.0 (+33.2 to +40.8)** |
 
+### Batch 5: no `peel` at all (Seal of Binding out) (`matrix-20261114-142708`): kept on its own measure
+
+67.0% → 69.7% (+2.7, 95% −1.1 to +6.5, no clear change overall); **melee +9.2 (+3.2 to +15.1), clearly better**; no kind clearly worse (daggers −3.3, −17.9 to +11.2). Seal of Binding 3.7 → 0 casts (lands 11%), Steal Essence +0.8, damage taken against melee 430 → 389 a second. Kept under the clinic's exception: the measure moved as meant and nothing got worse.
+
+| Against | Baseline | Batch 5 (final) | Difference (95%) |
+|---|---|---|---|
+| tank | 5.0% | 93.3% | +88.3 (+82.4 to +94.3) |
+| melee | 18.1% | 82.9% | +64.9 (+59.3 to +70.4) |
+| dagger | 7.8% | 45.6% | +37.8 (+26.1 to +49.5) |
+| archer | 10.0% | 55.0% | +45.0 (+34.6 to +55.4) |
+| nuker | 30.8% | 30.4% | −0.4 (−8.7 to +7.8) |
+| healer | 98.3% | 96.1% | −2.2 (−7.0 to +2.6) |
+| buffer | 65.3% | 92.0% | +26.7 (+17.9 to +35.4) |
+| **all** | **30.0%** | **69.7%** | **+39.7 (+36.0 to +43.4)** |
+
 ## 5. Not fixed here, and next
 
 - **Nukers (29%)**: it is out-damaged at range. Storm Screamer 0%, Soultaker 7%, Mystic Muse 10%, Archmage 13%: the wizards are the strongest builds of the clinic since their own clinic (`docs/class-clinic/wizards.md`), a balance question. Doom Oracle 13%: disabled 23% of the fight by its prophecies.
 - **Party play**: Chant of Life is out of the build entirely, so a Dominator in a real party doesn't cast it either. Its party buffs are untouched. A `supportParty` that doesn't count a party of one would let it come back (it reaches the Sword Muse too: guard run).
 - Seal of Suspension and Seal of Limit (section 3) are untested.
+- **Daggers (46%)**: they stand on it 70% of the fight and it has no peel left that lands; a root or escape that works would be the next thing to look for (it has none in its kit).
+- **Balance**: from 30% to 70% puts the Dominator among the stronger builds (Archmage 85%, Storm Screamer 91%, War Dancer 72%). Its 4 s Steal Essence was not the problem; the casts spent around it were.

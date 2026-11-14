@@ -675,9 +675,8 @@
 		<debuff>1462,1366,1367</debuff> <!-- Seal of Blockade, Despair, Disease, the seals the combo below leads with; the seals that land 10% (Silence, Binding, Slow, Winter, Chaos, Poison) and Madness out -->
 		<buff>1533</buff>
 		<toggle>337,1283</toggle> <!-- Arcane Power; Soul Guard (+653 P. Def) -->
-		<peel>1208</peel> <!-- Seal of Binding on a player that reached it; Dreaming Spirit (lands 11%, 22 casts a battle against tanks), Fear and the melee skills out -->
 		<partyBuff>1414,1415,1365,1364,1003,1004,1005,1008,1249,1250,1260,1261,1282,1536,1537,1538,1563</partyBuff> <!-- In a party: Victory of Pa'agrio, Pa'agrio's Emblem, Soul/Eye of Pa'agrio, Gift, Wisdom, Blessings, Glory, Vision, Shield, Tact, Rage, Haste, Combat, Critical, Condition, Fury -->
-		<enchant>1245:1,1366:1,1367:1,1462:1,1208:1</enchant>
+		<enchant>1245:1,1366:1,1367:1,1462:1</enchant>
 		<combo name="Despair" pvp="true" chance="50"> <!-- Starts only with the target within the seals' 200 (isComboReady: a ranged build doesn't walk in for an aura opener) -->
 			<step skill="1366" /> <!-- Seal of Despair -->
 			<step skill="1462" optional="true" /> <!-- Seal of Blockade -->
