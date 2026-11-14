@@ -5166,10 +5166,36 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				{
 					return false;
 				}
+				// A ranged build doesn't walk in to open with a seal around itself (an aura of 200 with no reach): the Dominator walked from 900 into a mage's or an archer's reach for a Seal of Despair. It opens with it once the
+				// target is in its area: a melee on it.
+				if (!step.isSelf() && profile.getRole().isRanged() && isAuraAround(skill) && (npc.calculateDistance2D(target) > (skill.getAffectRange() + npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius())))
+				{
+					return false;
+				}
 			}
 		}
 		
 		return firstChecked && (profile.getCharges() >= chargesNeeded);
+	}
+	
+	/**
+	 * @return {@code true} for a skill that hits around its caster and has no reach of its own (an AURA: the Dominator's seals)
+	 */
+	private static boolean isAuraAround(Skill skill)
+	{
+		switch (skill.getTargetType())
+		{
+			case AURA:
+			case FRONT_AURA:
+			case BEHIND_AURA:
+			{
+				return skill.getAffectRange() > 0;
+			}
+			default:
+			{
+				return false;
+			}
+		}
 	}
 	
 	private void nextComboStep(long now)
