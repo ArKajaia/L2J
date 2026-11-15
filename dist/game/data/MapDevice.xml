@@ -27,8 +27,10 @@
 
 	arena       a field a map can open in, picked at random: name, the middle x, y and the ground z, the fence's radiusX/radiusY (an ellipse,
 	            at least 500), entryAngle where the players come in (degrees round the middle, 0 = east, 90 = south; the entry is at 80% of the radius).
-	            The defaults were checked against the geodata: open ground, at least 95% of it walkable from the middle. They are twice the radius
-	            (four times the area) of the first fields, so a map's monsters stand well apart (MonsterSpacing in the ini).
+	            The defaults were checked against the geodata: open ground, at least 95% of it walkable from the middle. The wide ones (Ruins of Despair,
+	            Field of Whispers, Fields of Massacre) are twice the radius (four times the area) of the first fields, so a map's monsters stand well
+	            apart (MonsterSpacing in the ini); the long narrow ones (about 4 : 1) and the Cemetery's oval are smaller, so the monsters stand closer
+	            and along one way.
 	            A map is its own copy of the place, without its world monsters.
 
 	excludedNpcs monster ids that never fill a map, comma separated.
@@ -83,8 +85,32 @@
 	<arena name="Ruins of Despair" x="-17800" y="142600" z="-3900" radiusX="9600" radiusY="8800" entryAngle="0" />
 	<!-- Innadril: the wide bowl of the Field of Whispers. -->
 	<arena name="Field of Whispers" x="84000" y="214000" z="-3620" radiusX="8000" radiusY="7000" entryAngle="180" />
-	<!-- Aden: the floor of the Silent Valley. -->
-	<arena name="Silent Valley" x="172136" y="20325" z="-3328" radiusX="8000" radiusY="8000" entryAngle="90" />
+	<!-- Aden: the floor of the Cemetery (it was named "Silent Valley", which lies farther north). An oval of 6500 x 3500, about a third of the old 8000 x 8000 ring. -->
+	<arena name="The Cemetery" x="172136" y="20325" z="-3328" radiusX="6500" radiusY="3500" entryAngle="0" />
+
+	<!-- Long, narrow fields (about 4 : 1): the monsters stand along one corridor, so the players sweep it from one end to the other instead of searching
+	     a wide open field. Each was checked against the geodata the same way (at least 95% walkable from the middle, little height difference) and keeps
+	     clear of water, peace, town and damage zones. The entry is at one end of the long axis. -->
+	<!-- Innadril: the Field of Silence, west to east along the plain. -->
+	<arena name="Field of Silence" x="84160" y="186688" z="-3624" radiusX="10000" radiusY="2400" entryAngle="0" />
+	<!-- Innadril: the long beach of Alligator Island. -->
+	<arena name="Alligator Island" x="112100" y="188468" z="-3768" radiusX="10000" radiusY="2400" entryAngle="180" />
+	<!-- Isle of Prayer: the white sands of the eastern shore. -->
+	<arena name="Isle of Prayer" x="146988" y="188888" z="-3736" radiusX="10000" radiusY="2400" entryAngle="0" />
+	<!-- Oren: the road through the Outlaw Forest. -->
+	<arena name="Outlaw Forest" x="80356" y="-832" z="-3704" radiusX="10000" radiusY="2400" entryAngle="180" />
+	<!-- Goddard: the Garden of Beasts, west of the town. -->
+	<arena name="Garden of Beasts" x="141612" y="-61656" z="-3072" radiusX="10000" radiusY="2400" entryAngle="180" />
+	<!-- Rune: a causeway across the Swamp of Screams. -->
+	<arena name="Swamp of Screams" x="80740" y="-59072" z="-2168" radiusX="8000" radiusY="2000" entryAngle="0" />
+	<!-- Rune: the valley down the middle of Primeval Isle, north to south (not "primeval_isle", the Primal Crucible's own place on the event map page). -->
+	<arena name="Primeval Isle Valley" x="5056" y="-15016" z="-3632" radiusX="2400" radiusY="9000" entryAngle="90" />
+	<!-- Oren: the Sel Mahum Training Grounds, north to south. -->
+	<arena name="Sel Mahum Training Grounds" x="86506" y="59548" z="-3576" radiusX="2400" radiusY="7000" entryAngle="270" />
+	<!-- Giran: the Gorgon Flower Garden, a long strip north to south. -->
+	<arena name="Gorgon Flower Garden" x="104640" y="138584" z="-3552" radiusX="2000" radiusY="10000" entryAngle="270" />
+	<!-- Rune: the paddocks of the Beast Farm, a short narrow lane north to south. -->
+	<arena name="Beast Farm" x="46760" y="-88896" z="-2544" radiusX="2000" radiusY="6000" entryAngle="90" />
 	<!-- Aden: the plain of the Fields of Massacre. -->
 	<arena name="Fields of Massacre" x="181000" y="8000" z="-2728" radiusX="6000" radiusY="6000" entryAngle="90" />
 
@@ -140,7 +166,7 @@
 	</uniqueMap>
 
 	<!-- The Ossuary of Echoes: the dead don't stay down (Undying Legion, Linked Souls), they burst (Volatile) and curse (Death Curse), and nothing heals you well here (Desecrated, Withered). -->
-	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="18113" tier="6" monsters="70" arena="Silent Valley" reward="2.2"
+	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="18113" tier="6" monsters="70" arena="The Cemetery" reward="2.2"
 		modifiers="UNDYING_LEGION,VOLATILE,DEATH_CURSE,LINKED_SOULS,DESECRATED,WITHERED"
 		boss="22821" bossName="The Hollow King" bossHp="500" bossAttack="5.0" bossDefence="2.5">
 		<description>A valley of bones that remembers every death in it. Its king waits under it for the field to fall silent.</description>
@@ -252,7 +278,7 @@
 
 	<!-- The Tomb Raiders (TombRaidersManager): tier 2. A rival party of adventurers (fake players) races you for 5 Sealed Reliquaries in the Imperial Tomb's dead.
 	     Its field is the Imperial Tomb (the guards, royal guards and healers); the Imperial Commander is the Undying Emperor. -->
-	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="18119" tier="2" monsters="70" arena="Silent Valley" reward="1.5"
+	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="18119" tier="2" monsters="70" arena="The Cemetery" reward="1.5"
 		modifiers="SHIELDBEARERS,ARMOURED,WAR_PRIESTS,VOLATILE"
 		npcs="18132,18166,18167,18168,18169,18170,18171,18172,21417,21418,21419"
 		dropMinTier="1" dropMaxTier="4"

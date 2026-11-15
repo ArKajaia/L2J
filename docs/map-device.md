@@ -179,15 +179,15 @@ Seven map items that always open the same map: its modifiers are chosen for it (
 |---|---|---|---|---|
 | The Crimson Coliseum | 30 (waves) | Ruins of Despair | 9,600 x 8,800 | 3,720 x 3,410 |
 | The Gilded Vault | 60 | Fields of Massacre | 6,000 x 6,000 | 3,290 x 3,290 |
-| The Ossuary of Echoes | 70 | Silent Valley | 8,000 x 8,000 | 4,730 x 4,730 |
+| The Ossuary of Echoes | 70 | The Cemetery | 6,500 x 3,500 | 5,570 x 3,000 |
 | The Gambler's Den | 50 | Field of Whispers | 8,000 x 7,000 | 4,000 x 3,500 |
-| The Primal Crucible | 60 | `primeval_isle` (as placed); a tier 5 arena until it exists | | 55% of that arena's |
+| The Primal Crucible | 60 | `primeval_isle` (as placed); a tier 5 arena until it exists | | 55% of that arena's, never under 3,000 (a narrow arena: all of it) |
 | The Ketra-Varka Front | 80 | Ruins of Despair | 9,600 x 8,800 | 6,070 x 5,570 |
-| The Tomb Raiders | 70 | Silent Valley | 8,000 x 8,000 | 4,730 x 4,730 |
+| The Tomb Raiders | 70 | The Cemetery | 6,500 x 3,500 | 5,570 x 3,000 |
 
 | | The Crimson Coliseum (18111) | The Gilded Vault (18112) | The Ossuary of Echoes (18113) | The Gambler's Den (18114) |
 |---|---|---|---|---|
-| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Silent Valley | 50 of tier 5 (Lv. 81-84), Field of Whispers |
+| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), The Cemetery | 50 of tier 5 (Lv. 81-84), Field of Whispers |
 | Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered | Champions' Rally, Glass Cannon, Deadly, Fragile, Elemental Chaos, Splitters |
 | The idea | An arms race: the monsters grow with every death, and so do you. | A heist against the clock. | The dead don't stay down. | Luck, both ways. |
 | Twist | **Deathmatch: Mayhem.** Every kill (and every assist: `MayhemAssistShare` % of the damage) offers a strong passive, notables and keystones of the tree plus the Mayhem keystones, to stack **on top of your own tree**, working only inside the map (see below). The monsters come in three waves: 6, 10, 14. | **Borrowed Time and Greed.** The vault seals in 5 minutes; every kill adds 12 s (a claimed bounty 60 s) and 1% Greed, which raises the map's and the boss's drop chances (up to x2 at 100 kills). | **Echoes.** A quarter of the slain counted monsters leave an Echo (half HP, faster attacks, uncounted, its own drops). Every Echo still standing at the end feeds the boss +5% HP (up to +100%). | **The Wheel of Fate and the Pot.** Every 12 counted kills the wheel spins one of 24 fortunes (below), which holds until the next spin, and gives a **bet**. The **Dealer** by the Return Portal takes bets: the Pot doubles or halves. The **Pot** (x1 to start, x0.25-x4) multiplies the Den's drop chances; past 100% the drops grow bigger. |
@@ -279,7 +279,7 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 
 ### The Tomb Raiders (18119)
 
-*You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in Silent Valley. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
+*You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in the Cemetery. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
 
 - **The rivals**: when the first player comes in, a rival party of 4 **Tomb Raiders** (fake players: one support, three fighters, 2 levels below that player, at most 78) comes in from the far side (`FakePlayerPvpManager.spawnMapRival`; the only fake players a map ever has). They race you for the reliquaries, hunt the tomb's monsters (their kills count toward the clear), attack a player breaking a seal within 900, and ambush the players near them when they are behind in relics. They never flee, escape, log off or come back after dying, and they stay flagged: killing them, or being killed by them, is no PK, no PvP count and no announcement.
 - **The reliquaries**: 5 **Sealed Reliquaries** spread over the field. Talk to one (or `.tomb break` beside it) to break its seal: **30 seconds** of standing still, broken by any hit (HP or CP lost), a step, or death. A rival breaks one the same way, standing still out of a fight, and a hit breaks it too. You bank your relics; a rival carries its own, and **drops them to you when slain**.
@@ -315,9 +315,34 @@ A step already done is passed at once: a map picked up in the hideout skips the 
 
 Every map rolls one of the server's hot zone modifiers for its whole instance (`HotzoneModifierManager.setInstanceModifier`), shown on the device. Those that need a world hot zone or respawning monsters are excluded (`ExcludedHotzoneEffects`: Bounty Hunt, Rising Heat, Miniboss Frenzy, Blood Moon, Contested Ground). Their spawn multipliers (Coven, Thieves' Den, Elemental Storm...) apply to the map's own variant rolls, their player buffs are given inside the map, and Fragile Ground drains HP there.
 
+## The arenas
+
+A map opens in one of these fields at random (and in the places of the map editor, below). Sizes are the fence's radii (east-west x north-south); the entry is at 80% of the radius on the side named.
+
+| Arena | Region | Shape | Radii | Entry |
+|---|---|---|---|---|
+| Ruins of Despair | Gludio | wide | 9,600 x 8,800 | east |
+| Field of Whispers | Innadril | wide | 8,000 x 7,000 | west |
+| Fields of Massacre | Aden | round | 6,000 x 6,000 | south |
+| The Cemetery | Aden | oval | 6,500 x 3,500 | east |
+| Field of Silence | Innadril | long, east-west | 10,000 x 2,400 | east |
+| Alligator Island | Innadril | long, east-west | 10,000 x 2,400 | west |
+| Isle of Prayer | Isle of Prayer | long, east-west | 10,000 x 2,400 | east |
+| Outlaw Forest | Oren | long, east-west | 10,000 x 2,400 | west |
+| Garden of Beasts | Goddard | long, east-west | 10,000 x 2,400 | west |
+| Swamp of Screams | Rune | long, east-west | 8,000 x 2,000 | east |
+| Primeval Isle Valley | Rune | long, north-south | 2,400 x 9,000 | south |
+| Sel Mahum Training Grounds | Oren | long, north-south | 2,400 x 7,000 | north |
+| Gorgon Flower Garden | Giran | long, north-south | 2,000 x 10,000 | north |
+| Beast Farm | Rune | long, north-south | 2,000 x 6,000 | south |
+
+The long ones (about 4 : 1) hold the same 100 monsters on a fifth to two fifths of the Field of Whispers' ground, along one corridor: the players come in at one end and sweep it to the other, without searching an open field for the last monsters. The Cemetery was the "Silent Valley" arena (8,000 x 8,000; the real Silent Valley lies farther north), now about a third of its old area.
+
+Each was checked against the geodata like the first ones: at least 95% of the field walkable from its middle, the middle 90% of the ground within about 700 in height, the entry and the waystone spots on open ground, and no water, peace, town or damage zone (fire swamp, hot springs) in it, since a map's copy of the place keeps the world's zones. The Swamp of Screams keeps a few of its swamp zones, which only buff monsters.
+
 ## Making your own maps (the map editor)
 
-Maps open in places made on the **event map page**, the same editor as the Team vs Team, Conquest, Deathmatch and Race Wars battlefields (`data/maps/<id>.xml`). The four arenas of `data/MapDevice.xml` stay in the rotation next to them (delete them there if you only want your own; an `<arena>` there can also take `minTier`/`maxTier`).
+Maps open in places made on the **event map page**, the same editor as the Team vs Team, Conquest, Deathmatch and Race Wars battlefields (`data/maps/<id>.xml`). The arenas of `data/MapDevice.xml` (see *The arenas* below) stay in the rotation next to them (delete them there if you only want your own; an `<arena>` there can also take `minTier`/`maxTier`).
 
 1. In game, stand where the map should be and type **`//mapdevice`**: the page opens on the **Map Device** points. *New map here* starts a map round you (or pick an existing battlefield: one place can serve several events).
 2. Tick **Map Device** under *Used in*.
@@ -378,5 +403,5 @@ Parameters: `arena` (default the tier's first), `tier` (3), `mods`, `kills` (30)
 ## Setup notes
 
 - **Client**: the map items reuse the look of the retail *Pirate's Treasure Map* (`displayId` 5915) until the client is patched with `client/MapDevice` (item names and EtcItemgrp rows); then remove the `displayId` lines from `data/stats/items/custom/map_device_items.xml`.
-- **Places**: the hideout and the four arenas of `data/MapDevice.xml` were checked against the geodata in `data/geodata` (single ground layer, little height difference). Your own places need open ground the monsters can walk on: the fence follows the ground, and monsters are placed from the middle (or from their spot) outwards, never through a wall or the fence. The editor's terrain view shows walls and cliffs in red.
+- **Places**: the hideout and the arenas of `data/MapDevice.xml` were checked against the geodata in `data/geodata` (single ground layer, little height difference). Your own places need open ground the monsters can walk on: the fence follows the ground, and monsters are placed from the middle (or from their spot) outwards, never through a wall or the fence. The editor's terrain view shows walls and cliffs in red.
 - **Restarts**: open maps and hideouts live in memory. A restart closes them (the map and medals are spent); players inside are moved back to where they entered the hideout from when they log in.
