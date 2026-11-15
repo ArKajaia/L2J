@@ -218,7 +218,8 @@ public class SkillScorer
 		if (meanings.contains(SkillMeaning.CC))
 		{
 			double control = 0;
-			if (!held && !invulnerable)
+			// Under Physical Mirror the stun comes back on the caster (Armor Crush on a Hell Knight): only the damage is worth the cast.
+			if (!held && !invulnerable && !option.reflected())
 			{
 				final double chance = _read.landChance(target, skill, ctx.targetGroup(), now);
 				final double heldSeconds = Math.min(MAX_HELD_SECONDS, skill.abnormalTimeMs() / 1000.0);
@@ -228,7 +229,7 @@ public class SkillScorer
 		}
 		if (meanings.contains(SkillMeaning.DEBUFF) || meanings.contains(SkillMeaning.CANCEL))
 		{
-			terms.put("setup", invulnerable ? 0 : _weights.setup() * (ctx.burstReady() ? 1 : 0.3));
+			terms.put("setup", (invulnerable || option.reflected()) ? 0 : _weights.setup() * (ctx.burstReady() ? 1 : 0.3));
 		}
 		if (skill.reuseMs() >= LONG_COOLDOWN)
 		{

@@ -56,6 +56,18 @@ public class SkillScorerTest
 				final SkillScorer scorer = new SkillScorer(read, SkillWeights.DEFAULT, 1);
 				Check.eq(best(scorer.score(List.of(skill(nuke(1230, 3000), 1000), skill(stun(0), 0)), ctx(1000, 1, false, true))).option().skill().id(), 100, "the stun");
 			}, //
+			() -> // Under Physical Mirror a physical stun comes back on its caster: a damage stun keeps its damage, its control and setup are worth nothing.
+			{
+				final FightRead read = new FightRead(1, 1);
+				final SkillFacts crush = new SkillFacts(362, 1, true, false, 40, 1900, 100, 4000, 9000, "STUN", Set.of("PHYSICAL_ATTACK", "STUN"), false, 3077, 40, 77, "CON");
+				final SkillScorer scorer = new SkillScorer(read, SkillWeights.DEFAULT, 1);
+				final Scored free = scorer.score(List.of(new SkillOption(Kind.SKILL, crush, 500, true, 1900, false)), ctx(1000, 1, false, false)).get(0);
+				final Scored mirrored = scorer.score(List.of(new SkillOption(Kind.SKILL, crush, 500, true, 1900, true)), ctx(1000, 1, false, false)).get(0);
+				Check.isTrue(free.terms().getOrDefault("control", 0.0) > 0, "control without the mirror");
+				Check.near(mirrored.terms().getOrDefault("control", 0.0), 0, 0, "no control into the mirror");
+				Check.near(mirrored.terms().getOrDefault("setup", 0.0), 0, 0, "no setup into the mirror");
+				Check.near(mirrored.terms().get("damage"), free.terms().get("damage"), 1e-9, "the damage still counts");
+			}, //
 			() -> // Already stunned for 4 s: no value in another stun.
 			{
 				final FightRead read = new FightRead(1, 1);

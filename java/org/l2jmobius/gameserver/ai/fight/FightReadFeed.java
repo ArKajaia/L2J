@@ -45,9 +45,13 @@ import org.l2jmobius.gameserver.model.item.enums.ShotType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Formulas;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
 
 /**
  * Feeds a fake player's {@link FightRead} from the server: the cast bars of its enemies (a skill use listener on each enemy of its fight), the icons on itself and its target, and HP. It adds listeners as enemies come into the fight and removes them as they leave,
@@ -59,6 +63,8 @@ public class FightReadFeed
 	private static final long CC_CHECK_DELAY = 300;
 	private static final Set<Integer> INVULNERABLE_SKILLS = Set.of(442, 443, 1418);
 	private static final Set<Integer> REFLECT_SKILLS = Set.of(351, 916, 6282);
+	/** From this physical skill reflect chance on the target (Physical Mirror, Riposte Stance) a physical debuff or stun is not worth casting on it; Magical Mirror's 10% is not enough. */
+	public static final double MIRROR_REFLECT_CHANCE = 20;
 	/** Tenacity's buff (passive tree keystone): no stun, sleep or root for a moment. */
 	private static final int TENACITY_SKILL = 27479;
 	
@@ -309,6 +315,61 @@ public class FightReadFeed
 		{
 			post(new ReflexEvent(ReflexEvent.Kind.ENEMY_BURST, caster.getObjectId(), facts, now));
 		}
+	}
+	
+	/**
+	 * The chance a physical debuff cast on the creature comes back on its caster, as its icons show it: the {@code reflectSkillPhysic} its buffs add (Physical Mirror 30%, Riposte Stance 30%, Magical
+	 * Mirror 10%). A passive's share (the passive tree's Mirror Ward, a weapon's special ability) has no icon and is left out. {@link Formulas#calcBuffDebuffReflection} rolls this for any physical
+	 * debuff with a land chance: the damage of a skill like Armor Crush still lands, but its stun goes to the caster.
+	 * @param creature a creature
+	 * @return the chance in percent, 0 for none
+	 */
+	public static double physicalReflectChance(Creature creature)
+	{
+		double chance = 0;
+		for (BuffInfo info : creature.getEffectList().getEffects())
+		{
+			final Skill skill = info.getSkill();
+			if ((skill == null) || skill.isPassive() || (skill.getEffects(EffectScope.GENERAL) == null))
+			{
+				continue;
+			}
+			for (AbstractEffect effect : skill.getEffects(EffectScope.GENERAL))
+			{
+				if (effect.getFuncTemplates() == null)
+				{
+					continue;
+				}
+				for (FuncTemplate func : effect.getFuncTemplates())
+				{
+					if ((func.getStat() == Stat.REFLECT_SKILL_PHYSIC) && !func.isMultiplier())
+					{
+						chance += func.getValue();
+					}
+				}
+			}
+		}
+		return chance;
+	}
+	
+	/**
+	 * @return {@code true} if the skill can come back on its caster from a target with a physical reflect ({@link Formulas#calcBuffDebuffReflection}: a physical debuff with a land chance)
+	 * @param skill a skill
+	 */
+	public static boolean isPhysicallyReflectable(Skill skill)
+	{
+		return skill.isDebuff() && (skill.getActivateRate() != -1) && !skill.isMagic();
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @param target its target
+	 * @return {@code true} if all the skill would do to the target is come back on its caster: a physical debuff or stun without damage (Shock Stomp, Hamstring) on a target under Physical Mirror.
+	 *         One with damage (Armor Crush, Rush Impact) is still worth its damage: the scorer leaves its debuff out ({@link SkillOption#reflected()}).
+	 */
+	public static boolean isWastedOnMirror(Skill skill, Creature target)
+	{
+		return isPhysicallyReflectable(skill) && !SkillMeanings.classify(SkillFactsReader.of(skill)).contains(SkillMeaning.NUKE) && (physicalReflectChance(target) >= MIRROR_REFLECT_CHANCE);
 	}
 	
 	/**

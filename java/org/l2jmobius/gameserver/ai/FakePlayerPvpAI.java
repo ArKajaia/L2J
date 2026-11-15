@@ -4591,7 +4591,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		Skill outOfReach = null;
 		for (Skill skill : skills)
 		{
-			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || (!pvp && isPvpOnly(skill)) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, pvp))
+			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || (!pvp && isPvpOnly(skill)) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, pvp) || FightReadFeed.isWastedOnMirror(skill, target))
 			{
 				continue;
 			}
@@ -5087,8 +5087,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				return waitForStep(now);
 			}
 			
-			// The debuff is already on: nothing to do.
-			if (isAlreadyOn(skill, target))
+			// The debuff is already on: nothing to do. Under Physical Mirror a physical stun or debuff without damage would only come back on it: the combo goes on without it.
+			if (isAlreadyOn(skill, target) || FightReadFeed.isWastedOnMirror(skill, target))
 			{
 				nextComboStep(now);
 				continue;
@@ -8745,14 +8745,22 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 		final boolean disabled = debuff && isDisabled(target);
+		// Under Physical Mirror (30%) a physical stun or debuff comes back on the caster: Armor Crush's damage lands, its stun may be the Titan's.
+		final boolean mirrored = FightReadFeed.physicalReflectChance(target) >= FightReadFeed.MIRROR_REFLECT_CHANCE;
 		for (Skill skill : list)
 		{
 			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, true))
 			{
 				continue;
 			}
+			final boolean reflected = mirrored && FightReadFeed.isPhysicallyReflectable(skill);
 			final int range = skill.getCastRange() > 0 ? skill.getCastRange() : skill.getAffectRange();
 			final SkillFacts facts = SkillFactsReader.of(skill);
+			// Without damage it would only stun or debuff itself.
+			if (reflected && !SkillMeanings.classify(facts).contains(SkillMeaning.NUKE))
+			{
+				continue;
+			}
 			double damage = SkillMeanings.classify(facts).contains(SkillMeaning.NUKE) ? estimateDamage(npc, target, skill, dagger) : 0;
 			// A prophecy's damage comes from the skill it comes true with (Doom), or from the target's own (Reckoning).
 			damage = Math.max(damage, FakePlayerPvpOraclesWarchiefs.estimateDamage(npc, target, skill, incomingDps));
@@ -8761,7 +8769,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			{
 				damage = Math.max(damage, Math.pow(LIST_RANK_FACTOR, Math.max(0, ordered.indexOf(skill))) * top);
 			}
-			final SkillOption option = new SkillOption(SkillOption.Kind.SKILL, facts, damage, (range <= 0) || (range >= reach), FightReadFeed.castTime(npc, skill));
+			final SkillOption option = new SkillOption(SkillOption.Kind.SKILL, facts, damage, (range <= 0) || (range >= reach), FightReadFeed.castTime(npc, skill), reflected);
 			options.add(option);
 			skills.put(option, skill);
 		}

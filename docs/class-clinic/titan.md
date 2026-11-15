@@ -131,5 +131,5 @@ By opponent, clearly better: Hell Knight 10% → 40%, Sword Muse 70% → 100%, G
 ## 7. Not fixed here, and next
 
 - **Nukers (27%)** and **archers (33%)**: section 3. The archers hold it just outside Rush's reach; a slow melee with one 400 gap closer has no answer in its kit.
-- **Physical Mirror and debuffs.** A target under Physical Mirror (Hell Knight) sends Armor Crush's stun back; the scorer only knows reflects that hurt a nuke. A general finding: a debuff or stun is not worth casting on a target with a skill reflect for physical skills on.
+- **Physical Mirror and debuffs.** A target under Physical Mirror (Hell Knight) sends Armor Crush's stun back; the scorer only knows reflects that hurt a nuke. A general finding: a debuff or stun is not worth casting on a target with a skill reflect for physical skills on. **Done** in shared code (`docs/class-clinic.md`, General findings): a physical debuff without damage is left out, Armor Crush keeps its damage with no control value. Leaving Armor Crush out as well made Titan vs Hell Knight clearly worse (33% → 0%): the reflected stun takes the Titan rarely (2 in 52 casts).
 - **Zealot and the low-HP chain** (section 3).
