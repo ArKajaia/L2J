@@ -11,7 +11,7 @@ Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps, with
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
 4. **Each medal** rolls one **modifier** out of 77 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
 5. **Eight portals** open in a ring round the device. Each takes one player into the map and is gone. The owner and the owner's party may take them (`.hideout party` brings party members to the hideout).
-6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random among the places that take its tier (the `<arena>`s of `data/MapDevice.xml` and your own maps from the map editor), with **100 monsters** of the tier's levels and strength, made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left to go (before completion, below) they come for the players, so none stays hidden, and each player's **radar** points at one of them, the nearest, following it as it moves; when it dies the radar moves on to the next nearest, one by one, with a line in chat saying how many are left and which way (regular maps only, not unique maps).
+6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random among the places that take its tier (the `<arena>`s of `data/MapDevice.xml` and your own maps from the map editor), with **100 monsters** of the tier's levels and strength (5-15% more for each modifier, by its tier), made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left to go (before completion, below) they come for the players, so none stays hidden, and each player's **radar** points at one of them, the nearest, following it as it moves; when it dies the radar moves on to the next nearest, one by one, with a line in chat saying how many are left and which way (regular maps only, not unique maps).
 7. **Dying** in a map: 3 seconds later the player wakes up in the hideout (full HP/MP/CP) and may take another portal. **No experience is lost** dying in a map (`DeathExpLoss = False`; the Death Penalty debuff still applies as anywhere). A **Return Portal** at the map's entry (or `.hideout back`) goes back to the hideout without dying.
    - **Leaving the party**: a player who leaves (or is removed from) the owner's party may farm on in the map. When they die or leave it, they go to a hideout of their own, made for them if needed, not to the owner's (and can't take the owner's portals again).
    - **No fake players**: maps and hideouts are private, so no fake player ever spawns in them. A Resonant monster in a map fights alone: none of the helpers or rivals it calls in the open world come.
@@ -57,6 +57,14 @@ What still varies inside a map, on purpose: the map's own Champions, Mages, Thie
 
 The first 33 change numbers; the other 44 change how the map plays. The last ones (68 and up) make mapping less tedious: big moments that pay off a fast, aggressive clear, less walking and searching. Each has a price, so that a medal never makes a map easier.
 
+**Modifier tiers.** Every modifier a medal rolls has a tier, **I, II or III**, shown after its name ("Brutal III"). The tier is rolled for each modifier with the weights (11 - map tier) : 5 : map tier, so a tier 1 map rolls mostly tier I modifiers (62% I, 31% II, 6% III) and a tier 10 map mostly tier III (6% I, 31% II, 62% III) (`MapDeviceManager.rollModifierTiers`).
+
+- **A number modifier's effect scales with its tier**: x0.6 at I, x1.0 at II (the effect listed below), x1.4 at III (`ModifierTierScale` in `MapDevice.ini`). A multiplier scales its distance from 1: Fortified gives +24% / +40% / +56% HP, Withered -36% / -60% / -84% HP regeneration; an added number scales as it is: Elusive +4.8 / +8 / +11.2 evasion. Its text shows the numbers of its tier (`MapModifier.getDescription(tier)`; Regenerative, Desecrated and Arcane Precision say their effect in % so it can scale).
+- **A modifier that changes how the map plays keeps its effect at every tier.**
+- **Every modifier brings more monsters**: +5% at I, +10% at II, +15% at III (`ModifierMonsterCountPct`). They add up, then Horde and Titans multiply: 8 tier III modifiers make 220 monsters out of 100, with Horde 286. The device says how many more ("The modifiers bring 60% more monsters"), and each modifier's line says its share.
+
+Unique maps keep their fixed modifiers at tier II and their own monster counts. A GM names a tier with a colon: `//mapdevice test <map> 5 0 mods=BRUTAL:3,HORDE:1` (the map probe's `mods` too); a modifier named without one rolls its tier.
+
 | # | Modifier | Kind | Effect |
 |---|---|---|---|
 | 1 | Brutal | Numbers | Monsters deal 25% more physical damage. |
@@ -72,7 +80,7 @@ The first 33 change numbers; the other 44 change how the map plays. The last one
 | 11 | Vampiric | Numbers | Monsters heal for 15% of the melee damage they deal. |
 | 12 | Elemental Aegis | Numbers | Monsters have +80 to every attribute resistance. |
 | 13 | Spiked | Numbers | Monsters reflect 8% of the melee damage they take. |
-| 14 | Regenerative | Numbers | Monsters regenerate HP five times as fast. |
+| 14 | Regenerative | Numbers | Monsters regenerate HP 400% faster. |
 | 15 | Enfeebled | Numbers | Players have 20% less max HP. |
 | 16 | Exposed | Numbers | Players have 15% less P. Def. and M. Def. |
 | 17 | Mana Starved | Numbers | Players regenerate MP 50% slower. |
@@ -83,8 +91,8 @@ The first 33 change numbers; the other 44 change how the map plays. The last one
 | 22 | Elemental Weakness | Numbers | Players have -50 to every attribute resistance. |
 | 23 | Blurred Vision | Numbers | Players have -6 accuracy and land critical hits 30% less often. |
 | 24 | Fragile | Numbers | Players take 30% more damage from critical hits. |
-| 25 | Desecrated | Numbers | Healing received by players is halved. |
-| 26 | Arcane Precision | Numbers | Monsters land magic critical hits twice as often. |
+| 25 | Desecrated | Numbers | Healing received by players is 50% lower. |
+| 26 | Arcane Precision | Numbers | Monsters land magic critical hits 100% more often. |
 | 27 | Unshakable | Numbers | Monsters resist stun, sleep, root and fear 50% better. |
 | 28 | Hexproof | Numbers | Debuffs land on monsters 40% less often. |
 | 29 | Shieldbearers | Numbers | Monsters block 25% of attacks with a shield. |
@@ -173,21 +181,23 @@ Seven map items that always open the same map: its modifiers are chosen for it (
 
 **Their difficulty** shows like a normal map's: every unique map has a tier (its monsters' levels and strength, and the tier's multipliers), in its item name ("Unique Map: The Crimson Coliseum (Tier 5)"), in the device's list and windows, and on its portals. Tiers: the Ketra-Varka Front 1; the Tomb Raiders 2; the Gilded Vault 4; the Crimson Coliseum, the Gambler's Den and the Primal Crucible 5; the Ossuary of Echoes 6.
 
-**Their field is packed tight.** A unique map holds 30-80 monsters where a normal map holds 100 on the whole arena, so on the whole arena they would stand far apart. A unique map opens on a smaller copy of its arena instead (`MapDeviceManager.uniqueField`): the fence is pulled in round the same middle, with the entry, until its monsters stand **twice as densely** as a normal map's (`UniqueMapDensity` = 2.0 in `MapDevice.ini`; 1.0 as dense as a normal map, 0 the whole arena), never smaller than a radius of `UniqueMapMinRadius` (3,000). Everything a twist places as a share of the field comes in with it: the Coliseum's waves, the Front's totems, the Tomb's reliquaries, the Ossuary's phylacteries, the Vault's corners. The Front's sectors shrink with their totems (half the gap between two, 2,000 at most) and keep clear of the entry. An arena of the event map page (the Crucible's `primeval_isle`) keeps its hand-placed fence, entry and packs. With the defaults:
+**Their field is packed tight.** A unique map holds 30-80 monsters where a normal map holds 100 on the whole arena, so on the whole arena they would stand far apart. A unique map opens on a smaller copy of its arena instead (`MapDeviceManager.uniqueField`): the fence is pulled in round the same middle, with the entry, until its monsters stand **twice as densely** as a normal map's (`UniqueMapDensity` = 2.0 in `MapDevice.ini`; 1.0 as dense as a normal map, 0 the whole arena), never smaller than a radius of `UniqueMapMinRadius` (3,000). On a path the fence keeps its width and the path is cut short instead: its first part from the entry, as long as that density needs, never shorter than twice `UniqueMapMinRadius` (6,000). Everything a twist places as a share of the field comes in with it: the Coliseum's waves, the Front's totems, the Tomb's reliquaries, the Ossuary's phylacteries, the Vault's corners. The Front's sectors shrink with their totems (half the gap between two, 2,000 at most) and keep clear of the entry. An arena of the event map page (the Crucible's `primeval_isle`) keeps its hand-placed fence, entry and packs. With the defaults:
 
 | Unique map | Monsters | Arena | Whole arena | Its field |
 |---|---|---|---|---|
-| The Crimson Coliseum | 30 (waves) | Ruins of Despair | 9,600 x 8,800 | 3,720 x 3,410 |
-| The Gilded Vault | 60 | Fields of Massacre | 6,000 x 6,000 | 3,290 x 3,290 |
-| The Ossuary of Echoes | 70 | Cemetery Grounds | 6,500 x 3,500 | 5,570 x 3,000 |
-| The Gambler's Den | 50 | Field of Whispers | 8,000 x 7,000 | 4,000 x 3,500 |
-| The Primal Crucible | 60 | `primeval_isle` (as placed); a tier 5 ellipse until it exists | | 55% of that arena's, never under 3,000 |
-| The Ketra-Varka Front | 80 | Ruins of Despair | 9,600 x 8,800 | 6,070 x 5,570 |
-| The Tomb Raiders | 70 | Cemetery Grounds | 6,500 x 3,500 | 5,570 x 3,000 |
+| The Crimson Coliseum | 30 (waves) | Sel Mahum Training Grounds (path) | 17,600 long | the first 6,000 |
+| The Gilded Vault | 60 | Outlaw Forest (path) | 17,700 long | the first 6,000 |
+| The Ossuary of Echoes | 70 | The Cemetery (path) | 17,000 long | the first 6,000 |
+| The Gambler's Den | 50 | Isle of Prayer (path) | 17,000 long | the first 6,000 |
+| The Primal Crucible | 60 | `primeval_isle` (as placed), else Primeval Isle Valley (path) | 15,600 long | the first 6,000 |
+| The Ketra-Varka Front | 80 | Garden of Beasts (path) | 17,600 long | the first 7,060 |
+| The Tomb Raiders | 70 | The Cemetery (path) | 17,000 long | the first 6,000 |
+
+A unique map names its place in `arena`, or several, comma separated: the first that exists (the Crucible: its own place of the event map page if it is made, else Primeval Isle Valley). On a path, what a twist places round an ellipse lands along the path instead (`MapArena.fieldPoint`, `fromEntry`, `farSideDistance`, `fieldShare`): the path is taken as an ellipse straightened along it, its length the long axis (the entry at one end) and its width the short one. So the Front's three totems stand one after another along the way, the Tomb's rivals come in from the far end, the Ossuary's phylacteries and the Crucible's eggs stand along both sides, and the waves, reliquaries, coffers and the Vault's corners are spread along it like the monsters. A map probe (`unique=TYPE`) opened all seven and fought them through their final encounters: every monster, totem, reliquary, phylactery, egg and boss stood inside the fence.
 
 | | The Crimson Coliseum (18111) | The Gilded Vault (18112) | The Ossuary of Echoes (18113) | The Gambler's Den (18114) |
 |---|---|---|---|---|
-| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Cemetery Grounds | 50 of tier 5 (Lv. 81-84), Field of Whispers |
+| Monsters | 30 of tier 5 (Lv. 81-84), Sel Mahum Training Grounds | 60 of tier 4 (Lv. 82-84), Outlaw Forest | 70 of tier 6 (Lv. 82-85 party), The Cemetery | 50 of tier 5 (Lv. 81-84), Isle of Prayer |
 | Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered | Champions' Rally, Glass Cannon, Deadly, Fragile, Elemental Chaos, Splitters |
 | The idea | An arms race: the monsters grow with every death, and so do you. | A heist against the clock. | The dead don't stay down. | Luck, both ways. |
 | Twist | **Deathmatch: Mayhem.** Every kill (and every assist: `MayhemAssistShare` % of the damage) offers a strong passive, notables and keystones of the tree plus the Mayhem keystones, to stack **on top of your own tree**, working only inside the map (see below). The monsters come in three waves: 6, 10, 14. | **Borrowed Time and Greed.** The vault seals in 5 minutes; every kill adds 12 s (a claimed bounty 60 s) and 1% Greed, which raises the map's and the boss's drop chances (up to x2 at 100 kills). | **Echoes.** A quarter of the slain counted monsters leave an Echo (half HP, faster attacks, uncounted, its own drops). Every Echo still standing at the end feeds the boss +5% HP (up to +100%). | **The Wheel of Fate and the Pot.** Every 12 counted kills the wheel spins one of 24 fortunes (below), which holds until the next spin, and gives a **bet**. The **Dealer** by the Return Portal takes bets: the Pot doubles or halves. The **Pot** (x1 to start, x0.25-x4) multiplies the Den's drop chances; past 100% the drops grow bigger. |
@@ -279,7 +289,7 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 
 ### The Tomb Raiders (18119)
 
-*You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in the Cemetery Grounds. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
+*You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in the Cemetery. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
 
 - **The rivals**: when the first player comes in, a rival party of 4 **Tomb Raiders** (fake players: one support, three fighters, 2 levels below that player, at most 78) comes in from the far side (`FakePlayerPvpManager.spawnMapRival`; the only fake players a map ever has). They race you for the reliquaries, hunt the tomb's monsters (their kills count toward the clear), attack a player breaking a seal within 900, and ambush the players near them when they are behind in relics. They never flee, escape, log off or come back after dying, and they stay flagged: killing them, or being killed by them, is no PK, no PvP count and no announcement.
 - **The reliquaries**: 5 **Sealed Reliquaries** spread over the field. Talk to one (or `.tomb break` beside it) to break its seal: **30 seconds** of standing still, broken by any hit (HP or CP lost), a step, or death. A rival breaks one the same way, standing still out of a fight, and a hit breaks it too. You bank your relics; a rival carries its own, and **drops them to you when slain**.
@@ -340,11 +350,10 @@ A map opens in one of these fields at random (and in the places of the map edito
 | Ruins of Despair | Gludio | ellipse | 9,600 x 8,800 | the east |
 | Field of Whispers | Innadril | ellipse | 8,000 x 7,000 | the west |
 | Fields of Massacre | Aden | ellipse | 6,000 x 6,000 | the south |
-| Cemetery Grounds | Aden | ellipse, unique maps only | 6,500 x 3,500 | the east |
 
-The paths hold the same 100 monsters on 44-74 million square units (a wide field: 113-265), along one way: no searching an open field for the last monsters. The Cemetery was the "Silent Valley" arena (8,000 x 8,000; the real Silent Valley lies farther north); its old ground is kept as the oval **Cemetery Grounds** (`uniqueOnly="true"`: no map of the rotation opens there) for the two unique maps that open in it.
+The paths hold the same 100 monsters on 44-74 million square units (a wide field: 113-265), along one way: no searching an open field for the last monsters. The Cemetery was the "Silent Valley" arena (8,000 x 8,000; the real Silent Valley lies farther north). An arena with `uniqueOnly="true"` opens only for the unique maps that name it, never in the rotation.
 
-**Unique maps never open on a path**: their twists place things round an ellipse (the Front's totems, the Tomb's reliquaries, the Ossuary's phylacteries...). One that names a path, or falls back on its tier's arenas, takes an ellipse (the server log warns about a unique map that names a path).
+**Unique maps open on paths too**, on their first part (see *Unique maps*).
 
 **How the paths were made.** Traced on the geodata (`data/geodata`) round a spot of each place: the ground walkable from there (cell by cell, as the geodata allows, both ways, no step over 32 high, single layer, so no bridges or caves), with no water, peace, town or damage zone in it (a map's copy of the place keeps the world's zones); the way between its two farthest points with the most room from wall to wall; that way simplified to 9-11 points, each as wide as the room there (half-width 1,100-1,800). Then each was checked the way the server builds it: 96-99.8% of the field inside the fence is walkable from the entry, and a map probe on a live server opened every one with all 100 monsters inside the fence, the farthest 13,000-17,000 from the entry. Swamp of Screams, Hot Springs and Blazing Swamp were dropped: their open ground is cut up by water, the spa's and the fire swamp's zones. Making a path by hand: keep the bends gentle (the outer corner of a bend reaches at most twice the half-width out) and the half-width within the open ground.
 
@@ -406,7 +415,7 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 curl -X POST http://127.0.0.1:8788/api/mapdevice/probe -d 'tier=3&mods=CHAIN_REACTION,PACK_HUNTERS&kills=30&seconds=60&pace=100'
 ```
 
-Parameters: `arena` (default the tier's first), `tier` (3), `mods`, `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0); the answer also has where the monsters stood at the start (`outsideFence`: how many beyond the fence, `farthestFromEntry`), the fence's wall count (`fenceWalls`), whether the arena is a path (`path`), when the probe's radar first pointed somewhere (`radarFirstAt`) and how many monsters Gravity Well pulled (`pulled`). Before it fights, `waystone=1` tries the waystones (from too far, then from beside one), `hearts=N` breaks N Nest Hearts (the answer then lists each nest: broken, monsters, multipliers, the heart's HP, and what 1,000 damage does to it), `coffer=1` opens the nearest Sealed Coffer and slays its waves, `invul` (0 to let the probe take damage), `keep`.
+Parameters: `arena` (default the tier's first), `tier` (3), `mods` (each with its tier after a colon if wanted, `BRUTAL:3`; else tier II), `unique` (a unique map's type, `COLISEUM`...`TOMB`: opens it in its own place, or in `arena`, with its twist; then `tier` and `mods` are its own), `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0); the answer also has the modifiers with their tiers and effects (`modifiers`), the monster count multiplier they bring (`monsterCountMultiplier`), the field (`field`), every npc alive at the start and at the end and how many stood beyond the fence (`npcsAtStart`, `npcsOutsideAtStart`, `outsideAtStart`, the same `AtEnd`), where the monsters stood at the start (`outsideFence`: how many beyond the fence, `farthestFromEntry`), the fence's wall count (`fenceWalls`), whether the arena is a path (`path`), when the probe's radar first pointed somewhere (`radarFirstAt`) and how many monsters Gravity Well pulled (`pulled`). Before it fights, `waystone=1` tries the waystones (from too far, then from beside one), `hearts=N` breaks N Nest Hearts (the answer then lists each nest: broken, monsters, multipliers, the heart's HP, and what 1,000 damage does to it), `coffer=1` opens the nearest Sealed Coffer and slays its waves, `invul` (0 to let the probe take damage), `keep`.
 
 ## Setup notes
 

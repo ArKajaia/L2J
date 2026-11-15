@@ -135,6 +135,126 @@ public record MapArena(String id, String name, int x, int y, int z, int radiusX,
 	}
 
 	/**
+	 * A path cut short, for a unique map that holds fewer monsters: the players still come in at its start.
+	 * @param lengthShare how much of the path to keep (0-1)
+	 * @return the shorter field, under the same id and name; this arena if it is no path, or if nothing is cut
+	 */
+	public MapArena trimmed(double lengthShare)
+	{
+		if ((path == null) || (lengthShare >= 1) || (lengthShare <= 0))
+		{
+			return this;
+		}
+		final ArenaPath shorter = path.trimmed(path.getLength() * lengthShare);
+		if (shorter == path)
+		{
+			return this;
+		}
+		final MapArena trimmed = of(name, shorter, minTier, maxTier, uniqueOnly);
+		return new MapArena(id, name, trimmed.x, trimmed.y, trimmed.z, trimmed.radiusX, trimmed.radiusY, trimmed.entry, guardian, packs, minTier, maxTier, monsterCount, monsters, source, shorter, uniqueOnly);
+	}
+
+	// Where things stand, whatever the field's shape. A path is taken as an ellipse straightened along it: "along" its length (the long axis, the entry at one
+	// end) and "across" it (the short axis, its width there), so what a twist places round an ellipse lands along the path instead.
+
+	/**
+	 * @return how far along the path the entry lies (0 for an ellipse)
+	 */
+	private double entryAlong()
+	{
+		return path == null ? 0 : Math.min(PATH_ENTRY_DISTANCE, path.getLength() / 4);
+	}
+
+	/**
+	 * A spot of the field by its place round the middle. An ellipse: at {@code angle} round the middle, {@code share} of the radius out. A path: {@code share} of the
+	 * way from its middle towards its far end (cosine of {@code angle}, negative towards the entry) and towards its sides (sine).
+	 * @param angle in radians
+	 * @param share of the radius, 0-1
+	 * @return the spot (the ground's height is the field's there; take the ground under it)
+	 */
+	public Location fieldPoint(double angle, double share)
+	{
+		if (path == null)
+		{
+			return new Location(x + (int) (Math.cos(angle) * radiusX * share), y + (int) (Math.sin(angle) * radiusY * share), z);
+		}
+		final double half = path.getLength() / 2;
+		final ArenaPath.Spot spot = path.at(half + (half * share * Math.cos(angle)));
+		final double side = spot.width() * share * Math.sin(angle);
+		return new Location(spot.x() + (int) Math.round(-spot.dirY() * side), spot.y() + (int) Math.round(spot.dirX() * side), spot.z());
+	}
+
+	/**
+	 * @param share of the radius past the middle
+	 * @return how far from the entry the spot lies that is {@code share} of the radius past the middle, on the way from the entry to the far side
+	 */
+	public double farSideDistance(double share)
+	{
+		if (path != null)
+		{
+			return ((path.getLength() / 2) - entryAlong()) + ((path.getLength() / 2) * share);
+		}
+		final double dx = x - entry.getX();
+		final double dy = y - entry.getY();
+		final double toMiddle = Math.max(1, Math.hypot(dx, dy));
+		return toMiddle + (Math.hypot((radiusX * dx) / toMiddle, (radiusY * dy) / toMiddle) * share);
+	}
+
+	/**
+	 * @param distance how far
+	 * @return the spot that far from the entry on the way to the far side: straight through the middle of an ellipse, along a path
+	 */
+	public Location fromEntry(double distance)
+	{
+		if (path != null)
+		{
+			final ArenaPath.Spot spot = path.at(entryAlong() + distance);
+			return new Location(spot.x(), spot.y(), spot.z());
+		}
+		final double dx = x - entry.getX();
+		final double dy = y - entry.getY();
+		final double toMiddle = Math.max(1, Math.hypot(dx, dy));
+		return new Location(entry.getX() + (int) ((dx / toMiddle) * distance), entry.getY() + (int) ((dy / toMiddle) * distance), z);
+	}
+
+	/**
+	 * @param px a spot's x
+	 * @param py a spot's y
+	 * @return how far out the spot lies, squared: 0 in the middle, 1 at the fence (an ellipse's ((x - middle) / radius) squared; on a path, along it and across it)
+	 */
+	public double fieldShare(int px, int py)
+	{
+		if (path == null)
+		{
+			final double ex = (px - x) / (double) radiusX;
+			final double ey = (py - y) / (double) radiusY;
+			return (ex * ex) + (ey * ey);
+		}
+		final double half = path.getLength() / 2;
+		final double along = path.nearestDistance(px, py);
+		final ArenaPath.Spot spot = path.at(along);
+		final double ea = (along - half) / half;
+		final double ec = Math.hypot(px - spot.x(), py - spot.y()) / Math.max(1, spot.width());
+		return (ea * ea) + (ec * ec);
+	}
+
+	/**
+	 * @return the middle of the box round the fence, x (an ellipse's middle; a path's middle is halfway along it, which can lie off the box's)
+	 */
+	public int boxX()
+	{
+		return path == null ? x : path.getCenterX();
+	}
+
+	/**
+	 * @return the middle of the box round the fence, y
+	 */
+	public int boxY()
+	{
+		return path == null ? y : path.getCenterY();
+	}
+
+	/**
 	 * @param tier a map tier
 	 * @return {@code true} if a map of that tier may open here
 	 */

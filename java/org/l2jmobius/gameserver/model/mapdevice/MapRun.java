@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.model.mapdevice;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,6 +80,8 @@ public class MapRun
 	private final MapTier _tier;
 	private final int _medals;
 	private final List<MapModifier> _modifiers;
+	private final Map<MapModifier, Integer> _modifierTiers;
+	private final double _monsterCountMultiplier;
 	private final HotzoneModifier _hotzoneEffect;
 	private final MapArena _arena;
 	private final int _instanceId;
@@ -229,6 +232,27 @@ public class MapRun
 	 */
 	public MapRun(int id, int ownerId, String ownerName, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzoneEffect, MapArena arena, int instanceId, UniqueMap unique)
 	{
+		this(id, ownerId, ownerName, hideout, tier, medals, modifiers, null, hotzoneEffect, arena, instanceId, unique);
+	}
+
+	/**
+	 * @param modifierTiers the tier (1-3) of each modifier, {@code null} or missing for tier II
+	 * @param unique the unique map this run is, {@code null} for a plain map: its modifiers are the ones given, its reward multiplies the tier's
+	 */
+	public MapRun(int id, int ownerId, String ownerName, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, Map<MapModifier, Integer> modifierTiers, HotzoneModifier hotzoneEffect, MapArena arena, int instanceId, UniqueMap unique)
+	{
+		final Map<MapModifier, Integer> tiers = new EnumMap<>(MapModifier.class);
+		int monsterCountPct = 0;
+		for (MapModifier modifier : modifiers)
+		{
+			final int modifierTier = MapModifier.clampTier((modifierTiers != null) && modifierTiers.containsKey(modifier) ? modifierTiers.get(modifier) : MapModifier.DEFAULT_TIER);
+			tiers.put(modifier, modifierTier);
+			monsterCountPct += MapModifier.getMonsterCountPct(modifierTier);
+		}
+		_modifierTiers = Collections.unmodifiableMap(tiers);
+		// Every modifier brings more monsters; a unique map keeps its own count.
+		_monsterCountMultiplier = unique != null ? 1.0 : 1.0 + (monsterCountPct / 100.0);
+
 		_id = id;
 		_unique = unique;
 		_ownerId = ownerId;
@@ -322,29 +346,31 @@ public class MapRun
 		int timeLimit = MapDeviceConfig.MAP_DURATION;
 		for (MapModifier modifier : _modifiers)
 		{
-			hp *= modifier.getMonsterHp();
-			pAtk *= modifier.getMonsterPAtk();
-			mAtk *= modifier.getMonsterMAtk();
-			pDef *= modifier.getMonsterPDef();
-			mDef *= modifier.getMonsterMDef();
-			atkSpd *= modifier.getMonsterAtkSpd();
-			castSpd *= modifier.getMonsterCastSpd();
-			monsterMoveSpeed *= modifier.getMonsterMoveSpeed();
-			monsterCritRate *= modifier.getMonsterCritRate();
-			monsterCritDamage *= modifier.getMonsterCritDamage();
-			monsterEvasion += modifier.getMonsterEvasion();
-			monsterLeechPct += modifier.getMonsterLeechPct();
-			monsterElementRes += modifier.getMonsterElementRes();
-			monsterReflectPct += modifier.getMonsterReflectPct();
-			monsterHpRegen *= modifier.getMonsterHpRegen();
-			monsterMCritRate *= modifier.getMonsterMCritRate();
-			monsterControlChance *= modifier.getMonsterControlChance();
-			monsterDebuffChance *= modifier.getMonsterDebuffChance();
-			monsterShieldPct = Math.max(monsterShieldPct, modifier.getMonsterShieldPct());
-			monsterCritDamageTaken *= modifier.getMonsterCritDamageTaken();
-			monsterSkillDamageTaken *= modifier.getMonsterSkillDamageTaken();
-			playerDebuffChance *= modifier.getPlayerDebuffChance();
-			playerDamage *= modifier.getPlayerDamage();
+			// A number modifier is as strong as its tier makes it (II: as listed).
+			final double k = modifier.isStatModifier() ? MapModifier.getTierScale(_modifierTiers.get(modifier)) : 1.0;
+			hp *= scaled(modifier.getMonsterHp(), k);
+			pAtk *= scaled(modifier.getMonsterPAtk(), k);
+			mAtk *= scaled(modifier.getMonsterMAtk(), k);
+			pDef *= scaled(modifier.getMonsterPDef(), k);
+			mDef *= scaled(modifier.getMonsterMDef(), k);
+			atkSpd *= scaled(modifier.getMonsterAtkSpd(), k);
+			castSpd *= scaled(modifier.getMonsterCastSpd(), k);
+			monsterMoveSpeed *= scaled(modifier.getMonsterMoveSpeed(), k);
+			monsterCritRate *= scaled(modifier.getMonsterCritRate(), k);
+			monsterCritDamage *= scaled(modifier.getMonsterCritDamage(), k);
+			monsterEvasion += modifier.getMonsterEvasion() * k;
+			monsterLeechPct += modifier.getMonsterLeechPct() * k;
+			monsterElementRes += modifier.getMonsterElementRes() * k;
+			monsterReflectPct += modifier.getMonsterReflectPct() * k;
+			monsterHpRegen *= scaled(modifier.getMonsterHpRegen(), k);
+			monsterMCritRate *= scaled(modifier.getMonsterMCritRate(), k);
+			monsterControlChance *= scaled(modifier.getMonsterControlChance(), k);
+			monsterDebuffChance *= scaled(modifier.getMonsterDebuffChance(), k);
+			monsterShieldPct = Math.max(monsterShieldPct, (int) Math.round(modifier.getMonsterShieldPct() * k));
+			monsterCritDamageTaken *= scaled(modifier.getMonsterCritDamageTaken(), k);
+			monsterSkillDamageTaken *= scaled(modifier.getMonsterSkillDamageTaken(), k);
+			playerDebuffChance *= scaled(modifier.getPlayerDebuffChance(), k);
+			playerDamage *= scaled(modifier.getPlayerDamage(), k);
 			manaSiphonPct = Math.max(manaSiphonPct, modifier.getManaSiphonPct());
 			venomPct = Math.max(venomPct, modifier.getVenomPct());
 			lacerating |= modifier.isLacerating();
@@ -367,24 +393,24 @@ public class MapRun
 			{
 				speedrunMinutes = speedrunMinutes > 0 ? Math.min(speedrunMinutes, modifier.getSpeedrunMinutes()) : modifier.getSpeedrunMinutes();
 			}
-			playerMaxHp *= modifier.getPlayerMaxHp();
-			playerDef *= modifier.getPlayerDef();
-			playerMpRegen *= modifier.getPlayerMpRegen();
-			playerHpRegen *= modifier.getPlayerHpRegen();
-			playerMpCost *= modifier.getPlayerMpCost();
-			playerMoveSpeed *= modifier.getPlayerMoveSpeed();
-			playerReuse *= modifier.getPlayerReuse();
-			playerElementRes += modifier.getPlayerElementRes();
-			playerAccuracy += modifier.getPlayerAccuracy();
-			playerCritRate *= modifier.getPlayerCritRate();
-			playerCritDamageTaken *= modifier.getPlayerCritDamageTaken();
-			playerHealReceived *= modifier.getPlayerHealReceived();
+			playerMaxHp *= scaled(modifier.getPlayerMaxHp(), k);
+			playerDef *= scaled(modifier.getPlayerDef(), k);
+			playerMpRegen *= scaled(modifier.getPlayerMpRegen(), k);
+			playerHpRegen *= scaled(modifier.getPlayerHpRegen(), k);
+			playerMpCost *= scaled(modifier.getPlayerMpCost(), k);
+			playerMoveSpeed *= scaled(modifier.getPlayerMoveSpeed(), k);
+			playerReuse *= scaled(modifier.getPlayerReuse(), k);
+			playerElementRes += modifier.getPlayerElementRes() * k;
+			playerAccuracy += modifier.getPlayerAccuracy() * k;
+			playerCritRate *= scaled(modifier.getPlayerCritRate(), k);
+			playerCritDamageTaken *= scaled(modifier.getPlayerCritDamageTaken(), k);
+			playerHealReceived *= scaled(modifier.getPlayerHealReceived(), k);
 			magePct = Math.max(magePct, modifier.getMagePct());
 			championPct = Math.max(championPct, modifier.getChampionPct());
 			thiefPct = Math.max(thiefPct, modifier.getThiefPct());
 			infusedPct = Math.max(infusedPct, modifier.getInfusedPct());
 			waveMonsters += modifier.getWaveMonsters();
-			packSize *= modifier.getPackSize();
+			packSize *= scaled(modifier.getPackSize(), k);
 			packs |= modifier.isPacks();
 			titans |= modifier.isTitans();
 			if ((modifier.getArchetype() != null) && (modifier.getArchetypePct() > 0))
@@ -545,6 +571,50 @@ public class MapRun
 	public boolean hasModifier(MapModifier modifier)
 	{
 		return _modifiers.contains(modifier);
+	}
+
+	/**
+	 * @param modifier one of its modifiers
+	 * @return its tier, 1-3 (II if the map doesn't have it)
+	 */
+	public int getModifierTier(MapModifier modifier)
+	{
+		return _modifierTiers.getOrDefault(modifier, MapModifier.DEFAULT_TIER);
+	}
+
+	/**
+	 * @return how many more monsters its modifiers bring: 1 + the sum of their tiers' ModifierMonsterCountPct / 100 (1 for a unique map)
+	 */
+	public double getMonsterCountMultiplier()
+	{
+		return _monsterCountMultiplier;
+	}
+
+	/**
+	 * @param modifier one of its modifiers
+	 * @return its name with its tier, e.g. "Brutal III"
+	 */
+	public String getModifierName(MapModifier modifier)
+	{
+		return modifier.getDisplayName(getModifierTier(modifier));
+	}
+
+	/**
+	 * @param modifier one of its modifiers
+	 * @return what it does at its tier, and how many more monsters it brings (not on a unique map)
+	 */
+	public String describeModifier(MapModifier modifier)
+	{
+		final int tier = getModifierTier(modifier);
+		return modifier.getDescription(tier) + (_unique == null ? " (+" + MapModifier.getMonsterCountPct(tier) + "% monsters)" : "");
+	}
+
+	/**
+	 * A multiplier modifier's value at a tier: its distance from 1 (no effect) times {@code scale}.
+	 */
+	private static double scaled(double multiplier, double scale)
+	{
+		return 1.0 + ((multiplier - 1.0) * scale);
 	}
 
 	public HotzoneModifier getHotzoneEffect()

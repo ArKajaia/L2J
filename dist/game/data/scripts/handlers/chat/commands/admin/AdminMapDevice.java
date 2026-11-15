@@ -21,8 +21,10 @@
 package handlers.chat.commands.admin;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.l2jmobius.gameserver.data.xml.EventMapData;
@@ -124,13 +126,14 @@ public class AdminMapDevice implements IAdminCommandHandler
 			{
 				if (!st.hasMoreTokens())
 				{
-					activeChar.sendSysMessage("Usage: //mapdevice test <map> [tier] [medals] [mods=A,B] - in your own hideout (.hideout)");
+					activeChar.sendSysMessage("Usage: //mapdevice test <map> [tier] [medals] [mods=A,B:3] - in your own hideout (B:3: B at tier III) (.hideout)");
 					return false;
 				}
 				final String arenaId = st.nextToken();
 				int tier = 1;
 				int medals = 0;
 				List<MapModifier> forced = null;
+				final Map<MapModifier, Integer> forcedTiers = new EnumMap<>(MapModifier.class);
 				int number = 0;
 				while (st.hasMoreTokens())
 				{
@@ -138,7 +141,7 @@ public class AdminMapDevice implements IAdminCommandHandler
 					if (token.toLowerCase(Locale.ROOT).startsWith("mods="))
 					{
 						final List<String> unknown = new ArrayList<>();
-						forced = MapDeviceManager.parseModifiers(token.substring(5), unknown);
+						forced = MapDeviceManager.parseModifiers(token.substring(5), unknown, forcedTiers);
 						if (!unknown.isEmpty())
 						{
 							activeChar.sendSysMessage("Unknown modifiers: " + String.join(", ", unknown) + ".");
@@ -154,7 +157,7 @@ public class AdminMapDevice implements IAdminCommandHandler
 						medals = parse(token, 0);
 					}
 				}
-				final String denied = manager.openTestMap(activeChar, arenaId, tier, medals, forced);
+				final String denied = manager.openTestMap(activeChar, arenaId, tier, medals, forced, forcedTiers.isEmpty() ? null : forcedTiers);
 				activeChar.sendSysMessage(denied != null ? denied : "Opened a tier " + tier + " test map in " + arenaId + ": take a portal round your device.");
 				break;
 			}

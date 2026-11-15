@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -37,11 +38,13 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.appearance.PlayerAppearance;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.instancezone.Instance;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
+import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 
 /**
  * The map probe of the web API ({@code POST /api/mapdevice/probe}): tries map modifiers on a running server without a game client. It opens a map with the modifiers named (no hideout, no portals), puts a client-less player of its own inside ("MapProbe", made once in the
@@ -93,13 +96,30 @@ public final class MapProbe
 			return "{\"error\":\"No tier " + tier + ".\"}";
 		}
 		final String arenaName = params.getOrDefault("arena", "").trim();
-		final MapArena arena = arenaName.isEmpty() ? firstArena(tier) : MapDeviceManager.findArena(arenaName);
+		UniqueMap unique = null;
+		if (!params.getOrDefault("unique", "").isBlank())
+		{
+			try
+			{
+				unique = MapDeviceData.getInstance().getUniqueMap(UniqueMap.Type.valueOf(params.get("unique").trim().toUpperCase(java.util.Locale.ROOT)));
+			}
+			catch (IllegalArgumentException e)
+			{
+				// Unknown below.
+			}
+			if (unique == null)
+			{
+				return "{\"error\":" + quote("No unique map " + params.get("unique") + ".") + "}";
+			}
+		}
+		final MapArena arena = arenaName.isEmpty() ? (unique != null ? MapDeviceManager.uniquePlace(unique, MapDeviceData.getInstance().getTier(unique.tier())) : firstArena(tier)) : MapDeviceManager.findArena(arenaName);
 		if (arena == null)
 		{
 			return "{\"error\":" + quote("No arena " + arenaName + ".") + "}";
 		}
 		final List<String> unknown = new ArrayList<>();
-		final List<MapModifier> modifiers = MapDeviceManager.parseModifiers(params.getOrDefault("mods", ""), unknown);
+		final Map<MapModifier, Integer> tiers = new EnumMap<>(MapModifier.class);
+		final List<MapModifier> modifiers = MapDeviceManager.parseModifiers(params.getOrDefault("mods", ""), unknown, tiers);
 		if (!unknown.isEmpty())
 		{
 			return "{\"error\":" + quote("Unknown modifiers: " + String.join(", ", unknown)) + "}";
@@ -125,9 +145,9 @@ public final class MapProbe
 		probe.setCurrentHpMp(probe.getMaxHp(), probe.getMaxMp());
 
 		final MapDeviceManager manager = MapDeviceManager.getInstance();
-		final MapRun run = manager.openProbeRun(probe, arena, tier, modifiers);
+		final MapRun run = unique != null ? manager.openProbeUniqueRun(probe, unique, arenaName.isEmpty() ? null : arena) : manager.openProbeRun(probe, arena, tier, modifiers, tiers);
 		final long start = System.currentTimeMillis();
-		final Location entry = MapDeviceManager.getGroundLocation(arena.entry());
+		final Location entry = MapDeviceManager.getGroundLocation(run.getArena().entry());
 		teleport(probe, entry.getX(), entry.getY(), entry.getZ(), run.getInstanceId());
 
 		final int monstersAtStart = run.getMonsterTotal();
@@ -151,6 +171,8 @@ public final class MapProbe
 		}
 		extra.append(",\"outsideFence\":").append(outsideFence).append(",\"farthestFromEntry\":").append(farthestFromEntry).append(",\"fenceWalls\":").append(run.getFences().size());
 		extra.append(",\"path\":").append(placed.path() != null);
+		extra.append(",\"field\":").append(quote(placed.name() + (placed.path() != null ? ", path " + Math.round(placed.path().getLength()) + " long" : ", ellipse " + placed.radiusX() + " x " + placed.radiusY())));
+		extra.append(fenceReport(run, fence, "AtStart"));
 
 		// Waystones: from too far, then from beside the first, to the third.
 		if ("1".equals(params.get("waystone")) && (run.getWaystones().size() >= 3))
@@ -320,7 +342,13 @@ public final class MapProbe
 		json.append("\"instance\":").append(run.getInstanceId());
 		json.append(",\"arena\":").append(quote(arena.name()));
 		json.append(",\"tier\":").append(tier);
-		json.append(",\"modifiers\":").append(quote(modifiers.toString()));
+		final StringBuilder named = new StringBuilder();
+		for (MapModifier modifier : run.getModifiers())
+		{
+			named.append(named.length() > 0 ? ", " : "").append(run.getModifierName(modifier)).append(": ").append(run.describeModifier(modifier));
+		}
+		json.append(",\"modifiers\":").append(quote(named.toString()));
+		json.append(",\"monsterCountMultiplier\":").append(run.getMonsterCountMultiplier());
 		json.append(",\"status\":").append(quote(run.getStatus().name()));
 		json.append(",\"seconds\":").append(fought / 1000.0);
 		json.append(",\"monstersAtStart\":").append(monstersAtStart);
@@ -347,6 +375,7 @@ public final class MapProbe
 		json.append(",\"pulled\":").append(run.getPulled());
 		json.append(",\"killsBeforeFight\":").append(killsBeforeFight);
 		json.append(extra);
+		json.append(fenceReport(run, run.getArena().toBarrier(), "AtEnd"));
 		if (!run.getNestHearts().isEmpty())
 		{
 			json.append(",\"heartHits\":").append(heartHits);
@@ -535,5 +564,36 @@ public final class MapProbe
 			}
 		}
 		return sb.append('"').toString();
+	}
+
+	/**
+	 * Every npc of the map (a twist's totems, reliquaries, bosses, eggs... too), and how many stand beyond the fence.
+	 */
+	private static String fenceReport(MapRun run, EventBarrier fence, String suffix)
+	{
+		final Instance instance = InstanceManager.getInstance().getInstance(run.getInstanceId());
+		int npcs = 0;
+		int npcsOutside = 0;
+		final StringBuilder outsideNames = new StringBuilder();
+		if (instance != null)
+		{
+			for (Npc npc : instance.getNpcs())
+			{
+				if (npc.isDead())
+				{
+					continue;
+				}
+				npcs++;
+				if (!fence.contains(npc, 0))
+				{
+					npcsOutside++;
+					if (outsideNames.length() < 300)
+					{
+						outsideNames.append(outsideNames.length() > 0 ? ", " : "").append(npc.getName()).append(" (").append(npc.getTitle()).append(')');
+					}
+				}
+			}
+		}
+		return ",\"npcs" + suffix + "\":" + npcs + ",\"npcsOutside" + suffix + "\":" + npcsOutside + ",\"outside" + suffix + "\":" + quote(outsideNames.toString());
 	}
 }

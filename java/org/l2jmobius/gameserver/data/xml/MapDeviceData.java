@@ -114,16 +114,6 @@ public class MapDeviceData implements IXmlReader
 			uniqueByItem.put(unique.itemId(), unique);
 		}
 		_uniqueMaps = Collections.unmodifiableMap(_newUniqueMaps);
-		for (UniqueMap unique : _newUniqueMaps.values())
-		{
-			for (MapArena arena : _arenas)
-			{
-				if ((unique.arena() != null) && (arena.path() != null) && (arena.name().equalsIgnoreCase(unique.arena()) || arena.name().replace(' ', '_').equalsIgnoreCase(unique.arena())))
-				{
-					LOGGER.warning(getClass().getSimpleName() + ": The unique map " + unique.name() + " names " + arena.name() + ", a path: its twist places things round an ellipse, so it opens in an ellipse of its tier instead.");
-				}
-			}
-		}
 		_uniqueMapsByItem = Collections.unmodifiableMap(uniqueByItem);
 		_excludedNpcIds = Set.copyOf(_newExcluded);
 		_strengthWeights = _newStrengthWeights;

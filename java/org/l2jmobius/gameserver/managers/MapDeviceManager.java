@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1218,12 +1219,21 @@ public class MapDeviceManager
 	 */
 	public String openTestMap(Player gm, String arenaId, int tierId, int medals, List<MapModifier> forced)
 	{
+		return openTestMap(gm, arenaId, tierId, medals, forced, null);
+	}
+
+	/**
+	 * Opens a test map with the modifiers a GM names, at the tiers they name.
+	 * @param forcedTiers the tiers (1-3) of some of the modifiers, the others rolled as usual; {@code null} for none
+	 */
+	public String openTestMap(Player gm, String arenaId, int tierId, int medals, List<MapModifier> forced, Map<MapModifier, Integer> forcedTiers)
+	{
 		final MapArena arena = findArena(arenaId);
 		if (arena == null)
 		{
 			return "No place " + arenaId + ": name an event map with a fence and an entry (//mapdevice list), or an arena of data/MapDevice.xml.";
 		}
-		return openMap(gm, tierId, medals, arena, true, forced);
+		return openMap(gm, tierId, medals, arena, true, forced, forcedTiers);
 	}
 
 	/**
@@ -1233,10 +1243,35 @@ public class MapDeviceManager
 	 */
 	public static List<MapModifier> parseModifiers(String names, List<String> unknown)
 	{
+		return parseModifiers(names, unknown, null);
+	}
+
+	/**
+	 * @param names modifier names (the enum's, or their display names), comma separated, each with its tier after a colon if wanted ("BRUTAL:3")
+	 * @param unknown filled with the names that match no modifier
+	 * @param tiers filled with the tiers named, {@code null} to ignore them
+	 * @return the modifiers named, in the enum's order, each once
+	 */
+	public static List<MapModifier> parseModifiers(String names, List<String> unknown, Map<MapModifier, Integer> tiers)
+	{
 		final Set<MapModifier> found = new HashSet<>();
 		for (String token : names.split(","))
 		{
-			final String name = token.trim();
+			String name = token.trim();
+			int namedTier = 0;
+			final int colon = name.lastIndexOf(':');
+			if (colon > 0)
+			{
+				try
+				{
+					namedTier = MapModifier.clampTier(Integer.parseInt(name.substring(colon + 1).trim()));
+					name = name.substring(0, colon).trim();
+				}
+				catch (NumberFormatException e)
+				{
+					// Not a tier: the whole token is the name.
+				}
+			}
 			if (name.isEmpty())
 			{
 				continue;
@@ -1253,6 +1288,10 @@ public class MapDeviceManager
 			if (match != null)
 			{
 				found.add(match);
+				if ((tiers != null) && (namedTier > 0))
+				{
+					tiers.put(match, namedTier);
+				}
 			}
 			else
 			{
@@ -1274,6 +1313,14 @@ public class MapDeviceManager
 	 */
 	public MapRun openProbeRun(Player probe, MapArena arena, int tierId, List<MapModifier> modifiers)
 	{
+		return openProbeRun(probe, arena, tierId, modifiers, null);
+	}
+
+	/**
+	 * @param tiers the modifiers' tiers (1-3), {@code null} or missing for tier II
+	 */
+	public MapRun openProbeRun(Player probe, MapArena arena, int tierId, List<MapModifier> modifiers, Map<MapModifier, Integer> tiers)
+	{
 		final MapTier tier = MapDeviceData.getInstance().getTier(tierId);
 		if (tier == null)
 		{
@@ -1284,7 +1331,7 @@ public class MapDeviceManager
 		{
 			throw new IllegalArgumentException("No monster fits a tier " + tierId + " map in " + arena.name() + ".");
 		}
-		final MapRun run = createRun(probe, null, tier, 0, modifiers, null, arena, pool, null, true);
+		final MapRun run = createRun(probe, null, tier, 0, modifiers, tiers, null, arena, pool, null, true);
 		LOGGER.info(getClass().getSimpleName() + ": Probe map: tier " + tierId + " in " + arena.name() + " (instance " + run.getInstanceId() + ") with " + modifiers + ".");
 		return run;
 	}
@@ -1332,20 +1379,10 @@ public class MapDeviceManager
 				return "You don't have a " + getItemName(unique.itemId()) + ".";
 			}
 
-			MapArena arena = findArena(unique.arena());
-			if ((arena != null) && (arena.path() != null))
-			{
-				arena = null; // A twist places its things round an ellipse.
-			}
+			MapArena arena = uniquePlace(unique, tier);
 			if (arena == null)
 			{
-				final List<MapArena> arenas = new ArrayList<>(MapDeviceData.getInstance().getArenas(tier.tier()));
-				arenas.removeIf(candidate -> candidate.path() != null);
-				if (arenas.isEmpty())
-				{
-					return "The Map Device has nowhere to open " + unique.name() + ". Please contact an administrator.";
-				}
-				arena = arenas.get(Rnd.get(arenas.size()));
+				return "The Map Device has nowhere to open " + unique.name() + ". Please contact an administrator.";
 			}
 			final List<NpcTemplate> pool = unique.npcs().isEmpty() ? getArenaMonsters(arena, tier) : getUniqueMonsters(unique);
 			arena = uniqueField(arena, unique);
@@ -1415,6 +1452,59 @@ public class MapDeviceManager
 	}
 
 	/**
+	 * @param unique a unique map
+	 * @param tier its tier
+	 * @return its place: the first of the places it names (comma separated) that exists, else one of its tier's at random; {@code null} for none
+	 */
+	static MapArena uniquePlace(UniqueMap unique, MapTier tier)
+	{
+		if (unique.arena() != null)
+		{
+			for (String name : unique.arena().split(","))
+			{
+				final MapArena arena = findArena(name.trim());
+				if (arena != null)
+				{
+					return arena;
+				}
+			}
+		}
+		final List<MapArena> arenas = MapDeviceData.getInstance().getArenas(tier.tier());
+		return arenas.isEmpty() ? null : arenas.get(Rnd.get(arenas.size()));
+	}
+
+	/**
+	 * Opens a unique map with no hideout and no portals, for the web API's map probe ({@link MapProbe}): in its own place (or the one given), its twist started.
+	 * @param probe the player the run belongs to
+	 * @param unique the unique map
+	 * @param place where, {@code null} for its own place
+	 * @return the run
+	 */
+	public MapRun openProbeUniqueRun(Player probe, UniqueMap unique, MapArena place)
+	{
+		final MapTier tier = MapDeviceData.getInstance().getTier(unique.tier());
+		MapArena arena = place != null ? place : uniquePlace(unique, tier);
+		if ((tier == null) || (arena == null))
+		{
+			throw new IllegalArgumentException("Nowhere to open " + unique.name() + ".");
+		}
+		final List<NpcTemplate> pool = unique.npcs().isEmpty() ? getArenaMonsters(arena, tier) : getUniqueMonsters(unique);
+		arena = uniqueField(arena, unique);
+		final List<MapModifier> modifiers = new ArrayList<>();
+		for (MapModifier modifier : unique.modifiers())
+		{
+			if (modifier.isAvailable())
+			{
+				modifiers.add(modifier);
+			}
+		}
+		final MapRun run = createRun(probe, null, tier, 0, modifiers, null, null, arena, pool, unique, true);
+		UniqueMapManager.getInstance().onRunOpened(run);
+		LOGGER.info(getClass().getSimpleName() + ": Probe map: " + unique.name() + " in " + arena.name() + " (instance " + run.getInstanceId() + ").");
+		return run;
+	}
+
+	/**
 	 * The field a unique map opens on. A unique map holds fewer monsters than a normal map, so on the whole arena they would stand far apart: it takes a smaller copy of
 	 * the arena round the same middle, whose area makes its monsters stand {@code UniqueMapDensity} times as densely as {@code MonsterCount} monsters on the whole arena
 	 * (never smaller than {@code UniqueMapMinRadius}, never larger than the arena). An arena of the event map page keeps its hand-placed fence, entry and packs.
@@ -1427,6 +1517,12 @@ public class MapDeviceManager
 		if ((arena.source() != null) || (MapDeviceConfig.UNIQUE_MAP_DENSITY <= 0))
 		{
 			return arena;
+		}
+		if (arena.path() != null)
+		{
+			// A path keeps its width and is cut short: its first part, from the entry, holds the monsters as densely (never shorter than twice UniqueMapMinRadius).
+			final double share = unique.monsterCount() / (MapDeviceConfig.MONSTER_COUNT * MapDeviceConfig.UNIQUE_MAP_DENSITY);
+			return arena.trimmed(Math.max(share, (2.0 * MapDeviceConfig.UNIQUE_MAP_MIN_RADIUS) / Math.max(1, arena.path().getLength())));
 		}
 		// Area goes with the monsters: (factor^2 x area) / count = area / (MonsterCount x density).
 		double factor = Math.sqrt(unique.monsterCount() / (MapDeviceConfig.MONSTER_COUNT * MapDeviceConfig.UNIQUE_MAP_DENSITY));
@@ -1478,6 +1574,14 @@ public class MapDeviceManager
 	 * @param forced the modifiers of a GM's test map, {@code null} to roll them
 	 */
 	private String openMap(Player player, int tierId, int medals, MapArena forcedArena, boolean free, List<MapModifier> forced)
+	{
+		return openMap(player, tierId, medals, forcedArena, free, forced, null);
+	}
+
+	/**
+	 * @param forcedTiers the tiers of some of the forced modifiers, the others rolled; {@code null} for none
+	 */
+	private String openMap(Player player, int tierId, int medals, MapArena forcedArena, boolean free, List<MapModifier> forced, Map<MapModifier, Integer> forcedTiers)
 	{
 		if (!MapDeviceConfig.ENABLED)
 		{
@@ -1549,10 +1653,15 @@ public class MapDeviceManager
 			}
 
 			final List<MapModifier> modifiers = forced != null ? forced : rollModifiers(medals);
+			final Map<MapModifier, Integer> modifierTiers = rollModifierTiers(modifiers, tier.tier());
+			if (forcedTiers != null)
+			{
+				modifierTiers.putAll(forcedTiers);
+			}
 			final HotzoneModifier hotzone = rollHotzoneEffect(tier);
 			try
 			{
-				final MapRun run = createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool);
+				final MapRun run = createRun(player, hideout, tier, medals, modifiers, modifierTiers, hotzone, arena, pool, null, false);
 				announceOpened(player, run);
 				if (!free)
 				{
@@ -1603,6 +1712,26 @@ public class MapDeviceManager
 	}
 
 	/**
+	 * Rolls a tier for each modifier: I, II or III with weights (11 - map tier) : 5 : map tier, so low maps roll mild modifiers and high maps strong ones.
+	 * @param modifiers the modifiers
+	 * @param mapTier the map's tier, 1-10
+	 * @return the tier (1-3) of each
+	 */
+	public static Map<MapModifier, Integer> rollModifierTiers(List<MapModifier> modifiers, int mapTier)
+	{
+		final int high = Math.max(1, Math.min(10, mapTier));
+		final int low = 11 - high;
+		final int middle = 5;
+		final Map<MapModifier, Integer> tiers = new EnumMap<>(MapModifier.class);
+		for (MapModifier modifier : modifiers)
+		{
+			final int roll = Rnd.get(low + middle + high);
+			tiers.put(modifier, roll < low ? 1 : roll < (low + middle) ? 2 : 3);
+		}
+		return tiers;
+	}
+
+	/**
 	 * @param tier the map's tier
 	 * @return a hot zone effect for the whole map, {@code null} if none can apply
 	 */
@@ -1635,8 +1764,16 @@ public class MapDeviceManager
 	 */
 	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique, boolean probe)
 	{
+		return createRun(player, hideout, tier, medals, modifiers, null, hotzone, arena, pool, unique, probe);
+	}
+
+	/**
+	 * @param modifierTiers the tier (1-3) of each modifier, {@code null} for tier II
+	 */
+	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, Map<MapModifier, Integer> modifierTiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique, boolean probe)
+	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
-		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, hotzone, arena, instance.getId(), unique);
+		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, modifierTiers, hotzone, arena, instance.getId(), unique);
 		run.setProbe(probe);
 		instance.setExitLoc(getReturnLocation(player));
 		instance.setEjectTime(0);
@@ -1699,7 +1836,11 @@ public class MapDeviceManager
 		}
 		for (MapModifier modifier : run.getModifiers())
 		{
-			player.sendMessage("Modifier - " + modifier.getDisplayName() + ": " + modifier.getDescription());
+			player.sendMessage("Modifier - " + run.getModifierName(modifier) + ": " + run.describeModifier(modifier));
+		}
+		if (run.getMonsterCountMultiplier() > 1)
+		{
+			player.sendMessage("The modifiers bring " + Math.round((run.getMonsterCountMultiplier() - 1) * 100) + "% more monsters.");
 		}
 		if (run.getHotzoneEffect() != null)
 		{
@@ -1901,7 +2042,7 @@ public class MapDeviceManager
 		}
 
 		final int baseCount = run.isUnique() ? run.getUnique().monsterCount() : arena.monsterCount() > 0 ? arena.monsterCount() : MapDeviceConfig.MONSTER_COUNT;
-		final int count = Math.max(1, (int) Math.round(baseCount * run.getPackSize()));
+		final int count = Math.max(1, (int) Math.round(baseCount * run.getPackSize() * run.getMonsterCountMultiplier()));
 		// Nests: the centres of the nests (on a map of the event map page, its first monster spots).
 		final List<Location> nestCenters = new ArrayList<>();
 		final List<Location> spots;

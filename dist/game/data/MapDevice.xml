@@ -31,7 +31,8 @@
 	            Or a path (ArenaPath): <point x y z width> children instead of x, y, radiusX, radiusY: the field follows the line of points, width on each
 	            side of it (at least 500; the arena's width attribute is the default), and the fence follows it on both sides, round at the ends. The
 	            players come in 600 along it from the first point, facing along it; the middle waystone and the Map Guardian stand halfway along it.
-	            Keep the bends gentle (the outer corner of a bend reaches at most twice the width out). Unique maps never open on a path.
+	            Keep the bends gentle (the outer corner of a bend reaches at most twice the width out). A unique map on a path takes its first part
+	            (UniqueMap* in MapDevice.ini), and its twist places along the path what it would place round an ellipse.
 	            The defaults were checked against the geodata: open ground, at least 95% of it walkable from the middle. The wide ones (Ruins of Despair,
 	            Field of Whispers, Fields of Massacre) are twice the radius (four times the area) of the first fields, so a map's monsters stand well
 	            apart (MonsterSpacing in the ini); the paths are smaller, so the monsters stand closer and along one way.
@@ -47,8 +48,8 @@
 	  itemId    the item that opens it (data/stats/items/custom/map_device_items.xml).
 	  tier      the tier whose monsters fill it (their levels and strength) and whose multipliers they get.
 	  monsters  how many monsters it holds before the final encounter.
-	  arena     the arena of this file (or the id of an event map) it opens in; any of the tier's if unknown. An arena of this file is shrunk
-	            round its middle for it, so its fewer monsters stand UniqueMapDensity times as densely as a normal map's (MapDevice.ini).
+	  arena     the arena of this file (or the id of an event map) it opens in, or several, comma separated: the first that exists; any of the
+	            tier's if none does. An ellipse of this file is shrunk round its middle for it (a path is cut short from its entry), so its fewer monsters stand UniqueMapDensity times as densely as a normal map's (MapDevice.ini).
 	  modifiers the map's modifiers (MapModifier names, see docs/map-device.md).
 	  npcs      optional: the monsters that fill it (type="Monster" npc ids, comma separated), all of them, instead of 6 kinds of the tier's.
 	  dropMinTier, dropMaxTier  optional: the tiers of map whose completion may drop it (default UniqueMapMinTier of MapDevice.ini to 10).
@@ -91,9 +92,6 @@
 	<arena name="Field of Whispers" x="84000" y="214000" z="-3620" radiusX="8000" radiusY="7000" entryAngle="180" />
 	<!-- Aden: the plain of the Fields of Massacre. -->
 	<arena name="Fields of Massacre" x="181000" y="8000" z="-2728" radiusX="6000" radiusY="6000" entryAngle="90" />
-	<!-- Aden: the Cemetery as it was (it was named "Silent Valley", which lies farther north), an oval kept for the unique maps that open there
-	     (the Ossuary of Echoes, the Tomb Raiders: their twists place things round an ellipse). Maps of the rotation take the Cemetery's path below. -->
-	<arena name="Cemetery Grounds" x="172136" y="20325" z="-3328" radiusX="6500" radiusY="3500" entryAngle="0" uniqueOnly="true" />
 
 	<!-- Paths: long, narrow fields that follow the open ground of a valley, a road or a beach, 15,500-18,000 long and 2,200-3,600 wide, with the fence on
 	     both sides (round at the ends). The players come in at the first point and sweep the monsters to the far end, without searching a wide field.
@@ -246,12 +244,12 @@
 	<!-- Unique maps never drop raid-only items: everything here can also be had without raids (an ordinary monster drops it, or a player shop or recipe makes it). -->
 
 	<!-- The Crimson Coliseum: Deathmatch: Mayhem against monsters. The crowd wants blood, and the monsters grow with every death (Rising Dread, Soul Eaters, Berserkers)... but so do you. -->
-	<uniqueMap type="COLISEUM" name="The Crimson Coliseum" itemId="18111" tier="5" monsters="30" arena="Ruins of Despair" reward="2.0"
+	<uniqueMap type="COLISEUM" name="The Crimson Coliseum" itemId="18111" tier="5" monsters="30" arena="Sel Mahum Training Grounds" reward="2.0"
 		modifiers="BRUTAL,FORTIFIED,HUNTERS,BERSERKERS,RISING_DREAD,SOUL_EATERS"
 		boss="22839" bossName="Crimson Champion" bossHp="25" bossAttack="1.0" bossDefence="1.5">
-		<description>The old ring of the Ruins of Despair, filled once more for the crowd. Thirty fighters come through its gates, the Crimson Champion last.</description>
+		<description>The training grounds of the Sel Mahum, filled once more for the crowd. Thirty fighters come down the lists, the Crimson Champion last.</description>
 		<twist>Deathmatch: Mayhem. Every kill (or a fair share of one) offers you a strong passive of the tree, a notable or a keystone, to stack on top of your own tree. They work only inside the map and never leave it: out of it (dead in the hideout, gone back) they are off, and they come back if you return while it is open. The 30 monsters come in three waves (6, 10, 14), each once the last is down.</twist>
-		<finale>The Crimson Champion steps into the ring once the 30 are slain. At 75%, 50% and 25% of its HP the crowd roars: it hits 10% harder, and 3 Challengers (Champions of the map's kinds) jump in. Every Challenger slain is another passive.</finale>
+		<finale>The Crimson Champion steps into the lists once the 30 are slain. At 75%, 50% and 25% of its HP the crowd roars: it hits 10% harder, and 3 Challengers (Champions of the map's kinds) jump in. Every Challenger slain is another passive.</finale>
 		<drop group="map" id="6393" min="1" max="1" chance="10" /> <!-- Champion Medal -->
 		<drop group="map" id="14167" min="1" max="1" chance="6" /> <!-- Mid-Grade Life Stone - Level 84 -->
 		<drop group="map" id="14168" min="1" max="1" chance="2" /> <!-- High-Grade Life Stone - Level 84 -->
@@ -269,10 +267,10 @@
 	</uniqueMap>
 
 	<!-- The Gilded Vault: a heist against the clock. Thieves everywhere (Thieves' Guild), quick and slippery (Fleet, Elusive, Skittish), a bounty to chase, a speedrun to make. -->
-	<uniqueMap type="VAULT" name="The Gilded Vault" itemId="18112" tier="4" monsters="60" arena="Fields of Massacre" reward="1.8"
+	<uniqueMap type="VAULT" name="The Gilded Vault" itemId="18112" tier="4" monsters="60" arena="Outlaw Forest" reward="1.8"
 		modifiers="THIEVES_GUILD,FLEET,ELUSIVE,SKITTISH,BOUNTY_MARK,SPEEDRUN"
 		boss="18822" bossName="Gilded Mimic" bossHp="400" bossAttack="3.0" bossDefence="2.0">
-		<description>A vault of stolen gold, open for five minutes before its wards seal it again. Every thief in Aden is already inside.</description>
+		<description>A vault of stolen gold, open for five minutes before its wards seal it again. Every outlaw of the forest is already inside.</description>
 		<twist>Borrowed Time and Greed. The vault seals in 5 minutes, but every kill buys 12 more seconds (a bounty 60) and adds 1% Greed: the map's drops and the Mimic's hoard come more often, up to twice as often at 100 kills. Its monsters drop coin, gems and medals.</twist>
 		<finale>The Gilded Mimic wakes once the vault is cleared, with at least 2 minutes on the clock. It runs from you, spills coins when struck, and at 80%, 60%, 40% and 20% of its HP it vanishes to another corner of the vault, leaving 4 thieves behind. If the vault seals first, it escapes with the hoard.</finale>
 		<drop group="map" id="57" min="20000" max="60000" chance="100" /> <!-- Adena -->
@@ -293,7 +291,7 @@
 	</uniqueMap>
 
 	<!-- The Ossuary of Echoes: the dead don't stay down (Undying Legion, Linked Souls), they burst (Volatile) and curse (Death Curse), and nothing heals you well here (Desecrated, Withered). -->
-	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="18113" tier="6" monsters="70" arena="Cemetery Grounds" reward="2.2"
+	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="18113" tier="6" monsters="70" arena="The Cemetery" reward="2.2"
 		modifiers="UNDYING_LEGION,VOLATILE,DEATH_CURSE,LINKED_SOULS,DESECRATED,WITHERED"
 		boss="22821" bossName="The Hollow King" bossHp="500" bossAttack="5.0" bossDefence="2.5">
 		<description>A valley of bones that remembers every death in it. Its king waits under it for the field to fall silent.</description>
@@ -323,10 +321,10 @@
 	<!-- Unlike the other unique maps, the Den's own drops follow the server rates (Rates.ini: DeathDrop*Multiplier and the per-item multipliers), then its Pot. -->
 	<!-- Adena: one run pays at most GamblersDenMaxAdena (MapDevice.ini, 150M). With Adena x5 in Rates.ini and at most x8 more from the Pot (x4) and Hot Table (x2), -->
 	<!-- the amounts below are worth up to 40x: the House 90M, the 6 special rolls 30M, the ~94 monster kills (Splitters copies count half) 30M. -->
-	<uniqueMap type="DEN" name="The Gambler's Den" itemId="18114" tier="5" monsters="50" arena="Field of Whispers" reward="2.0"
+	<uniqueMap type="DEN" name="The Gambler's Den" itemId="18114" tier="5" monsters="50" arena="Isle of Prayer" reward="2.0"
 		modifiers="CHAMPIONS_RALLY,GLASS_CANNON,DEADLY,FRAGILE,ELEMENTAL_CHAOS,SPLITTERS"
 		boss="22841" bossName="The House" bossHp="45" bossAttack="1.0" bossDefence="1.5">
-		<description>A gambling den in the Field of Whispers, where the stakes are your life and the house always wants its cut. A Dealer waits at the door.</description>
+		<description>A gambling den on the white sands of the Isle of Prayer, where the stakes are your life and the house always wants its cut. A Dealer waits at the door.</description>
 		<twist>The Wheel of Fate and the Pot. Every 12 kills the wheel spins: one of 24 fortunes, a blessing or a curse, holds until the next spin, and no fortune comes twice before all have come. The Pot (x1 to start, x0.25 to x4) multiplies every drop of the Den; at 100% it makes them bigger. Each spin gives a bet: at the Dealer, a bet doubles the Pot or halves it.</twist>
 		<finale>The House takes the table once the den is cleared, with one more bet for you. At 80%, 60%, 40% and 20% of its HP it draws a card from a deck of five: Ace of Blades (it hits harder and faster), King of Shields (invulnerable behind 3 Card Guards), Queen of Mirrors (2 Bluffs, each slain +10% Pot), Jack of Thieves (it vanishes, leaving thieves behind) or the Joker (a spin of the wheel).</finale>
 		<drop group="map" id="57" min="5000" max="7500" chance="100" /> <!-- Adena -->
@@ -350,7 +348,7 @@
 	<!-- The Primal Crucible: evolve, or be eaten (PrimalCrucibleManager). The players evolve through four transformations into Titans; the monsters eat each other into Alphas and Apex Predators. -->
 	<!-- Quick and venomous (Fleet, Venomous), fierce when hurt (Berserkers, Vampiric, Lacerating), tough (Fortified). Soloable: tier 5, no Hunters or Pack Hunters (live tests showed a geared solo Duelist dying to whole packs, and dying even at tier 6 without them), Stage I free on entering. -->
 	<!-- arena: the event map "primeval_isle" (make it with //mapdevice on Primeval Isle, fill it with its dinosaurs); until it exists, any arena of tier 5. -->
-	<uniqueMap type="CRUCIBLE" name="The Primal Crucible" itemId="18115" tier="5" monsters="60" arena="primeval_isle" reward="2.4"
+	<uniqueMap type="CRUCIBLE" name="The Primal Crucible" itemId="18115" tier="5" monsters="60" arena="primeval_isle,Primeval Isle Valley" reward="2.4"
 		modifiers="FLEET,VENOMOUS,BERSERKERS,VAMPIRIC,FORTIFIED,LACERATING"
 		boss="22215" bossName="The Primordial" bossHp="3.5" bossAttack="1.6" bossDefence="1.5">
 		<description>A valley older than Aden, where everything eats everything. You come in as yourself. You may leave as a Titan, if you are not eaten first.</description>
@@ -378,7 +376,7 @@
 
 	<!-- The Ketra-Varka Front (KetraVarkaFrontManager): the first unique map, tier 1. Swear to a side, take its war totems with its warriors, maybe betray it, then hold the camp.
 	     Its field is both factions (no Commander, Head Shaman or Prophet: their guards would follow them); the Ketra Orc General is the Warlord if you swore to Varka, else the Varka Silenos General (21366). -->
-	<uniqueMap type="FRONT" name="The Ketra-Varka Front" itemId="18118" tier="1" monsters="80" arena="Ruins of Despair" reward="1.4"
+	<uniqueMap type="FRONT" name="The Ketra-Varka Front" itemId="18118" tier="1" monsters="80" arena="Garden of Beasts" reward="1.4"
 		modifiers="WAR_PRIESTS,SUMMONERS,BOUNTY_MARK,FLEET"
 		npcs="21324,21327,21328,21329,21331,21332,21334,21335,21336,21338,21340,21342,21350,21351,21353,21354,21355,21357,21358,21360,21361,21362,21364,21365,21368"
 		dropMinTier="1" dropMaxTier="4"
@@ -405,7 +403,7 @@
 
 	<!-- The Tomb Raiders (TombRaidersManager): tier 2. A rival party of adventurers (fake players) races you for 5 Sealed Reliquaries in the Imperial Tomb's dead.
 	     Its field is the Imperial Tomb (the guards, royal guards and healers); the Imperial Commander is the Undying Emperor. -->
-	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="18119" tier="2" monsters="70" arena="Cemetery Grounds" reward="1.5"
+	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="18119" tier="2" monsters="70" arena="The Cemetery" reward="1.5"
 		modifiers="SHIELDBEARERS,ARMOURED,WAR_PRIESTS,VOLATILE"
 		npcs="18132,18166,18167,18168,18169,18170,18171,18172,21417,21418,21419"
 		dropMinTier="1" dropMaxTier="4"

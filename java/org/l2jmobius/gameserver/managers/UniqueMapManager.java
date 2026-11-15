@@ -1503,9 +1503,7 @@ public class UniqueMapManager
 		for (int i = 0; i < count; i++)
 		{
 			final double angle = start + ((i * 2 * Math.PI) / count);
-			final int x = arena.x() + (int) (Math.cos(angle) * arena.radiusX() * PHYLACTERY_SPREAD);
-			final int y = arena.y() + (int) (Math.sin(angle) * arena.radiusY() * PHYLACTERY_SPREAD);
-			final Location spot = MapDeviceManager.getGroundLocation(new Location(x, y, arena.z()));
+			final Location spot = MapDeviceManager.getGroundLocation(arena.fieldPoint(angle, PHYLACTERY_SPREAD));
 			final Monster phylactery = spawnEncounter(run, template, spot, ROLE_PHYLACTERY, "[Bone Phylactery]", true);
 			if (phylactery != null)
 			{
@@ -2273,9 +2271,9 @@ public class UniqueMapManager
 		final List<WorldRegion> kept = new ArrayList<>();
 		synchronized (KEPT_REGIONS)
 		{
-			for (int x = arena.x() - arena.radiusX() - KEEP_AWAKE_MARGIN; x <= (arena.x() + arena.radiusX() + KEEP_AWAKE_MARGIN); x += step)
+			for (int x = arena.boxX() - arena.radiusX() - KEEP_AWAKE_MARGIN; x <= (arena.boxX() + arena.radiusX() + KEEP_AWAKE_MARGIN); x += step)
 			{
-				for (int y = arena.y() - arena.radiusY() - KEEP_AWAKE_MARGIN; y <= (arena.y() + arena.radiusY() + KEEP_AWAKE_MARGIN); y += step)
+				for (int y = arena.boxY() - arena.radiusY() - KEEP_AWAKE_MARGIN; y <= (arena.boxY() + arena.radiusY() + KEEP_AWAKE_MARGIN); y += step)
 				{
 					final WorldRegion region = World.getInstance().getRegion(x, y, arena.z());
 					if ((region == null) || kept.contains(region))

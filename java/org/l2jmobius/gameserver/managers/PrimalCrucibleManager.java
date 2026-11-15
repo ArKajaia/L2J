@@ -1024,7 +1024,7 @@ public class PrimalCrucibleManager
 		for (int i = 0; i < EGG_COUNT; i++)
 		{
 			final double angle = start + ((i * 2 * Math.PI) / EGG_COUNT);
-			final Location spot = MapDeviceManager.getGroundLocation(new Location(arena.x() + (int) (Math.cos(angle) * arena.radiusX() * EGG_SPREAD), arena.y() + (int) (Math.sin(angle) * arena.radiusY() * EGG_SPREAD), arena.z()));
+			final Location spot = MapDeviceManager.getGroundLocation(arena.fieldPoint(angle, EGG_SPREAD));
 			final Monster egg = UniqueMapManager.spawnEgg(run, template, spot);
 			if (egg != null)
 			{

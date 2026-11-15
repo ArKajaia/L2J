@@ -206,6 +206,39 @@ public final class ArenaPath
 	}
 
 	/**
+	 * @param length how much of the path to keep, from its first waypoint
+	 * @return the path cut there (its last waypoint where it is cut), or this path if it is no longer
+	 */
+	public ArenaPath trimmed(double length)
+	{
+		if (length >= (_length - 1))
+		{
+			return this;
+		}
+		final List<Waypoint> points = new ArrayList<>();
+		points.add(_points.get(0));
+		double left = Math.max(1, length);
+		for (int i = 0; i < _segmentLengths.length; i++)
+		{
+			if (left > _segmentLengths[i])
+			{
+				left -= _segmentLengths[i];
+				points.add(_points.get(i + 1));
+				continue;
+			}
+			final Waypoint a = _points.get(i);
+			final Waypoint b = _points.get(i + 1);
+			final double t = left / _segmentLengths[i];
+			if (left >= 1)
+			{
+				points.add(new Waypoint((int) Math.round(a.x() + ((b.x() - a.x()) * t)), (int) Math.round(a.y() + ((b.y() - a.y()) * t)), (int) Math.round(a.z() + ((b.z() - a.z()) * t)), (int) Math.round(a.width() + ((b.width() - a.width()) * t))));
+			}
+			break;
+		}
+		return points.size() < 2 ? this : new ArenaPath(points);
+	}
+
+	/**
 	 * @return the waypoints, from where the players come in
 	 */
 	public List<Waypoint> getPoints()
