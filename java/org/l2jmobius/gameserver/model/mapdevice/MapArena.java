@@ -45,11 +45,15 @@ import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
  * @param monsterCount how many monsters before the modifiers, 0 for the server's setting
  * @param monsters the npc ids the map is filled with, empty for monsters of the tier's levels
  * @param source the event map it comes from (its doors go in the map's copy of the place), {@code null} for an arena of data/MapDevice.xml
+ * @param path the path the field follows, {@code null} for an ellipse (x, y and the radii are then the middle of the path and the box round its fence)
+ * @param uniqueOnly {@code true} if only unique maps that name it open here, never a map of the random rotation
  */
-public record MapArena(String id, String name, int x, int y, int z, int radiusX, int radiusY, Location entry, Location guardian, List<EventMapDevice.Pack> packs, int minTier, int maxTier, int monsterCount, List<Integer> monsters, EventMap source)
+public record MapArena(String id, String name, int x, int y, int z, int radiusX, int radiusY, Location entry, Location guardian, List<EventMapDevice.Pack> packs, int minTier, int maxTier, int monsterCount, List<Integer> monsters, EventMap source, ArenaPath path, boolean uniqueOnly)
 {
-	/** How far inside the fence the entry of an arena of data/MapDevice.xml lies, as a share of the radius. */
-	public static final double ENTRY_SHARE = 0.80;
+	/** How far inside the fence the entry of an elliptic arena of data/MapDevice.xml lies, as a share of the radius: near the edge, so the players start at one end of the field. */
+	public static final double ENTRY_SHARE = 0.90;
+	/** How far along a path the entry lies from its first waypoint. */
+	public static final int PATH_ENTRY_DISTANCE = 600;
 
 	public MapArena
 	{
@@ -68,14 +72,33 @@ public record MapArena(String id, String name, int x, int y, int z, int radiusX,
 	 * @param entryAngle where the players come in, in degrees round the middle (0 = east, 90 = south)
 	 * @param minTier the lowest tier that may open here, 0 for any
 	 * @param maxTier the highest tier that may open here, 0 for any
+	 * @param uniqueOnly {@code true} if only unique maps that name it open here
 	 * @return the arena
 	 */
-	public static MapArena of(String name, int x, int y, int z, int radiusX, int radiusY, int entryAngle, int minTier, int maxTier)
+	public static MapArena of(String name, int x, int y, int z, int radiusX, int radiusY, int entryAngle, int minTier, int maxTier, boolean uniqueOnly)
 	{
 		final int entryX = x + (int) Math.round(Math.cos(Math.toRadians(entryAngle)) * radiusX * ENTRY_SHARE);
 		final int entryY = y + (int) Math.round(Math.sin(Math.toRadians(entryAngle)) * radiusY * ENTRY_SHARE);
 		final int heading = (int) Math.round((Math.atan2(y - entryY, x - entryX) * 32768) / Math.PI) & 0xFFFF;
-		return new MapArena("xml:" + name, name, x, y, z, radiusX, radiusY, new Location(entryX, entryY, z, heading), null, List.of(), minTier, maxTier, 0, List.of(), null);
+		return new MapArena("xml:" + name, name, x, y, z, radiusX, radiusY, new Location(entryX, entryY, z, heading), null, List.of(), minTier, maxTier, 0, List.of(), null, null, uniqueOnly);
+	}
+
+	/**
+	 * An arena of data/MapDevice.xml that follows a path: the players come in {@link #PATH_ENTRY_DISTANCE} along it from its first waypoint, facing along it; its middle (the Map
+	 * Guardian's spot, the middle waystone) is halfway along it.
+	 * @param name the name shown to the players
+	 * @param path the path
+	 * @param minTier the lowest tier that may open here, 0 for any
+	 * @param maxTier the highest tier that may open here, 0 for any
+	 * @param uniqueOnly {@code true} if only unique maps that name it open here
+	 * @return the arena
+	 */
+	public static MapArena of(String name, ArenaPath path, int minTier, int maxTier, boolean uniqueOnly)
+	{
+		final ArenaPath.Spot entry = path.at(Math.min(PATH_ENTRY_DISTANCE, path.getLength() / 4));
+		final int heading = (int) Math.round((Math.atan2(entry.dirY(), entry.dirX()) * 32768) / Math.PI) & 0xFFFF;
+		final ArenaPath.Spot middle = path.at(path.getLength() / 2);
+		return new MapArena("xml:" + name, name, middle.x(), middle.y(), middle.z(), Math.max(1, path.getRadiusX()), Math.max(1, path.getRadiusY()), new Location(entry.x(), entry.y(), entry.z(), heading), null, List.of(), minTier, maxTier, 0, List.of(), null, path, uniqueOnly);
 	}
 
 	/**
@@ -91,24 +114,24 @@ public record MapArena(String id, String name, int x, int y, int z, int radiusX,
 		{
 			return null;
 		}
-		return new MapArena(map.id(), map.name(), barrier.x(), barrier.y(), map.z(), barrier.radiusX(), barrier.radiusY(), device.entry(), device.guardian(), device.packs(), device.minTier(), device.maxTier(), device.monsterCount(), device.monsters(), map);
+		return new MapArena(map.id(), map.name(), barrier.x(), barrier.y(), map.z(), barrier.radiusX(), barrier.radiusY(), device.entry(), device.guardian(), device.packs(), device.minTier(), device.maxTier(), device.monsterCount(), device.monsters(), map, null, false);
 	}
 
 	/**
-	 * A smaller copy of this field, round the same middle: the fence's radii times {@code factor}, and the entry pulled in towards the middle by as much (same heading).
+	 * A smaller copy of this field (an ellipse; a path is given back as it is), round the same middle: the fence's radii times {@code factor}, and the entry pulled in towards the middle by as much (same heading).
 	 * Everything placed as a share of the radius (the monsters, a twist's totems, reliquaries, phylacteries, eggs) comes in with it.
 	 * @param factor the share of the radius to keep (0-1); 1 or more gives this arena back
 	 * @return the smaller field, under the same id and name
 	 */
 	public MapArena scaled(double factor)
 	{
-		if ((factor >= 1) || (factor <= 0))
+		if ((factor >= 1) || (factor <= 0) || (path != null))
 		{
 			return this;
 		}
 		final Location scaledEntry = new Location(x + (int) Math.round((entry.getX() - x) * factor), y + (int) Math.round((entry.getY() - y) * factor), entry.getZ(), entry.getHeading());
 		final Location scaledGuardian = guardian == null ? null : new Location(x + (int) Math.round((guardian.getX() - x) * factor), y + (int) Math.round((guardian.getY() - y) * factor), guardian.getZ(), guardian.getHeading());
-		return new MapArena(id, name, x, y, z, (int) Math.round(radiusX * factor), (int) Math.round(radiusY * factor), scaledEntry, scaledGuardian, packs, minTier, maxTier, monsterCount, monsters, source);
+		return new MapArena(id, name, x, y, z, (int) Math.round(radiusX * factor), (int) Math.round(radiusY * factor), scaledEntry, scaledGuardian, packs, minTier, maxTier, monsterCount, monsters, source, path, uniqueOnly);
 	}
 
 	/**
@@ -125,7 +148,7 @@ public record MapArena(String id, String name, int x, int y, int z, int radiusX,
 	 */
 	public EventBarrier toBarrier()
 	{
-		return new EventBarrier(x, y, radiusX, radiusY);
+		return new EventBarrier(x, y, radiusX, radiusY, path);
 	}
 
 	/**

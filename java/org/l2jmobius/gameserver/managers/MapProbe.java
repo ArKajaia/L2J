@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.appearance.PlayerAppearance;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
@@ -131,6 +132,25 @@ public final class MapProbe
 
 		final int monstersAtStart = run.getMonsterTotal();
 		final StringBuilder extra = new StringBuilder();
+
+		// Where the monsters stand: any beyond the fence, and how far the farthest is from the entry.
+		final MapArena placed = run.getArena();
+		final EventBarrier fence = placed.toBarrier();
+		int outsideFence = 0;
+		int farthestFromEntry = 0;
+		for (int objectId : run.getMonsters())
+		{
+			if (World.getInstance().findObject(objectId) instanceof Monster monster)
+			{
+				if (!fence.contains(monster, 0))
+				{
+					outsideFence++;
+				}
+				farthestFromEntry = Math.max(farthestFromEntry, (int) Math.hypot(monster.getX() - placed.getEntryX(), monster.getY() - placed.getEntryY()));
+			}
+		}
+		extra.append(",\"outsideFence\":").append(outsideFence).append(",\"farthestFromEntry\":").append(farthestFromEntry).append(",\"fenceWalls\":").append(run.getFences().size());
+		extra.append(",\"path\":").append(placed.path() != null);
 
 		// Waystones: from too far, then from beside the first, to the third.
 		if ("1".equals(params.get("waystone")) && (run.getWaystones().size() >= 3))

@@ -80,6 +80,7 @@ import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.EtcItemType;
+import org.l2jmobius.gameserver.model.mapdevice.ArenaPath;
 import org.l2jmobius.gameserver.model.mapdevice.Hideout;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
@@ -1332,9 +1333,14 @@ public class MapDeviceManager
 			}
 
 			MapArena arena = findArena(unique.arena());
+			if ((arena != null) && (arena.path() != null))
+			{
+				arena = null; // A twist places its things round an ellipse.
+			}
 			if (arena == null)
 			{
-				final List<MapArena> arenas = MapDeviceData.getInstance().getArenas(tier.tier());
+				final List<MapArena> arenas = new ArrayList<>(MapDeviceData.getInstance().getArenas(tier.tier()));
+				arenas.removeIf(candidate -> candidate.path() != null);
 				if (arenas.isEmpty())
 				{
 					return "The Map Device has nowhere to open " + unique.name() + ". Please contact an administrator.";
@@ -2228,6 +2234,10 @@ public class MapDeviceManager
 	{
 		final MapArena arena = run.getArena();
 		final GeoEngine geo = GeoEngine.getInstance();
+		if (arena.path() != null)
+		{
+			return randomPathSpot(run, arena.path(), share, awayFromEntry);
+		}
 		final int centerZ = geo.getHeight(arena.x(), arena.y(), arena.z());
 		int x = arena.x();
 		int y = arena.y();
@@ -2243,6 +2253,40 @@ public class MapDeviceManager
 			}
 		}
 		return geo.getValidLocation(arena.x(), arena.y(), centerZ, x, y, geo.getHeight(x, y, arena.z()), run.getInstanceId());
+	}
+
+	/**
+	 * A spot on a field that follows a path: somewhere along the path (as often where it is wide as its width says), and to one side of it by up to {@code share} of its
+	 * half-width there; reached on the ground from the path itself, so never through a bend's wall.
+	 */
+	private static Location randomPathSpot(MapRun run, ArenaPath path, double share, boolean awayFromEntry)
+	{
+		final GeoEngine geo = GeoEngine.getInstance();
+		final MapArena arena = run.getArena();
+		ArenaPath.Spot along = path.at(path.getLength() / 2);
+		int x = along.x();
+		int y = along.y();
+		for (int attempt = 0; attempt < 24; attempt++)
+		{
+			final ArenaPath.Spot candidate = path.at(Rnd.nextDouble() * path.getLength());
+			if (Rnd.nextDouble() > (candidate.width() / (double) path.getMaxWidth()))
+			{
+				continue; // Narrow parts hold fewer monsters.
+			}
+			final double side = ((Rnd.nextDouble() * 2) - 1) * share * candidate.width();
+			final int cx = candidate.x() + (int) Math.round(-candidate.dirY() * side);
+			final int cy = candidate.y() + (int) Math.round(candidate.dirX() * side);
+			if (!path.contains(cx, cy, 0) || (awayFromEntry && (Math.hypot(cx - arena.getEntryX(), cy - arena.getEntryY()) < MapDeviceConfig.SAFE_RADIUS)))
+			{
+				continue;
+			}
+			along = candidate;
+			x = cx;
+			y = cy;
+			break;
+		}
+		final int alongZ = geo.getHeight(along.x(), along.y(), along.z());
+		return geo.getValidLocation(along.x(), along.y(), alongZ, x, y, geo.getHeight(x, y, alongZ), run.getInstanceId());
 	}
 
 	/**
@@ -2497,12 +2541,37 @@ public class MapDeviceManager
 	// =========================================================================
 
 	/**
-	 * Waystones: one in the middle of the field and three at the fence, a quarter turn apart from the entry.
+	 * Waystones: one in the middle of the field and three at the fence, a quarter turn apart from the entry; on a path, along it.
 	 */
 	private static void spawnWaystones(MapRun run)
 	{
 		final MapArena arena = run.getArena();
 		final GeoEngine geo = GeoEngine.getInstance();
+		if (arena.path() != null)
+		{
+			// Along a path: its middle, a quarter and three quarters of the way, and near the far end.
+			final ArenaPath path = arena.path();
+			final double[] shares =
+			{
+				0.5,
+				0.25,
+				0.75,
+				1
+			};
+			for (int i = 0; i < shares.length; i++)
+			{
+				final ArenaPath.Spot spot = path.at(i == 3 ? path.getLength() - MapArena.PATH_ENTRY_DISTANCE : path.getLength() * shares[i]);
+				final Location ground = getGroundLocation(new Location(spot.x(), spot.y(), spot.z()));
+				final Npc waystone = Quest.addSpawn(WAYSTONE_NPC_ID, ground.getX(), ground.getY(), ground.getZ(), 0, false, 0, false, run.getInstanceId());
+				if (waystone != null)
+				{
+					waystone.setTitle(i == 0 ? "The Middle" : i == 3 ? "The Far End" : compass(ground.getX() - arena.x(), ground.getY() - arena.y()));
+					waystone.broadcastInfo();
+					run.getWaystones().add(waystone);
+				}
+			}
+			return;
+		}
 		final int centerZ = geo.getHeight(arena.x(), arena.y(), arena.z());
 		final double entryAngle = Math.atan2((arena.getEntryY() - arena.y()) / (double) Math.max(1, arena.radiusY()), (arena.getEntryX() - arena.x()) / (double) Math.max(1, arena.radiusX()));
 		for (int i = 0; i < 4; i++)

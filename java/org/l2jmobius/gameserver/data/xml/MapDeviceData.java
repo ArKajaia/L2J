@@ -39,6 +39,7 @@ import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
+import org.l2jmobius.gameserver.model.mapdevice.ArenaPath;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
@@ -113,6 +114,16 @@ public class MapDeviceData implements IXmlReader
 			uniqueByItem.put(unique.itemId(), unique);
 		}
 		_uniqueMaps = Collections.unmodifiableMap(_newUniqueMaps);
+		for (UniqueMap unique : _newUniqueMaps.values())
+		{
+			for (MapArena arena : _arenas)
+			{
+				if ((unique.arena() != null) && (arena.path() != null) && (arena.name().equalsIgnoreCase(unique.arena()) || arena.name().replace(' ', '_').equalsIgnoreCase(unique.arena())))
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": The unique map " + unique.name() + " names " + arena.name() + ", a path: its twist places things round an ellipse, so it opens in an ellipse of its tier instead.");
+				}
+			}
+		}
 		_uniqueMapsByItem = Collections.unmodifiableMap(uniqueByItem);
 		_excludedNpcIds = Set.copyOf(_newExcluded);
 		_strengthWeights = _newStrengthWeights;
@@ -176,9 +187,30 @@ public class MapDeviceData implements IXmlReader
 			forEach(listNode, "arena", arenaNode ->
 			{
 				final StatSet set = new StatSet(parseAttributes(arenaNode));
+				final String name = set.getString("name");
+				final boolean uniqueOnly = set.getBoolean("uniqueOnly", false);
+				// A field that follows a path: its waypoints.
+				final List<ArenaPath.Waypoint> points = new ArrayList<>();
+				forEach(arenaNode, "point", pointNode ->
+				{
+					final StatSet point = new StatSet(parseAttributes(pointNode));
+					points.add(new ArenaPath.Waypoint(point.getInt("x"), point.getInt("y"), point.getInt("z"), Math.max(EventBarrier.MIN_RADIUS, point.getInt("width", set.getInt("width", EventBarrier.MIN_RADIUS)))));
+				});
+				if (!points.isEmpty())
+				{
+					try
+					{
+						_newArenas.add(MapArena.of(name, new ArenaPath(points), set.getInt("minTier", 0), set.getInt("maxTier", 0), uniqueOnly));
+					}
+					catch (IllegalArgumentException e)
+					{
+						LOGGER.warning(getClass().getSimpleName() + ": The arena " + name + " has a broken path (" + e.getMessage() + "): it is left out.");
+					}
+					return;
+				}
 				final int radiusX = Math.max(EventBarrier.MIN_RADIUS, set.getInt("radiusX"));
 				final int radiusY = Math.max(EventBarrier.MIN_RADIUS, set.getInt("radiusY", radiusX));
-				_newArenas.add(MapArena.of(set.getString("name"), set.getInt("x"), set.getInt("y"), set.getInt("z"), radiusX, radiusY, set.getInt("entryAngle", 0), set.getInt("minTier", 0), set.getInt("maxTier", 0)));
+				_newArenas.add(MapArena.of(name, set.getInt("x"), set.getInt("y"), set.getInt("z"), radiusX, radiusY, set.getInt("entryAngle", 0), set.getInt("minTier", 0), set.getInt("maxTier", 0), uniqueOnly));
 			});
 			forEach(listNode, "uniqueMap", uniqueNode -> parseUniqueMap(uniqueNode));
 			forEach(listNode, "excludedNpcs", excludedNode ->
@@ -417,14 +449,14 @@ public class MapDeviceData implements IXmlReader
 	
 	/**
 	 * @param tier a map tier
-	 * @return every place a map of that tier can open in: the arenas of data/MapDevice.xml and the maps of the event map page that take the tier
+	 * @return every place a map of that tier can open in: the arenas of data/MapDevice.xml (not those kept for unique maps) and the maps of the event map page that take the tier
 	 */
 	public List<MapArena> getArenas(int tier)
 	{
 		final List<MapArena> arenas = new ArrayList<>();
 		for (MapArena arena : _arenas)
 		{
-			if (arena.allowsTier(tier))
+			if (!arena.uniqueOnly() && arena.allowsTier(tier))
 			{
 				arenas.add(arena);
 			}

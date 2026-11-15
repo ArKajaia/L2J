@@ -26,11 +26,15 @@
 	            Tiers 1-5 hold solo monsters, tiers 6-10 party monsters: their own strength makes them harder, so their multipliers stay near 1.
 
 	arena       a field a map can open in, picked at random: name, the middle x, y and the ground z, the fence's radiusX/radiusY (an ellipse,
-	            at least 500), entryAngle where the players come in (degrees round the middle, 0 = east, 90 = south; the entry is at 80% of the radius).
+	            at least 500), entryAngle where the players come in (degrees round the middle, 0 = east, 90 = south; the entry is at 90% of the radius,
+	            near the fence). uniqueOnly="true": only the unique maps that name it open there, never a map of the rotation.
+	            Or a path (ArenaPath): <point x y z width> children instead of x, y, radiusX, radiusY: the field follows the line of points, width on each
+	            side of it (at least 500; the arena's width attribute is the default), and the fence follows it on both sides, round at the ends. The
+	            players come in 600 along it from the first point, facing along it; the middle waystone and the Map Guardian stand halfway along it.
+	            Keep the bends gentle (the outer corner of a bend reaches at most twice the width out). Unique maps never open on a path.
 	            The defaults were checked against the geodata: open ground, at least 95% of it walkable from the middle. The wide ones (Ruins of Despair,
 	            Field of Whispers, Fields of Massacre) are twice the radius (four times the area) of the first fields, so a map's monsters stand well
-	            apart (MonsterSpacing in the ini); the long narrow ones (about 4 : 1) and the Cemetery's oval are smaller, so the monsters stand closer
-	            and along one way.
+	            apart (MonsterSpacing in the ini); the paths are smaller, so the monsters stand closer and along one way.
 	            A map is its own copy of the place, without its world monsters.
 
 	excludedNpcs monster ids that never fill a map, comma separated.
@@ -85,34 +89,157 @@
 	<arena name="Ruins of Despair" x="-17800" y="142600" z="-3900" radiusX="9600" radiusY="8800" entryAngle="0" />
 	<!-- Innadril: the wide bowl of the Field of Whispers. -->
 	<arena name="Field of Whispers" x="84000" y="214000" z="-3620" radiusX="8000" radiusY="7000" entryAngle="180" />
-	<!-- Aden: the floor of the Cemetery (it was named "Silent Valley", which lies farther north). An oval of 6500 x 3500, about a third of the old 8000 x 8000 ring. -->
-	<arena name="The Cemetery" x="172136" y="20325" z="-3328" radiusX="6500" radiusY="3500" entryAngle="0" />
-
-	<!-- Long, narrow fields (about 4 : 1): the monsters stand along one corridor, so the players sweep it from one end to the other instead of searching
-	     a wide open field. Each was checked against the geodata the same way (at least 95% walkable from the middle, little height difference) and keeps
-	     clear of water, peace, town and damage zones. The entry is at one end of the long axis. -->
-	<!-- Innadril: the Field of Silence, west to east along the plain. -->
-	<arena name="Field of Silence" x="84160" y="186688" z="-3624" radiusX="10000" radiusY="2400" entryAngle="0" />
-	<!-- Innadril: the long beach of Alligator Island. -->
-	<arena name="Alligator Island" x="112100" y="188468" z="-3768" radiusX="10000" radiusY="2400" entryAngle="180" />
-	<!-- Isle of Prayer: the white sands of the eastern shore. -->
-	<arena name="Isle of Prayer" x="146988" y="188888" z="-3736" radiusX="10000" radiusY="2400" entryAngle="0" />
-	<!-- Oren: the road through the Outlaw Forest. -->
-	<arena name="Outlaw Forest" x="80356" y="-832" z="-3704" radiusX="10000" radiusY="2400" entryAngle="180" />
-	<!-- Goddard: the Garden of Beasts, west of the town. -->
-	<arena name="Garden of Beasts" x="141612" y="-61656" z="-3072" radiusX="10000" radiusY="2400" entryAngle="180" />
-	<!-- Rune: a causeway across the Swamp of Screams. -->
-	<arena name="Swamp of Screams" x="80740" y="-59072" z="-2168" radiusX="8000" radiusY="2000" entryAngle="0" />
-	<!-- Rune: the valley down the middle of Primeval Isle, north to south (not "primeval_isle", the Primal Crucible's own place on the event map page). -->
-	<arena name="Primeval Isle Valley" x="5056" y="-15016" z="-3632" radiusX="2400" radiusY="9000" entryAngle="90" />
-	<!-- Oren: the Sel Mahum Training Grounds, north to south. -->
-	<arena name="Sel Mahum Training Grounds" x="86506" y="59548" z="-3576" radiusX="2400" radiusY="7000" entryAngle="270" />
-	<!-- Giran: the Gorgon Flower Garden, a long strip north to south. -->
-	<arena name="Gorgon Flower Garden" x="104640" y="138584" z="-3552" radiusX="2000" radiusY="10000" entryAngle="270" />
-	<!-- Rune: the paddocks of the Beast Farm, a short narrow lane north to south. -->
-	<arena name="Beast Farm" x="46760" y="-88896" z="-2544" radiusX="2000" radiusY="6000" entryAngle="90" />
 	<!-- Aden: the plain of the Fields of Massacre. -->
 	<arena name="Fields of Massacre" x="181000" y="8000" z="-2728" radiusX="6000" radiusY="6000" entryAngle="90" />
+	<!-- Aden: the Cemetery as it was (it was named "Silent Valley", which lies farther north), an oval kept for the unique maps that open there
+	     (the Ossuary of Echoes, the Tomb Raiders: their twists place things round an ellipse). Maps of the rotation take the Cemetery's path below. -->
+	<arena name="Cemetery Grounds" x="172136" y="20325" z="-3328" radiusX="6500" radiusY="3500" entryAngle="0" uniqueOnly="true" />
+
+	<!-- Paths: long, narrow fields that follow the open ground of a valley, a road or a beach, 15,500-18,000 long and 2,200-3,600 wide, with the fence on
+	     both sides (round at the ends). The players come in at the first point and sweep the monsters to the far end, without searching a wide field.
+	     Each point is x, y, the ground's z there and the half-width of the way there. They were traced on the geodata (the way with the most room
+	     from wall to wall, no cliff, no water, peace, town or damage zone) and checked: at least 96% of each is walkable from its entry. -->
+	<!-- Aden: the Cemetery, between its graves and down the valley floor, from the east. -->
+	<arena name="The Cemetery">
+		<point x="182910" y="16380" z="-3168" width="1100" />
+		<point x="180890" y="16660" z="-3168" width="1400" />
+		<point x="178860" y="16940" z="-3168" width="1650" />
+		<point x="176830" y="17220" z="-3408" width="1650" />
+		<point x="176060" y="17980" z="-3248" width="1700" />
+		<point x="173630" y="17980" z="-3408" width="1750" />
+		<point x="171860" y="19690" z="-3328" width="1800" />
+		<point x="170090" y="21400" z="-3392" width="1800" />
+		<point x="168320" y="23100" z="-3328" width="1100" />
+	</arena>
+	<!-- Innadril: up the Field of Silence from the south, bending west at the hills. -->
+	<arena name="Field of Silence">
+		<point x="90340" y="194910" z="-3440" width="1500" />
+		<point x="90340" y="192750" z="-3760" width="1800" />
+		<point x="90340" y="190590" z="-3624" width="1700" />
+		<point x="90340" y="188430" z="-3744" width="1750" />
+		<point x="90340" y="186270" z="-3600" width="1800" />
+		<point x="88890" y="184820" z="-3632" width="1800" />
+		<point x="87430" y="183370" z="-3760" width="1750" />
+		<point x="85980" y="181920" z="-3624" width="1700" />
+		<point x="84670" y="181280" z="-3760" width="1700" />
+		<point x="83360" y="180640" z="-3760" width="1600" />
+	</arena>
+	<!-- Innadril: along Alligator Island, from the north-west. -->
+	<arena name="Alligator Island">
+		<point x="103550" y="175630" z="-3440" width="1800" />
+		<point x="104750" y="176810" z="-3760" width="1800" />
+		<point x="105940" y="177980" z="-3608" width="1800" />
+		<point x="107140" y="179150" z="-3760" width="1750" />
+		<point x="108640" y="179980" z="-3672" width="1450" />
+		<point x="110140" y="180820" z="-3712" width="1450" />
+		<point x="111550" y="182130" z="-3736" width="1800" />
+		<point x="112960" y="183440" z="-3760" width="1550" />
+		<point x="114370" y="184750" z="-3632" width="1600" />
+		<point x="115780" y="186060" z="-3368" width="1600" />
+		<point x="116990" y="186510" z="-3760" width="1600" />
+	</arena>
+	<!-- Isle of Prayer: the white sands, from the east; narrower than the others. -->
+	<arena name="Isle of Prayer">
+		<point x="154560" y="183730" z="-3712" width="1350" />
+		<point x="153410" y="183730" z="-3656" width="1100" />
+		<point x="152260" y="183060" z="-3664" width="1100" />
+		<point x="151100" y="182380" z="-3592" width="1200" />
+		<point x="149780" y="183790" z="-3720" width="1250" />
+		<point x="148460" y="185200" z="-3728" width="1300" />
+		<point x="147140" y="186610" z="-3744" width="1100" />
+		<point x="144700" y="186990" z="-3728" width="1100" />
+		<point x="142270" y="187380" z="-3712" width="1100" />
+		<point x="139840" y="187760" z="-3760" width="1100" />
+	</arena>
+	<!-- Oren: through the Outlaw Forest, from the east. -->
+	<arena name="Outlaw Forest">
+		<point x="90300" y="8030" z="-3264" width="1700" />
+		<point x="88930" y="7330" z="-3112" width="1600" />
+		<point x="87550" y="6620" z="-3056" width="1600" />
+		<point x="85270" y="6600" z="-3504" width="1800" />
+		<point x="82990" y="6580" z="-3088" width="1650" />
+		<point x="80700" y="6560" z="-3232" width="1800" />
+		<point x="79330" y="5200" z="-3064" width="1800" />
+		<point x="77950" y="3840" z="-3168" width="1800" />
+		<point x="76580" y="2480" z="-3664" width="1700" />
+		<point x="75200" y="1120" z="-3176" width="1650" />
+	</arena>
+	<!-- Goddard: across the Garden of Beasts, from the south. -->
+	<arena name="Garden of Beasts">
+		<point x="153920" y="-50430" z="-2984" width="1750" />
+		<point x="154080" y="-52060" z="-2960" width="1650" />
+		<point x="154240" y="-53700" z="-3088" width="1750" />
+		<point x="155070" y="-54780" z="-3056" width="1550" />
+		<point x="155900" y="-55870" z="-3128" width="1600" />
+		<point x="155900" y="-57630" z="-3128" width="1750" />
+		<point x="155900" y="-59390" z="-2608" width="1800" />
+		<point x="154300" y="-60900" z="-2776" width="1550" />
+		<point x="152700" y="-62400" z="-2648" width="1550" />
+		<point x="150850" y="-62430" z="-3152" width="1650" />
+		<point x="148990" y="-62460" z="-3560" width="1800" />
+	</arena>
+	<!-- Oren: the valley below the Timak Outpost, from the north. -->
+	<arena name="Timak Outpost">
+		<point x="76320" y="36830" z="-2488" width="1700" />
+		<point x="76320" y="38930" z="-2488" width="1800" />
+		<point x="76320" y="41030" z="-3064" width="1800" />
+		<point x="76320" y="43130" z="-3032" width="1800" />
+		<point x="76320" y="45230" z="-2992" width="1800" />
+		<point x="76320" y="47330" z="-2832" width="1800" />
+		<point x="74700" y="49120" z="-2872" width="1800" />
+		<point x="73080" y="50910" z="-3480" width="1350" />
+		<point x="71460" y="52700" z="-3496" width="1350" />
+	</arena>
+	<!-- Rune: down the valley of Primeval Isle, from the south (not "primeval_isle", the Primal Crucible's own place on the event map page). -->
+	<arena name="Primeval Isle Valley">
+		<point x="6940" y="-6860" z="-3520" width="1100" />
+		<point x="6430" y="-8910" z="-3768" width="1500" />
+		<point x="5630" y="-9900" z="-3648" width="1600" />
+		<point x="4830" y="-10900" z="-3656" width="1600" />
+		<point x="4770" y="-12880" z="-3648" width="1650" />
+		<point x="4900" y="-14860" z="-3624" width="1800" />
+		<point x="5020" y="-16850" z="-3768" width="1800" />
+		<point x="5150" y="-18830" z="-3672" width="1800" />
+		<point x="6110" y="-19950" z="-3592" width="1600" />
+		<point x="7070" y="-21070" z="-3472" width="1100" />
+	</arena>
+	<!-- Oren: through the Sel Mahum Training Grounds, from the north-west. -->
+	<arena name="Sel Mahum Training Grounds">
+		<point x="74940" y="54770" z="-3056" width="1700" />
+		<point x="74940" y="56050" z="-2680" width="1800" />
+		<point x="76420" y="57520" z="-2976" width="1750" />
+		<point x="77890" y="58990" z="-2784" width="1600" />
+		<point x="80320" y="59500" z="-2056" width="1650" />
+		<point x="81700" y="60880" z="-3472" width="1800" />
+		<point x="83070" y="62260" z="-3512" width="1800" />
+		<point x="84450" y="63630" z="-3680" width="1800" />
+		<point x="85820" y="65010" z="-3432" width="1550" />
+		<point x="87740" y="65200" z="-3720" width="1550" />
+	</arena>
+	<!-- Giran: the length of the Gorgon Flower Garden, from the north-east. -->
+	<arena name="Gorgon Flower Garden">
+		<point x="105440" y="138220" z="-3520" width="1750" />
+		<point x="104030" y="138220" z="-3616" width="1800" />
+		<point x="102360" y="139900" z="-3360" width="1800" />
+		<point x="100690" y="141570" z="-3528" width="1800" />
+		<point x="99010" y="143240" z="-3176" width="1800" />
+		<point x="97340" y="144920" z="-3328" width="1800" />
+		<point x="95670" y="146590" z="-2784" width="1800" />
+		<point x="93990" y="148260" z="-2592" width="1800" />
+		<point x="92320" y="149940" z="-2616" width="1800" />
+	</arena>
+	<!-- Rune: between the paddocks of the Beast Farm, from the south-east. -->
+	<arena name="Beast Farm">
+		<point x="54780" y="-74080" z="-3256" width="1650" />
+		<point x="53280" y="-75840" z="-3472" width="1700" />
+		<point x="51780" y="-77600" z="-3440" width="1800" />
+		<point x="50270" y="-79360" z="-3336" width="1750" />
+		<point x="48770" y="-81120" z="-3264" width="1500" />
+		<point x="48700" y="-83180" z="-3128" width="1500" />
+		<point x="48640" y="-85250" z="-3008" width="1800" />
+		<point x="48580" y="-87310" z="-2744" width="1800" />
+		<point x="48510" y="-89380" z="-2448" width="1800" />
+	</arena>
 
 	<!-- ================================================================ Unique maps ================================================================ -->
 
@@ -166,7 +293,7 @@
 	</uniqueMap>
 
 	<!-- The Ossuary of Echoes: the dead don't stay down (Undying Legion, Linked Souls), they burst (Volatile) and curse (Death Curse), and nothing heals you well here (Desecrated, Withered). -->
-	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="18113" tier="6" monsters="70" arena="The Cemetery" reward="2.2"
+	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="18113" tier="6" monsters="70" arena="Cemetery Grounds" reward="2.2"
 		modifiers="UNDYING_LEGION,VOLATILE,DEATH_CURSE,LINKED_SOULS,DESECRATED,WITHERED"
 		boss="22821" bossName="The Hollow King" bossHp="500" bossAttack="5.0" bossDefence="2.5">
 		<description>A valley of bones that remembers every death in it. Its king waits under it for the field to fall silent.</description>
@@ -278,7 +405,7 @@
 
 	<!-- The Tomb Raiders (TombRaidersManager): tier 2. A rival party of adventurers (fake players) races you for 5 Sealed Reliquaries in the Imperial Tomb's dead.
 	     Its field is the Imperial Tomb (the guards, royal guards and healers); the Imperial Commander is the Undying Emperor. -->
-	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="18119" tier="2" monsters="70" arena="The Cemetery" reward="1.5"
+	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="18119" tier="2" monsters="70" arena="Cemetery Grounds" reward="1.5"
 		modifiers="SHIELDBEARERS,ARMOURED,WAR_PRIESTS,VOLATILE"
 		npcs="18132,18166,18167,18168,18169,18170,18171,18172,21417,21418,21419"
 		dropMinTier="1" dropMaxTier="4"

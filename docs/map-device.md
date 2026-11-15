@@ -159,7 +159,7 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 - Momentum: per player `{stacks, last kill}` (`MapRun.getMomentum`), applied as stat functions like Death Curse; the run's clock breaks a chain 8 s after its last kill. Leaving the map clears it.
 - Cartographer's Lens: the last hunt radar (`updateLastHuntRadar`) runs from the start. Until the last 10 monsters, a new target is the best pack: the monster with the most others within 800, divided by 1 + its distance / 3,000, so a near pack beats a slightly bigger far one; the chat line names the pack's size and way. `getAggroRange` makes the range of the monsters that were aggressive anyway 25% longer.
 - Gravity Well: `onMonsterDamaged`, on a player's hit, at most once every 6 s per monster: up to 6 monsters within 600 (nearest first; not ones already attacking, the Map Guardian, or monsters that can't move) fly beside the one hit (`AreaTargets.flyTo`) and attack the hitter.
-- Waystones: `spawnWaystones` (npc 900718, the Obelisk's model) puts one in the middle and three at 80% of the radius, a quarter turn apart from the entry (pulled in where the geodata blocks the way), titled by their direction. Talking to one (`custom/MapDevice`) lists the entry and the other waystones; `useWaystone` takes a player within 400 of it there.
+- Waystones: `spawnWaystones` (npc 900718, the Obelisk's model) puts one in the middle and three at 80% of the radius, a quarter turn apart from the entry (pulled in where the geodata blocks the way), titled by their direction; on a path, halfway, at a quarter and three quarters of the way and near the far end. Talking to one (`custom/MapDevice`) lists the entry and the other waystones; `useWaystone` takes a player within 400 of it there.
 - Nests: `nestSpots` puts the monsters in 6 nests (fewer on a small map; on a map of the event map page, round its first 6 monster spots) of radius 700, instead of Pack Hunters' packs. Each nest's monsters carry `MAP_NEST`. A Nest Heart (npc 900719, the Bizarre Cocoon's model, a monster that lies still and doesn't count for the map) stands in each, with 8 times the HP of its nest's average monster (`MAP_HEART_HP`, read by `getMonsterMultiplier`). `onMonsterDamaged` takes 20% off the damage to a monster whose heart stands; when a heart dies (`breakNest`) its nest gets +30% P./M. Atk. and double drops, and comes for whoever broke it. Gravity Well never pulls a heart.
 - Sealed Coffers: `spawnCoffers` (npc 900720, the Imperial Coffer's model) puts 3 coffers 2,500 apart. Talking to one shows its seal; `openCoffer` (within 250) calls 6 guards of the map's kinds after the opener, `onCofferGuardDied` calls the second wave of 8 (the first a tier 2 Champion) when the last falls, and when the last of those falls the coffer opens: 2-4 Champion Medals, 5-15 Gemstone S, and a 15% chance at a map (within the map's map budget), to whoever slew it (or the opener). Guards don't count for the map.
 - Splitters' copies and Summoners' minions have half HP (minions 70% damage) and give half the experience and drops; they count toward clearing the map.
@@ -179,15 +179,15 @@ Seven map items that always open the same map: its modifiers are chosen for it (
 |---|---|---|---|---|
 | The Crimson Coliseum | 30 (waves) | Ruins of Despair | 9,600 x 8,800 | 3,720 x 3,410 |
 | The Gilded Vault | 60 | Fields of Massacre | 6,000 x 6,000 | 3,290 x 3,290 |
-| The Ossuary of Echoes | 70 | The Cemetery | 6,500 x 3,500 | 5,570 x 3,000 |
+| The Ossuary of Echoes | 70 | Cemetery Grounds | 6,500 x 3,500 | 5,570 x 3,000 |
 | The Gambler's Den | 50 | Field of Whispers | 8,000 x 7,000 | 4,000 x 3,500 |
-| The Primal Crucible | 60 | `primeval_isle` (as placed); a tier 5 arena until it exists | | 55% of that arena's, never under 3,000 (a narrow arena: all of it) |
+| The Primal Crucible | 60 | `primeval_isle` (as placed); a tier 5 ellipse until it exists | | 55% of that arena's, never under 3,000 |
 | The Ketra-Varka Front | 80 | Ruins of Despair | 9,600 x 8,800 | 6,070 x 5,570 |
-| The Tomb Raiders | 70 | The Cemetery | 6,500 x 3,500 | 5,570 x 3,000 |
+| The Tomb Raiders | 70 | Cemetery Grounds | 6,500 x 3,500 | 5,570 x 3,000 |
 
 | | The Crimson Coliseum (18111) | The Gilded Vault (18112) | The Ossuary of Echoes (18113) | The Gambler's Den (18114) |
 |---|---|---|---|---|
-| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), The Cemetery | 50 of tier 5 (Lv. 81-84), Field of Whispers |
+| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Cemetery Grounds | 50 of tier 5 (Lv. 81-84), Field of Whispers |
 | Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered | Champions' Rally, Glass Cannon, Deadly, Fragile, Elemental Chaos, Splitters |
 | The idea | An arms race: the monsters grow with every death, and so do you. | A heist against the clock. | The dead don't stay down. | Luck, both ways. |
 | Twist | **Deathmatch: Mayhem.** Every kill (and every assist: `MayhemAssistShare` % of the damage) offers a strong passive, notables and keystones of the tree plus the Mayhem keystones, to stack **on top of your own tree**, working only inside the map (see below). The monsters come in three waves: 6, 10, 14. | **Borrowed Time and Greed.** The vault seals in 5 minutes; every kill adds 12 s (a claimed bounty 60 s) and 1% Greed, which raises the map's and the boss's drop chances (up to x2 at 100 kills). | **Echoes.** A quarter of the slain counted monsters leave an Echo (half HP, faster attacks, uncounted, its own drops). Every Echo still standing at the end feeds the boss +5% HP (up to +100%). | **The Wheel of Fate and the Pot.** Every 12 counted kills the wheel spins one of 24 fortunes (below), which holds until the next spin, and gives a **bet**. The **Dealer** by the Return Portal takes bets: the Pot doubles or halves. The **Pot** (x1 to start, x0.25-x4) multiplies the Den's drop chances; past 100% the drops grow bigger. |
@@ -279,7 +279,7 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 
 ### The Tomb Raiders (18119)
 
-*You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in the Cemetery. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
+*You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in the Cemetery Grounds. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
 
 - **The rivals**: when the first player comes in, a rival party of 4 **Tomb Raiders** (fake players: one support, three fighters, 2 levels below that player, at most 78) comes in from the far side (`FakePlayerPvpManager.spawnMapRival`; the only fake players a map ever has). They race you for the reliquaries, hunt the tomb's monsters (their kills count toward the clear), attack a player breaking a seal within 900, and ambush the players near them when they are behind in relics. They never flee, escape, log off or come back after dying, and they stay flagged: killing them, or being killed by them, is no PK, no PvP count and no announcement.
 - **The reliquaries**: 5 **Sealed Reliquaries** spread over the field. Talk to one (or `.tomb break` beside it) to break its seal: **30 seconds** of standing still, broken by any hit (HP or CP lost), a step, or death. A rival breaks one the same way, standing still out of a fight, and a hit breaks it too. You bank your relics; a rival carries its own, and **drops them to you when slain**.
@@ -317,28 +317,36 @@ Every map rolls one of the server's hot zone modifiers for its whole instance (`
 
 ## The arenas
 
-A map opens in one of these fields at random (and in the places of the map editor, below). Sizes are the fence's radii (east-west x north-south); the entry is at 80% of the radius on the side named.
+A map opens in one of these fields at random (and in the places of the map editor, below). Two kinds, both in `data/MapDevice.xml`:
 
-| Arena | Region | Shape | Radii | Entry |
+- **Paths** (`ArenaPath`): a line of waypoints, each with the ground's height and the half-width of the way there. The fence follows the path on both sides, round at the ends, so a field can bend along a valley, a road or a beach. The players come in 600 along the path from its first point, facing along it, and sweep the monsters to the far end. Monsters are spread along the whole path (fewer where it narrows), each reached on the ground from the path itself; the waystones stand halfway (*The Middle*), at a quarter and three quarters of the way, and near the far end (*The Far End*); the Map Guardian stands halfway.
+- **Ellipses**: a middle and two radii, the entry at 90% of the radius on the side `entryAngle` names (so the players start near the fence, not in the middle).
+
+![The path arenas](map-device-paths.png)
+
+| Arena | Region | Shape | Size | Players come in from |
 |---|---|---|---|---|
-| Ruins of Despair | Gludio | wide | 9,600 x 8,800 | east |
-| Field of Whispers | Innadril | wide | 8,000 x 7,000 | west |
-| Fields of Massacre | Aden | round | 6,000 x 6,000 | south |
-| The Cemetery | Aden | oval | 6,500 x 3,500 | east |
-| Field of Silence | Innadril | long, east-west | 10,000 x 2,400 | east |
-| Alligator Island | Innadril | long, east-west | 10,000 x 2,400 | west |
-| Isle of Prayer | Isle of Prayer | long, east-west | 10,000 x 2,400 | east |
-| Outlaw Forest | Oren | long, east-west | 10,000 x 2,400 | west |
-| Garden of Beasts | Goddard | long, east-west | 10,000 x 2,400 | west |
-| Swamp of Screams | Rune | long, east-west | 8,000 x 2,000 | east |
-| Primeval Isle Valley | Rune | long, north-south | 2,400 x 9,000 | south |
-| Sel Mahum Training Grounds | Oren | long, north-south | 2,400 x 7,000 | north |
-| Gorgon Flower Garden | Giran | long, north-south | 2,000 x 10,000 | north |
-| Beast Farm | Rune | long, north-south | 2,000 x 6,000 | south |
+| The Cemetery | Aden | path | 17,000 long, 2,200-3,600 wide | the east |
+| Field of Silence | Innadril | path, bending west | 17,700 long, 3,000-3,600 wide | the south |
+| Alligator Island | Innadril | path | 17,500 long, 2,900-3,600 wide | the north-west |
+| Isle of Prayer | Isle of Prayer | path | 17,000 long, 2,200-2,700 wide | the east |
+| Outlaw Forest | Oren | path | 17,700 long, 3,200-3,600 wide | the east |
+| Garden of Beasts | Goddard | path | 17,600 long, 3,100-3,600 wide | the south |
+| Timak Outpost | Oren | path | 17,700 long, 2,700-3,600 wide | the north |
+| Primeval Isle Valley | Rune | path | 15,600 long, 2,200-3,600 wide | the south |
+| Sel Mahum Training Grounds | Oren | path | 17,600 long, 3,100-3,600 wide | the north-west |
+| Gorgon Flower Garden | Giran | path | 18,000 long, 3,500-3,600 wide | the north-east |
+| Beast Farm | Rune | path | 17,500 long, 3,000-3,600 wide | the south-east |
+| Ruins of Despair | Gludio | ellipse | 9,600 x 8,800 | the east |
+| Field of Whispers | Innadril | ellipse | 8,000 x 7,000 | the west |
+| Fields of Massacre | Aden | ellipse | 6,000 x 6,000 | the south |
+| Cemetery Grounds | Aden | ellipse, unique maps only | 6,500 x 3,500 | the east |
 
-The long ones (about 4 : 1) hold the same 100 monsters on a fifth to two fifths of the Field of Whispers' ground, along one corridor: the players come in at one end and sweep it to the other, without searching an open field for the last monsters. The Cemetery was the "Silent Valley" arena (8,000 x 8,000; the real Silent Valley lies farther north), now about a third of its old area.
+The paths hold the same 100 monsters on 44-74 million square units (a wide field: 113-265), along one way: no searching an open field for the last monsters. The Cemetery was the "Silent Valley" arena (8,000 x 8,000; the real Silent Valley lies farther north); its old ground is kept as the oval **Cemetery Grounds** (`uniqueOnly="true"`: no map of the rotation opens there) for the two unique maps that open in it.
 
-Each was checked against the geodata like the first ones: at least 95% of the field walkable from its middle, the middle 90% of the ground within about 700 in height, the entry and the waystone spots on open ground, and no water, peace, town or damage zone (fire swamp, hot springs) in it, since a map's copy of the place keeps the world's zones. The Swamp of Screams keeps a few of its swamp zones, which only buff monsters.
+**Unique maps never open on a path**: their twists place things round an ellipse (the Front's totems, the Tomb's reliquaries, the Ossuary's phylacteries...). One that names a path, or falls back on its tier's arenas, takes an ellipse (the server log warns about a unique map that names a path).
+
+**How the paths were made.** Traced on the geodata (`data/geodata`) round a spot of each place: the ground walkable from there (cell by cell, as the geodata allows, both ways, no step over 32 high, single layer, so no bridges or caves), with no water, peace, town or damage zone in it (a map's copy of the place keeps the world's zones); the way between its two farthest points with the most room from wall to wall; that way simplified to 9-11 points, each as wide as the room there (half-width 1,100-1,800). Then each was checked the way the server builds it: 96-99.8% of the field inside the fence is walkable from the entry, and a map probe on a live server opened every one with all 100 monsters inside the fence, the farthest 13,000-17,000 from the entry. Swamp of Screams, Hot Springs and Blazing Swamp were dropped: their open ground is cut up by water, the spa's and the fire swamp's zones. Making a path by hand: keep the bends gentle (the outer corner of a bend reaches at most twice the half-width out) and the half-width within the open ground.
 
 ## Making your own maps (the map editor)
 
@@ -398,7 +406,7 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 curl -X POST http://127.0.0.1:8788/api/mapdevice/probe -d 'tier=3&mods=CHAIN_REACTION,PACK_HUNTERS&kills=30&seconds=60&pace=100'
 ```
 
-Parameters: `arena` (default the tier's first), `tier` (3), `mods`, `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0); the answer also has when the probe's radar first pointed somewhere (`radarFirstAt`) and how many monsters Gravity Well pulled (`pulled`). Before it fights, `waystone=1` tries the waystones (from too far, then from beside one), `hearts=N` breaks N Nest Hearts (the answer then lists each nest: broken, monsters, multipliers, the heart's HP, and what 1,000 damage does to it), `coffer=1` opens the nearest Sealed Coffer and slays its waves, `invul` (0 to let the probe take damage), `keep`.
+Parameters: `arena` (default the tier's first), `tier` (3), `mods`, `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0); the answer also has where the monsters stood at the start (`outsideFence`: how many beyond the fence, `farthestFromEntry`), the fence's wall count (`fenceWalls`), whether the arena is a path (`path`), when the probe's radar first pointed somewhere (`radarFirstAt`) and how many monsters Gravity Well pulled (`pulled`). Before it fights, `waystone=1` tries the waystones (from too far, then from beside one), `hearts=N` breaks N Nest Hearts (the answer then lists each nest: broken, monsters, multipliers, the heart's HP, and what 1,000 damage does to it), `coffer=1` opens the nearest Sealed Coffer and slays its waves, `invul` (0 to let the probe take damage), `keep`.
 
 ## Setup notes
 
