@@ -84,6 +84,10 @@ public class RandomSpawn extends Script
 	@Override
 	public void onSpawn(Npc npc)
 	{
+		if ((npc.getSpawn() == null) || (npc.getInstanceId() != 0))
+		{
+			return; // Spawned by hand (a Map Device map): it stays where it was put.
+		}
 		final Location[] spawnlist = SPAWN_POINTS.get(npc.getId());
 		final Location loc = spawnlist[getRandom(spawnlist.length)];
 		if (!npc.isInsideRadius2D(loc, 200))

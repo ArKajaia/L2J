@@ -55,6 +55,26 @@ public class MapDeviceConfig
 	public static int XP_BONUS_PER_MEDAL;
 	public static int DROP_BONUS_PER_MEDAL;
 	public static int MONSTER_COUNT;
+	/** The lowest level of a monster a map lifts to its tier's levels. */
+	public static int LIFTED_MIN_LEVEL;
+	/** How many of a map's kinds of monster are lifted from lower levels. */
+	public static int LIFTED_KINDS_PER_MAP;
+	/** How much stronger a lifted monster may be made, at most, to reach its tier's strength. */
+	public static double LIFTED_MAX_STRENGTH_GAIN;
+	/** How strong a number modifier is at modifier tier I, II and III (index 0-2), as a share of its listed effect. */
+	public static double[] MODIFIER_TIER_SCALE = new double[]
+	{
+		0.6,
+		1.0,
+		1.4
+	};
+	/** How many more monsters (%) a modifier adds at modifier tier I, II and III (index 0-2). */
+	public static int[] MODIFIER_MONSTER_COUNT_PCT = new int[]
+	{
+		5,
+		10,
+		15
+	};
 	public static int MONSTER_TYPES;
 	public static int PORTAL_COUNT;
 	public static int PORTAL_RADIUS;
@@ -119,6 +139,27 @@ public class MapDeviceConfig
 		XP_BONUS_PER_MEDAL = Math.max(0, config.getInt("XpBonusPerMedal", 20));
 		DROP_BONUS_PER_MEDAL = Math.max(0, config.getInt("DropBonusPerMedal", 20));
 		MONSTER_COUNT = Math.max(1, config.getInt("MonsterCount", 100));
+		LIFTED_MIN_LEVEL = Math.max(1, config.getInt("LiftedMonsterMinLevel", 40));
+		LIFTED_KINDS_PER_MAP = Math.max(0, config.getInt("LiftedKindsPerMap", 3));
+		LIFTED_MAX_STRENGTH_GAIN = Math.max(1.0, config.getDouble("LiftedMaxStrengthGain", 2.0));
+		MODIFIER_TIER_SCALE = parseThree(config.getString("ModifierTierScale", "0.6,1.0,1.4"), new double[]
+		{
+			0.6,
+			1.0,
+			1.4
+		});
+		final double[] countPct = parseThree(config.getString("ModifierMonsterCountPct", "5,10,15"), new double[]
+		{
+			5,
+			10,
+			15
+		});
+		MODIFIER_MONSTER_COUNT_PCT = new int[]
+		{
+			Math.max(0, (int) Math.round(countPct[0])),
+			Math.max(0, (int) Math.round(countPct[1])),
+			Math.max(0, (int) Math.round(countPct[2]))
+		};
 		MONSTER_TYPES = Math.max(1, config.getInt("MonsterTypesPerMap", 6));
 		PORTAL_COUNT = Math.max(1, Math.min(16, config.getInt("PortalCount", 8)));
 		PORTAL_RADIUS = Math.max(60, config.getInt("PortalRadius", 150));
@@ -173,5 +214,36 @@ public class MapDeviceConfig
 
 		QUEST_ENABLED = config.getBoolean("MapQuestEnabled", true);
 		QUEST_REWARD_MEDALS = Math.max(0, config.getInt("MapQuestRewardMedals", 5));
+	}
+
+	/**
+	 * @param value three numbers, comma separated (modifier tiers I, II and III)
+	 * @param defaults what to take if they are not three non-negative numbers
+	 * @return the three numbers
+	 */
+	private static double[] parseThree(String value, double[] defaults)
+	{
+		final String[] parts = value.split(",");
+		if (parts.length != 3)
+		{
+			return defaults;
+		}
+		final double[] result = new double[3];
+		try
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				result[i] = Double.parseDouble(parts[i].trim());
+				if (result[i] < 0)
+				{
+					return defaults;
+				}
+			}
+		}
+		catch (NumberFormatException e)
+		{
+			return defaults;
+		}
+		return result;
 	}
 }

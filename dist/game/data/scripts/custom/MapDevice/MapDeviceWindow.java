@@ -239,14 +239,22 @@ public final class MapDeviceWindow
 
 	private static void modifiers(StringBuilder sb, List<MapModifier> modifiers)
 	{
+		modifiers(sb, modifiers, null);
+	}
+
+	/**
+	 * @param run the open map they belong to (their tiers and the monsters they bring), {@code null} for a unique map's list (tier II)
+	 */
+	private static void modifiers(StringBuilder sb, List<MapModifier> modifiers, MapRun run)
+	{
 		sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=2 cellspacing=0>");
 		boolean shade = false;
 		for (MapModifier modifier : modifiers)
 		{
 			final String bg = shade ? " bgcolor=\"" + BG_CARD + "\"" : "";
 			sb.append("<tr><td width=").append(CONTENT_WIDTH).append(bg).append(">");
-			sb.append(text(modifier.isStatModifier() ? COLOR_STAT : COLOR_CREATIVE, modifier.getDisplayName())).append("<br1>");
-			sb.append(text(COLOR_MUTED, modifier.getDescription()));
+			sb.append(text(modifier.isStatModifier() ? COLOR_STAT : COLOR_CREATIVE, run != null ? run.getModifierName(modifier) : modifier.getDisplayName())).append("<br1>");
+			sb.append(text(COLOR_MUTED, run != null ? run.describeModifier(modifier) : modifier.getDescription()));
 			sb.append("</td></tr>");
 			shade = !shade;
 		}
@@ -283,7 +291,7 @@ public final class MapDeviceWindow
 		sb.append(text(COLOR_HINT, "Strength 1.0 is an ordinary monster of its level, 2.0 twice as strong (a Spiked Stakato); party monsters start near 3, the Seed of Annihilation elites are 10. The tier's multipliers come on top.")).append("<br><br>");
 
 		section(sb, "Feed it " + medalName() + "s");
-		sb.append(text(COLOR_MUTED, "You have " + format(medals) + ". Each one rolls a modifier (out of " + MapModifier.values().length + ") and adds +" + MapDeviceConfig.XP_BONUS_PER_MEDAL + "% experience and +" + MapDeviceConfig.DROP_BONUS_PER_MEDAL + "% drop rate.")).append("<br1>");
+		sb.append(text(COLOR_MUTED, "You have " + format(medals) + ". Each one rolls a modifier (out of " + MapModifier.values().length + ") of tier I, II or III (stronger on higher maps), which brings +" + MapModifier.getMonsterCountPct(1) + "% to +" + MapModifier.getMonsterCountPct(3) + "% more monsters, and adds +" + MapDeviceConfig.XP_BONUS_PER_MEDAL + "% experience and +" + MapDeviceConfig.DROP_BONUS_PER_MEDAL + "% drop rate.")).append("<br1>");
 		sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=2 cellspacing=0>");
 		for (int count = 0; count <= MapDeviceConfig.MAX_MEDALS; count++)
 		{
@@ -333,7 +341,7 @@ public final class MapDeviceWindow
 		row(sb, "Map", text(COLOR_VALUE, "Tier " + tier.tier()) + text(COLOR_MUTED, " (Lv. " + tier.minLevel() + "-" + tier.maxLevel() + ")"), false);
 		row(sb, "Monster strength", strength(tier), true);
 		row(sb, "It costs", "1 " + MapDeviceManager.getItemName(tier.itemId()) + (medals > 0 ? ", " + medals + " " + medalName() + (medals == 1 ? "" : "s") : ""), false);
-		row(sb, "Modifiers", medals > 0 ? text(COLOR_CREATIVE, medals + " at random") : text(COLOR_HINT, "none"), true);
+		row(sb, "Modifiers", medals > 0 ? text(COLOR_CREATIVE, medals + " at random, tier I-III") + text(COLOR_MUTED, ", +" + (medals * MapModifier.getMonsterCountPct(1)) + "% to +" + (medals * MapModifier.getMonsterCountPct(3)) + "% monsters") : text(COLOR_HINT, "none"), true);
 		row(sb, "Hot zone effect", "1 at random", false);
 		row(sb, "Experience", text(COLOR_POSITIVE, "+" + (medals * MapDeviceConfig.XP_BONUS_PER_MEDAL) + "%") + text(COLOR_MUTED, " (and the tier's x" + two(tier.reward()) + ")"), true);
 		row(sb, "Drop rate", text(COLOR_POSITIVE, "+" + (medals * MapDeviceConfig.DROP_BONUS_PER_MEDAL) + "%"), false);
@@ -429,7 +437,11 @@ public final class MapDeviceWindow
 		}
 		else
 		{
-			modifiers(sb, run.getModifiers());
+			modifiers(sb, run.getModifiers(), run);
+			if (run.getMonsterCountMultiplier() > 1)
+			{
+				sb.append(text(COLOR_HINT, "Together they bring " + Math.round((run.getMonsterCountMultiplier() - 1) * 100) + "% more monsters.")).append("<br>");
+			}
 		}
 
 		section(sb, "Hot Zone Effect");

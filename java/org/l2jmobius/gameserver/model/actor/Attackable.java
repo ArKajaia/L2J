@@ -1362,28 +1362,36 @@ public class Attackable extends Npc
 	 */
 	private void doFakePlayerItemDrop(Creature fake)
 	{
-		doItemDrop(getTemplate(), fake);
+		doItemDrop(getDropTemplate(), fake);
 		
 		if (isSpoiled())
 		{
 			final Player spoiler = World.getInstance().getPlayer(getSpoilerObjectId());
 			if (spoiler != null)
 			{
-				_sweepItems.set(getTemplate().calculateDrops(DropType.SPOIL, this, spoiler));
+				_sweepItems.set(getDropTemplate().calculateDrops(DropType.SPOIL, this, spoiler));
 			}
 		}
 	}
 	
+	/**
+	 * @return whose drop and spoil lists this one rolls: its own, or another's (a map monster lifted to its map's tier rolls a monster of the tier's)
+	 */
+	public NpcTemplate getDropTemplate()
+	{
+		return getTemplate();
+	}
+
 	public void doItemDrop(Creature mainDamageDealer)
 	{
-		doItemDrop(getTemplate(), mainDamageDealer);
+		doItemDrop(getDropTemplate(), mainDamageDealer);
 		// 1. Lucky Loot jackpot: roll the kill drop table again (only DROP, so spoil, cursed weapons and the buff book below don't repeat).
 		final Player jackpotOwner = mainDamageDealer != null ? mainDamageDealer.asPlayer() : null;
 		if ((jackpotOwner != null) && org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().rollJackpot(this, jackpotOwner))
 		{
 			for (int roll = 1; roll < org.l2jmobius.gameserver.config.custom.LuckyLootConfig.JACKPOT_DROP_ROLLS; roll++)
 			{
-				final Collection<ItemHolder> jackpotItems = getTemplate().calculateDrops(DropType.DROP, this, jackpotOwner);
+				final Collection<ItemHolder> jackpotItems = getDropTemplate().calculateDrops(DropType.DROP, this, jackpotOwner);
 				if (jackpotItems != null)
 				{
 					for (ItemHolder drop : jackpotItems)

@@ -74,4 +74,13 @@ public record MapTier(int tier, int itemId, int minLevel, int maxLevel, double m
 	{
 		return maxScore > 0 ? MonsterStrength.format(minScore) + "-" + MonsterStrength.format(maxScore) : MonsterStrength.format(minScore) + "+";
 	}
+
+	/**
+	 * @param template a monster
+	 * @return {@code true} if a map of this tier lifts it: of a lower level, or weaker than the tier's strength (see {@link MapLift})
+	 */
+	public boolean isLifted(org.l2jmobius.gameserver.model.actor.templates.NpcTemplate template)
+	{
+		return (template.getLevel() < minLevel) || ((minScore > 0) && (MonsterStrength.getScore(template) < minScore));
+	}
 }

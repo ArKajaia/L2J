@@ -20,7 +20,11 @@
  */
 package org.l2jmobius.gameserver.model.mapdevice;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.InfusedMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
@@ -119,7 +123,7 @@ public enum MapModifier
 			monsterReflectPct = 8;
 		}
 	},
-	REGENERATIVE("Regenerative", "Monsters regenerate HP five times as fast.")
+	REGENERATIVE("Regenerative", "Monsters regenerate HP 400% faster.")
 	{
 		{
 			monsterHpRegen = 5.0;
@@ -190,13 +194,13 @@ public enum MapModifier
 			playerCritDamageTaken = 1.30;
 		}
 	},
-	DESECRATED("Desecrated", "Healing received by players is halved.")
+	DESECRATED("Desecrated", "Healing received by players is 50% lower.")
 	{
 		{
 			playerHealReceived = 0.50;
 		}
 	},
-	ARCANE_PRECISION("Arcane Precision", "Monsters land magic critical hits twice as often.")
+	ARCANE_PRECISION("Arcane Precision", "Monsters land magic critical hits 100% more often.")
 	{
 		{
 			monsterMCritRate = 2.0;
@@ -564,6 +568,19 @@ public enum MapModifier
 	/** How many of these only change numbers: the first ones of the enum. The rest change how the map plays. */
 	public static final int STAT_MODIFIER_COUNT = 33;
 
+	/** Modifier tiers: I is the mildest, III the strongest; II is the effect as listed. */
+	public static final int MIN_TIER = 1;
+	public static final int DEFAULT_TIER = 2;
+	public static final int MAX_TIER = 3;
+	private static final String[] TIER_NAMES =
+	{
+		"I",
+		"II",
+		"III"
+	};
+	/** A number in a description. */
+	private static final Pattern NUMBER = Pattern.compile("\\d+(?:\\.\\d+)?");
+
 	private final String _displayName;
 	private final String _description;
 
@@ -687,11 +704,79 @@ public enum MapModifier
 	}
 
 	/**
-	 * @return what it does, as shown to the players
+	 * @return what it does, as shown to the players (at modifier tier II)
 	 */
 	public String getDescription()
 	{
 		return _description;
+	}
+
+	/**
+	 * @param tier a modifier tier, 1-3
+	 * @return its name with the tier, e.g. "Brutal III"
+	 */
+	public String getDisplayName(int tier)
+	{
+		return _displayName + " " + getTierName(tier);
+	}
+
+	/**
+	 * @param tier a modifier tier, 1-3
+	 * @return what it does at that tier: a number modifier's numbers scaled by {@link #getTierScale(int)}, any other modifier's text as it is
+	 */
+	public String getDescription(int tier)
+	{
+		final double scale = getTierScale(tier);
+		if (!isStatModifier() || (scale == 1.0))
+		{
+			return _description;
+		}
+		final Matcher matcher = NUMBER.matcher(_description);
+		final StringBuilder sb = new StringBuilder();
+		while (matcher.find())
+		{
+			final double value = Double.parseDouble(matcher.group()) * scale;
+			final double rounded = value >= 10 ? Math.round(value) : Math.round(value * 10) / 10.0;
+			matcher.appendReplacement(sb, rounded == Math.rint(rounded) ? Long.toString((long) rounded) : Double.toString(rounded));
+		}
+		matcher.appendTail(sb);
+		return sb.toString();
+	}
+
+	/**
+	 * @param tier a modifier tier
+	 * @return "I", "II" or "III"
+	 */
+	public static String getTierName(int tier)
+	{
+		return TIER_NAMES[clampTier(tier) - 1];
+	}
+
+	/**
+	 * @param tier a modifier tier
+	 * @return how strong a number modifier is at that tier, as a share of its listed effect (MapDevice.ini ModifierTierScale)
+	 */
+	public static double getTierScale(int tier)
+	{
+		return MapDeviceConfig.MODIFIER_TIER_SCALE[clampTier(tier) - 1];
+	}
+
+	/**
+	 * @param tier a modifier tier
+	 * @return how many more monsters (%) a modifier of that tier adds to its map (MapDevice.ini ModifierMonsterCountPct)
+	 */
+	public static int getMonsterCountPct(int tier)
+	{
+		return MapDeviceConfig.MODIFIER_MONSTER_COUNT_PCT[clampTier(tier) - 1];
+	}
+
+	/**
+	 * @param tier any number
+	 * @return it, within {@link #MIN_TIER}-{@link #MAX_TIER}
+	 */
+	public static int clampTier(int tier)
+	{
+		return Math.max(MIN_TIER, Math.min(MAX_TIER, tier));
 	}
 
 	/**

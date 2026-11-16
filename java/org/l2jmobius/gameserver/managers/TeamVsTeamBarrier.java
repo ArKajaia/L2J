@@ -31,6 +31,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Fence;
 import org.l2jmobius.gameserver.model.interfaces.ILocational;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
+import org.l2jmobius.gameserver.model.mapdevice.ArenaPath;
 
 /**
  * The fence round the field of a Team vs Team match (the {@link EventMap#barrier} of its map): an ellipse round every spawn point, that nobody gets through, players or fake players. On the Ruins of Despair it goes round the ring wall, which has gaps all round,
@@ -81,6 +82,31 @@ public final class TeamVsTeamBarrier
 	public static List<Fence> build(EventBarrier barrier, int groundZ, int instanceId, String name)
 	{
 		final List<Fence> walls = new ArrayList<>();
+		if (barrier.path() != null)
+		{
+			// Round the outline of the path, in the same steps as round an ellipse.
+			final int[][] outline = barrier.path().getOutline();
+			int px = outline[0][0];
+			int py = outline[0][1];
+			for (int i = 1; i <= outline.length; i++)
+			{
+				final int tx = outline[i % outline.length][0];
+				final int ty = outline[i % outline.length][1];
+				final int sx = px;
+				final int sy = py;
+				final int steps = Math.max(1, (int) Math.ceil(Math.hypot(tx - sx, ty - sy) / STEP));
+				for (int k = 1; k <= steps; k++)
+				{
+					final int x = sx + (int) Math.round(((tx - sx) * (double) k) / steps);
+					final int y = sy + (int) Math.round(((ty - sy) * (double) k) / steps);
+					addWall(walls, px, py, x, py, groundZ, instanceId, name);
+					addWall(walls, x, py, x, y, groundZ, instanceId, name);
+					px = x;
+					py = y;
+				}
+			}
+			return walls;
+		}
 		final int cx = barrier.x();
 		final int cy = barrier.y();
 		final int rx = barrier.radiusX();
@@ -182,6 +208,17 @@ public final class TeamVsTeamBarrier
 	 */
 	public static Location getInside(EventBarrier barrier, ILocational location)
 	{
+		if (barrier.path() != null)
+		{
+			// Towards the nearest point of the path, to 93% of the way's half-width from it.
+			final ArenaPath.Spot spot = barrier.path().at(barrier.path().nearestDistance(location.getX(), location.getY()));
+			final double ox = location.getX() - spot.x();
+			final double oy = location.getY() - spot.y();
+			final double scale = Math.min(1, (0.93 * spot.width()) / Math.max(1e-6, Math.hypot(ox, oy)));
+			final int x = spot.x() + (int) (ox * scale);
+			final int y = spot.y() + (int) (oy * scale);
+			return new Location(x, y, GeoEngine.getInstance().getHeight(x, y, spot.z()));
+		}
 		final double dx = (location.getX() - barrier.x()) / (double) barrier.radiusX();
 		final double dy = (location.getY() - barrier.y()) / (double) barrier.radiusY();
 		final double scale = 0.93 / Math.max(1e-6, Math.sqrt((dx * dx) + (dy * dy)));

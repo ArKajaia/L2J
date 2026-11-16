@@ -339,21 +339,13 @@ public class KetraVarkaFrontManager
 		final Front front = front(run);
 		final MapArena arena = run.getArena();
 
-		// The line from the entry through the middle to the far side of the field.
-		final double dx = arena.x() - arena.getEntryX();
-		final double dy = arena.y() - arena.getEntryY();
-		final double toMiddle = Math.max(1, Math.hypot(dx, dy));
-		final double ux = dx / toMiddle;
-		final double uy = dy / toMiddle;
-		final double radiusAlong = Math.hypot(arena.radiusX() * ux, arena.radiusY() * uy);
-		final double length = toMiddle + (radiusAlong * 0.6);
+		// The way from the entry through the middle to the far side of the field (along a path, a path's way).
+		final double length = arena.farSideDistance(0.6);
 		for (int i = 0; i < TOTEM_SHARES.length; i++)
 		{
-			final int x = arena.getEntryX() + (int) (ux * length * TOTEM_SHARES[i]);
-			final int y = arena.getEntryY() + (int) (uy * length * TOTEM_SHARES[i]);
-			front._totems.add(new Totem(i, MapDeviceManager.getGroundLocation(new Location(x, y, arena.z()))));
+			front._totems.add(new Totem(i, MapDeviceManager.getGroundLocation(arena.fromEntry(length * TOTEM_SHARES[i]))));
 		}
-		front._camp = MapDeviceManager.getGroundLocation(new Location(arena.getEntryX() + (int) (ux * CAMP_DISTANCE), arena.getEntryY() + (int) (uy * CAMP_DISTANCE), arena.z()));
+		front._camp = MapDeviceManager.getGroundLocation(arena.fromEntry(CAMP_DISTANCE));
 
 		// The monsters: as many of each side, shared out among the sectors.
 		final List<NpcTemplate> ketra = kindsOf(run, Side.KETRA);
@@ -435,9 +427,7 @@ public class KetraVarkaFrontManager
 			final double distance = Math.sqrt(Rnd.nextDouble()) * range;
 			x = center.getX() + (int) (Math.cos(angle) * distance);
 			y = center.getY() + (int) (Math.sin(angle) * distance);
-			final double ex = (x - arena.x()) / (double) arena.radiusX();
-			final double ey = (y - arena.y()) / (double) arena.radiusY();
-			if ((((ex * ex) + (ey * ey)) <= 0.8) && (!awayFromEntry || (Math.hypot(x - arena.getEntryX(), y - arena.getEntryY()) >= MapDeviceConfig.SAFE_RADIUS)))
+			if ((arena.fieldShare(x, y) <= 0.8) && (!awayFromEntry || (Math.hypot(x - arena.getEntryX(), y - arena.getEntryY()) >= MapDeviceConfig.SAFE_RADIUS)))
 			{
 				break;
 			}

@@ -317,13 +317,7 @@ public class TombRaidersManager
 			tomb._reliquaries.add(reliquary);
 		}
 
-		final double dx = arena.x() - arena.getEntryX();
-		final double dy = arena.y() - arena.getEntryY();
-		final double toMiddle = Math.max(1, Math.hypot(dx, dy));
-		final double ux = dx / toMiddle;
-		final double uy = dy / toMiddle;
-		final double radiusAlong = Math.hypot(arena.radiusX() * ux, arena.radiusY() * uy);
-		tomb._rivalStart = MapDeviceManager.getGroundLocation(new Location(arena.x() + (int) (ux * radiusAlong * 0.7), arena.y() + (int) (uy * radiusAlong * 0.7), arena.z()));
+		tomb._rivalStart = MapDeviceManager.getGroundLocation(arena.fromEntry(arena.farSideDistance(0.7)));
 	}
 
 	private static Npc spawnNpc(MapRun run, int npcId, Location spot)

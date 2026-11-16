@@ -55,6 +55,7 @@ import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
+import org.l2jmobius.gameserver.model.mapdevice.MapLift;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -2091,9 +2092,40 @@ public class Monster extends Attackable
 		return true;
 	}
 	
+	/** Set when a map lifts this monster to its tier (see {@link MapLift}). */
+	private volatile MapLift _mapLift;
+
+	/**
+	 * @param lift how a map lifts this monster to its tier, {@code null} for none
+	 */
+	public void setMapLift(MapLift lift)
+	{
+		_mapLift = lift;
+	}
+
+	/**
+	 * @return how a map lifts this monster to its tier, {@code null} for none
+	 */
+	public MapLift getMapLift()
+	{
+		return _mapLift;
+	}
+
+	@Override
+	public NpcTemplate getDropTemplate()
+	{
+		final MapLift lift = _mapLift;
+		return (lift != null) && (lift.dropTemplate() != null) ? lift.dropTemplate() : super.getDropTemplate();
+	}
+
 	@Override
 	public int getLevel()
 	{
+		final MapLift lift = _mapLift;
+		if ((lift != null) && !isWaveChallenge())
+		{
+			return lift.level(); // A map monster lifted to its map's tier.
+		}
 		if (isArenaChallenger())
 		{
 			// Override the level to be at least 85.
@@ -2106,7 +2138,7 @@ public class Monster extends Attackable
 		
 		if (isWaveChallenge())
 		{
-			final int baseLevel = super.getLevel();
+			final int baseLevel = lift != null ? lift.level() : super.getLevel();
 			final int virtualLevel = baseLevel + (Math.max(0, getWaveChallengeWave() - 1) * WaveChallengeConfig.LEVEL_GROWTH_PER_WAVE);
 			return Math.max(baseLevel, Math.min(WaveChallengeConfig.MAX_VIRTUAL_LEVEL, virtualLevel));
 		}
