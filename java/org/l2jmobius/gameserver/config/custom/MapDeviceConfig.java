@@ -138,7 +138,7 @@ public class MapDeviceConfig
 		MAX_MEDALS = Math.max(0, Math.min(50, config.getInt("MaxMedals", 8)));
 		XP_BONUS_PER_MEDAL = Math.max(0, config.getInt("XpBonusPerMedal", 20));
 		DROP_BONUS_PER_MEDAL = Math.max(0, config.getInt("DropBonusPerMedal", 20));
-		MONSTER_COUNT = Math.max(1, config.getInt("MonsterCount", 100));
+		MONSTER_COUNT = Math.max(1, config.getInt("MonsterCount", 50));
 		LIFTED_MIN_LEVEL = Math.max(1, config.getInt("LiftedMonsterMinLevel", 40));
 		LIFTED_KINDS_PER_MAP = Math.max(0, config.getInt("LiftedKindsPerMap", 3));
 		LIFTED_MAX_STRENGTH_GAIN = Math.max(1.0, config.getDouble("LiftedMaxStrengthGain", 2.0));
@@ -165,7 +165,7 @@ public class MapDeviceConfig
 		PORTAL_RADIUS = Math.max(60, config.getInt("PortalRadius", 150));
 		MAP_DURATION = Math.max(5, config.getInt("MapDurationMinutes", 60));
 		COMPLETED_CLOSE_DELAY = Math.max(10, config.getInt("CompletedMapCloseSeconds", 120));
-		COMPLETION_PERCENT = Math.max(1, Math.min(100, config.getInt("CompletionPercent", 99)));
+		COMPLETION_PERCENT = Math.max(1, Math.min(100, config.getInt("CompletionPercent", 94)));
 		SAFE_RADIUS = Math.max(0, config.getInt("EntrySafeRadius", 900));
 		MONSTER_SPACING = Math.max(0, config.getInt("MonsterSpacing", 500));
 		RANDOM_PASSIVES = config.getBoolean("MapMonsterRandomPassives", true);
