@@ -123,3 +123,21 @@ python tools/simulation/matrix_compare.py log/simulation-matrix/matrix-20261108-
 ```
 curl -X POST http://127.0.0.1:8788/api/mapdevice/probe -d 'tier=3&mods=RAMPAGE&kills=55&seconds=120&pace=40&after=17'
 ```
+
+## Map simulation: a class running Map Device maps, many at once
+
+`POST /api/mapdevice/simulate` has fake players of one build run Map Device maps alone, the way a player runs them, each map in an instance of its own and up to `parallel` open at once, and logs every map for balancing the maps' difficulty and rewards (`MapSimulation`; how it works in `docs/map-device.md`, *Map simulation*).
+
+```
+# A Soultaker (the necromancer line) through tiers 1-10, ten maps a tier with 1 to 10 medals: 100 maps, all open at once.
+curl -X POST http://127.0.0.1:8788/api/mapdevice/simulate -d 'build=Soultaker&tiers=1-10&medals=1-10&parallel=100'
+curl http://127.0.0.1:8788/api/mapdevice/simulate/status      # progress, each open map's runner, the summary so far
+curl -X POST http://127.0.0.1:8788/api/mapdevice/simulate/stop
+python3 tools/simulation/map_report.py --latest               # or the batch folders
+```
+
+Parameters: `build` (a build of `data/FakePlayerPvp.xml`, Soultaker), `level` (`auto`: 80 at tiers 1-2, then one level every two tiers up to 85 at tiers 9-10; or a level), `tiers` (1-10), `medals` (1-10; the maps of each tier take these in turn, so tiers 1-10 x medals 1-10 is 100 maps; more than the device's 8 are allowed here), `repeat` (maps per tier and medal count, 1), `parallel` (100), `minutes` (60, the most a map runs; a map still collapses at 60, 15 with Hourglass), `stuck` (6: a map where nothing was slain for that long ends), `respawn` (10 s from the runner's death to its return at the entry), `arena` (an arena id: every map there).
+
+Output goes to `log/simulation-maps/maps-<time>/`: `runs.csv` and `runs.jsonl` (one line per map: tier, medals, level, arena, hot zone effect, modifiers with their tiers, monsters, result, minutes, minutes to 50% and 90%, kills, deaths, potions, rest, damage taken and dealt with the servitor's share, and what a player would have earned: experience, SP, adena, every item with its count, their reference price, and the maps dropped by tier and source; the JSON adds the deaths, each kind of monster and the kills by minute), `deaths.csv` (one line per death: when, how far into the map, the killer, its level, Champion tier and variant), `kinds.csv` (each kind of monster of each map: own level, level played at, lifted, max HP, kills, deaths it caused, experience), `settings.txt` and `summary.txt` (by tier, by medals, and each modifier against its tier's mean; rewritten as maps end). `map_report.py` adds the tier x medals grids, the modifiers' kill rate and deaths against their tier, the deadliest monsters and the drops per 100 kills.
+
+100 maps at once (100 fake players, about 15,000 monsters) used about 1.5 of the container's 4 cores.

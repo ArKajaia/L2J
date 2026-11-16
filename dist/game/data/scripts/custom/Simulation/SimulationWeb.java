@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamBatch;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
+import org.l2jmobius.gameserver.managers.simulation.MapSimulation;
 import org.l2jmobius.gameserver.managers.simulation.SimulationArena;
 import org.l2jmobius.gameserver.managers.simulation.SimulationHistory;
 import org.l2jmobius.gameserver.managers.simulation.SimulationLog;
@@ -193,6 +194,9 @@ public class SimulationWeb
 		server.addRoute("/api/simulation/weights/reload", "POST", true, this::handleWeightsReload);
 		server.addRoute("/api/tvt/status", "GET", false, this::handleTvtStatus);
 		server.addRoute("/api/mapdevice/probe", "POST", true, this::handleMapProbe);
+		server.addRoute("/api/mapdevice/simulate", "POST", true, this::handleMapSimulate);
+		server.addRoute("/api/mapdevice/simulate/stop", "POST", true, this::handleMapSimulateStop);
+		server.addRoute("/api/mapdevice/simulate/status", "GET", false, this::handleMapSimulateStatus);
 		server.addRoute("/api/tvt/simulate", "POST", true, this::handleTvtSimulate);
 		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
 		server.addRoute("/api/tvt/batch", "POST", true, this::handleTvtBatch);
@@ -1409,6 +1413,35 @@ public class SimulationWeb
 
 		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
 		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, MapProbe.run(params));
+	}
+
+	/**
+	 * The map simulation (see MapSimulation): fake players of one build run Map Device maps alone, many at once, and every map is logged. Answers at once; the maps run in the background.
+	 */
+	private void handleMapSimulate(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		sendTvtLines(exchange, List.of(MapSimulation.start(params)));
+	}
+
+	private void handleMapSimulateStop(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+		sendTvtLines(exchange, List.of(MapSimulation.stop()));
+	}
+
+	private void handleMapSimulateStatus(HttpExchange exchange) throws IOException
+	{
+		sendTvtLines(exchange, List.of(MapSimulation.status().split("\n")));
 	}
 
 	private void handleTvtStatus(HttpExchange exchange) throws IOException

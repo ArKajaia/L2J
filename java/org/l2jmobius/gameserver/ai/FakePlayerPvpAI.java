@@ -73,6 +73,7 @@ import org.l2jmobius.gameserver.managers.conquest.ConquestManager;
 import org.l2jmobius.gameserver.managers.conquest.ConquestMatch;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
+import org.l2jmobius.gameserver.managers.simulation.MapSimulation;
 import org.l2jmobius.gameserver.managers.simulation.Reason;
 import org.l2jmobius.gameserver.managers.simulation.SimulationRun;
 import org.l2jmobius.gameserver.model.Location;
@@ -7982,6 +7983,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			spawn.setXYZ(npc.getX(), npc.getY(), npc.getZ());
 		}
 
+		// A fake player of the map simulation runs the map alone, as a player would.
+		if (MapSimulation.isRunner(npc))
+		{
+			thinkMapRunner(npc, profile);
+			return;
+		}
+
 		if (TombRaidersManager.isChanneling(npc))
 		{
 			trace(Reason.SIM_WAIT, null);
@@ -8016,6 +8024,77 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		trace(Reason.SIM_MARCH, null);
 		marchTo(npc, destination, true);
+	}
+
+	/**
+	 * A fake player of the map simulation ({@link MapSimulation}): it clears a Map Device map alone, like a player. It fights whatever is on it, rests between fights when hurt (its servitor out again first), and otherwise goes for the nearest monster of the map:
+	 * at once if it is close, else it runs toward it (the monsters of a map stand all along its field).
+	 */
+	private void thinkMapRunner(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		final long now = System.currentTimeMillis();
+
+		// A monster on it: it fights back first.
+		final Creature onIt = getMonsterOnIt(npc);
+		if (onIt != null)
+		{
+			_resting = false;
+			if (standUp(npc))
+			{
+				trace(Reason.STAND_UP, onIt);
+				return;
+			}
+			if ((npc.getCurrentHp() / npc.getMaxHp()) < 0.5)
+			{
+				FakePlayerPvpManager.getInstance().tryPotion(npc);
+			}
+			trace(Reason.SIM_ENGAGE, onIt);
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, onIt);
+			return;
+		}
+
+		// Hurt after a fight: sits down until HP is back, as a player does between pulls.
+		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		if (hpRatio < (_resting ? MapSimulation.REST_UNTIL : MapSimulation.REST_BELOW))
+		{
+			_resting = true;
+			if (!npc.isMoving() && !npc.isMovementDisabled())
+			{
+				sitDown(npc);
+			}
+			MapSimulation.onResting(npc);
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+		_resting = false;
+		if (standUp(npc))
+		{
+			return;
+		}
+
+		// Its servitor out again before the next pull.
+		if (profile.needsServitor() && mayCastSummon(npc, profile, now) && castOnSelf(npc, null, profile.getSkills(SkillCategory.SUMMON), true, false))
+		{
+			return;
+		}
+
+		// The next monster: the nearest of the map's, fought at once when close, else run to.
+		final Creature next = MapSimulation.findTarget(npc);
+		if (next == null)
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+		if (npc.calculateDistance2D(next) <= MapSimulation.ENGAGE_RANGE)
+		{
+			trace(Reason.SIM_ENGAGE, next);
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, next);
+			return;
+		}
+		trace(Reason.SIM_MARCH, next);
+		marchTo(npc, next.getLocation(), false);
 	}
 
 	/**
