@@ -107,6 +107,8 @@ public final class MapSimulation
 	/** The same for its MP: below this it rests (nothing on it) until the other. */
 	public static final double MP_REST_BELOW = 0.12;
 	public static final double MP_REST_UNTIL = 0.7;
+	/** It rests at most this long for MP alone (fake players have no mana potions, and their MP comes back slowly). */
+	public static final long MP_REST_MAX_MILLIS = 30000;
 	/** A monster it gets no closer to and doesn't hurt for this long is out of its reach (across water, a cliff, the fence): it leaves it aside for a while. */
 	private static final long NO_PROGRESS_MILLIS = 30000;
 	private static final long SKIP_MILLIS = 180000;
@@ -176,12 +178,19 @@ public final class MapSimulation
 		{
 			return null;
 		}
+		final Monster best = nearest(npc, run, job, true);
+		// Every one left aside: the nearest all the same.
+		return best != null ? best : nearest(npc, run, job, false);
+	}
+
+	private static Monster nearest(Npc npc, MapRun run, Job job, boolean skip)
+	{
 		Monster best = null;
 		double bestDistance = Double.MAX_VALUE;
 		final long now = System.currentTimeMillis();
 		for (int objectId : run.getMonsters())
 		{
-			final Long skipUntil = job._skipped.get(objectId);
+			final Long skipUntil = skip ? job._skipped.get(objectId) : null;
 			if ((skipUntil != null) && (now < skipUntil))
 			{
 				continue;
@@ -851,6 +860,12 @@ public final class MapSimulation
 		private void checkProgress(Npc runner, long now)
 		{
 			if (runner.isDead())
+			{
+				_watchTargetId = 0;
+				return;
+			}
+			// Resting is no lack of progress.
+			if ((now - _lastRestAt) < 5000)
 			{
 				_watchTargetId = 0;
 				return;

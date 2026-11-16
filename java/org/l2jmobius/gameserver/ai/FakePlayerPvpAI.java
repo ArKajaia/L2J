@@ -410,6 +410,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private long _lastDebuffTime;
 	private final Map<Integer, Long> _reflectors = new ConcurrentHashMap<>();
 	private volatile boolean _resting = false;
+	// Map simulation: when it sat down to rest.
+	private long _restStartedAt;
 	
 	// Running away from a PvP it is losing: since when, when it runs on and may read its scroll, and whether it gave up running (then it fights to the end).
 	private boolean _fleeing = false;
@@ -8056,9 +8058,15 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 
 		// Hurt or out of mana after a fight: sits down until both are back, as a player does between pulls.
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		// For MP only a short while: a fake player has no mana potion, and its MP comes back at its class's base rate.
 		final double mpRatio = npc.getCurrentMp() / Math.max(1, npc.getMaxMp());
-		if ((hpRatio < (_resting ? MapSimulation.REST_UNTIL : MapSimulation.REST_BELOW)) || (mpRatio < (_resting ? MapSimulation.MP_REST_UNTIL : MapSimulation.MP_REST_BELOW)))
+		final boolean mpRest = (mpRatio < (_resting ? MapSimulation.MP_REST_UNTIL : MapSimulation.MP_REST_BELOW)) && (!_resting || ((now - _restStartedAt) < MapSimulation.MP_REST_MAX_MILLIS));
+		if ((hpRatio < (_resting ? MapSimulation.REST_UNTIL : MapSimulation.REST_BELOW)) || mpRest)
 		{
+			if (!_resting)
+			{
+				_restStartedAt = now;
+			}
 			_resting = true;
 			if (!npc.isMoving() && !npc.isMovementDisabled())
 			{
