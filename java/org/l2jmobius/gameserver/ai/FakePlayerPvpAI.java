@@ -8041,6 +8041,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if (onIt != null)
 		{
 			_resting = false;
+			MapSimulation.onRestEnded(npc);
 			if (standUp(npc))
 			{
 				trace(Reason.STAND_UP, onIt);
@@ -8077,6 +8078,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 		_resting = false;
+		MapSimulation.onRestEnded(npc);
 		if (standUp(npc))
 		{
 			return;

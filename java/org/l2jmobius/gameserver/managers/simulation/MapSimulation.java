@@ -73,6 +73,8 @@ import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
 import org.l2jmobius.gameserver.model.mapdevice.MapRunListener;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.taskmanagers.DecayTaskManager;
 
 /**
@@ -109,6 +111,10 @@ public final class MapSimulation
 	public static final double MP_REST_UNTIL = 0.7;
 	/** It rests at most this long for MP alone (fake players have no mana potions, and their MP comes back slowly). */
 	public static final long MP_REST_MAX_MILLIS = 30000;
+	/** While it sits resting, its MP comes back this many times faster. */
+	public static final double REST_MP_REGEN_MULTIPLIER = 100;
+	/** Owns the resting MP regeneration function. */
+	private static final Object REST_REGEN_OWNER = new Object();
 	/** A monster it gets no closer to and doesn't hurt for this long is out of its reach (across water, a cliff, the fence): it leaves it aside for a while. */
 	private static final long NO_PROGRESS_MILLIS = 30000;
 	private static final long SKIP_MILLIS = 180000;
@@ -218,6 +224,26 @@ public final class MapSimulation
 		if (job != null)
 		{
 			job.onResting();
+			if (!job._restRegen)
+			{
+				job._restRegen = true;
+				npc.removeStatsOwner(REST_REGEN_OWNER);
+				npc.addStatFunc(new FuncMul(Stat.REGENERATE_MP_RATE, 0x30, REST_REGEN_OWNER, REST_MP_REGEN_MULTIPLIER, null));
+			}
+		}
+	}
+
+	/**
+	 * A runner stood up from resting (or died): its MP comes back at its usual rate again.
+	 * @param npc the runner
+	 */
+	public static void onRestEnded(Npc npc)
+	{
+		final Job job = RUNNERS.isEmpty() ? null : RUNNERS.get(npc.getObjectId());
+		if ((job != null) && job._restRegen)
+		{
+			job._restRegen = false;
+			npc.removeStatsOwner(REST_REGEN_OWNER);
 		}
 	}
 
@@ -721,6 +747,7 @@ public final class MapSimulation
 		double _watchHp;
 		long _watchSince;
 		int _skips;
+		volatile boolean _restRegen;
 		int _killsAll;
 		int _uncredited;
 		double _exp;
@@ -1102,6 +1129,11 @@ public final class MapSimulation
 				_deaths.add(new Death((now - _startedAt) / 60000.0, progress, attacker != null ? attacker.getName() : "(the map)", level, champion, kindName, variant));
 				_diedAt = now;
 				_respawnScheduled = true;
+				_lastRestAt = 0;
+			}
+			if (_runner != null)
+			{
+				onRestEnded(_runner);
 			}
 			ThreadPool.schedule(this::respawn, _batch._respawn * 1000L);
 		}
