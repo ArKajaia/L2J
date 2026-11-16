@@ -5694,9 +5694,9 @@ public abstract class Creature extends WorldObject
 			}
 			
 			// Map Device modifiers: Mana Siphon, Venomous, Lacerating.
-			if (isMonster() && target.isPlayer())
+			if (isMonster() && (target.isPlayer() || MapDeviceManager.isSimulatedFighter(target)))
 			{
-				MapDeviceManager.onMonsterHit(asMonster(), target.asPlayer(), crit);
+				MapDeviceManager.onMonsterHit(asMonster(), target, crit);
 			}
 			
 			target.notifyDamageReceived(damage, this, null, crit, false);

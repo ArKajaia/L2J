@@ -146,6 +146,8 @@ public class MapRun
 	private final AtomicInteger _chainKills = new AtomicInteger();
 	/** A test run of the web API's map probe (no hideout, no portals): it keeps a log of what its map says. */
 	private volatile boolean _probe;
+	/** A run fought by fake players instead of players (the map simulation), {@code null} for a players' run. */
+	private volatile MapRunListener _simulation;
 	private final List<String> _probeLog = Collections.synchronizedList(new ArrayList<>());
 
 	// Combined effect of the modifiers.
@@ -1427,6 +1429,27 @@ public class MapRun
 	public void addChainKill()
 	{
 		_chainKills.incrementAndGet();
+	}
+
+	/**
+	 * @return what watches a run fought by fake players (the map simulation), {@code null} for a players' run
+	 */
+	public MapRunListener getSimulation()
+	{
+		return _simulation;
+	}
+
+	public void setSimulation(MapRunListener simulation)
+	{
+		_simulation = simulation;
+	}
+
+	/**
+	 * @return {@code true} for a run fought by fake players (the map simulation)
+	 */
+	public boolean isSimulated()
+	{
+		return _simulation != null;
 	}
 
 	public boolean isProbe()

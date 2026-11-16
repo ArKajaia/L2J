@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.MageMonsterManager;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
+import org.l2jmobius.gameserver.managers.simulation.MapSimulation;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.World;
@@ -235,6 +236,13 @@ public class AttackableAI extends CreatureAI
 			}
 		}
 		
+		// A monster of a simulated Map Device map goes for its fake players (see MapSimulation) as it would for players.
+		final Boolean mapPrey = MapSimulation.isPrey(getActiveChar(), target);
+		if (mapPrey != null)
+		{
+			return mapPrey;
+		}
+
 		// Check if the target isn't invulnerable
 		if (target.isInvul())
 		{
@@ -690,7 +698,7 @@ public class AttackableAI extends CreatureAI
 							if (hating == 0)
 							{
 								// A player in range gets 1 hate (see Attackable#addDamageHate), a fake player 0, which never makes the monster attack: a Race Wars monster gives it 1 too, so it goes for the fake players like for the players.
-								npc.addDamageHate(target, 0, RaceWarsManager.isEventMonster(npc) ? 1 : 0);
+								npc.addDamageHate(target, 0, RaceWarsManager.isEventMonster(npc) || MapSimulation.isRunner(target) ? 1 : 0);
 							}
 						}
 						return;

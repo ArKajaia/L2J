@@ -87,6 +87,7 @@ import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapLift;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
+import org.l2jmobius.gameserver.model.mapdevice.MapRunListener;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
@@ -522,7 +523,7 @@ public class MapDeviceManager
 		{
 			damage *= run.getMonsterSkillDamageTaken();
 		}
-		if ((attacker != null) && attacker.isPlayable())
+		if (isMapFighter(run, attacker))
 		{
 			damage *= run.getPlayerDamage();
 			if (run.isRampaging())
@@ -548,7 +549,7 @@ public class MapDeviceManager
 		}
 
 		// Gravity Well: the monsters round the one hit are pulled to it (once in a while per monster).
-		if (run.isGravityWell() && (attacker != null) && attacker.isPlayable() && (run.getStatus() == Status.OPEN))
+		if (run.isGravityWell() && isMapFighter(run, attacker) && (run.getStatus() == Status.OPEN))
 		{
 			final long now = System.currentTimeMillis();
 			final Long next = run.getGravityCooldowns().get(monster.getObjectId());
@@ -586,7 +587,7 @@ public class MapDeviceManager
 		}
 
 		// Culling Strike: a hit that leaves the monster below the line finishes it.
-		if (run.isCullingStrike() && (attacker != null) && attacker.isPlayable())
+		if (run.isCullingStrike() && isMapFighter(run, attacker))
 		{
 			final double left = monster.getCurrentHp() - damage;
 			if ((left > 0) && (left < (monster.getMaxHp() * CULL_HP)))
@@ -594,6 +595,10 @@ public class MapDeviceManager
 				damage = monster.getCurrentHp() + 1;
 				run.probeLog("Culling Strike finishes the " + monster.getName() + ".");
 			}
+		}
+		if (run.getSimulation() != null)
+		{
+			run.getSimulation().onMonsterDamaged(run, monster, attacker, Math.min(damage, monster.getCurrentHp()));
 		}
 		return damage;
 	}
@@ -604,7 +609,7 @@ public class MapDeviceManager
 	 * @param target the player hit
 	 * @param crit {@code true} for a critical hit
 	 */
-	public static void onMonsterHit(Monster monster, Player target, boolean crit)
+	public static void onMonsterHit(Monster monster, Creature target, boolean crit)
 	{
 		final MapRun run = getMonsterRun(monster);
 		if ((run == null) || target.isDead() || target.isInvul())
@@ -628,7 +633,7 @@ public class MapDeviceManager
 	/**
 	 * Lands an NPC damage over time debuff on a player, at the level that fits the monster (the skill's levels step every 10 levels, from 14).
 	 */
-	private static void applyNpcDebuff(Monster monster, Player target, int skillId)
+	private static void applyNpcDebuff(Monster monster, Creature target, int skillId)
 	{
 		final int level = Math.max(1, Math.min(12, ((monster.getLevel() - 14) / 10) + 2));
 		final Skill skill = SkillData.getInstance().getSkill(skillId, level);
@@ -667,7 +672,7 @@ public class MapDeviceManager
 				}
 			}
 		}
-		if ((attacker != null) && attacker.isPlayable())
+		if ((attacker != null) && (attacker.isPlayable() || isSimulatedFighter(attacker)))
 		{
 			final MapRun attackerRun = getRun(attacker.getInstanceId());
 			if (attackerRun != null)
@@ -1353,6 +1358,46 @@ public class MapDeviceManager
 	}
 	
 	/**
+	 * Opens a map for the map simulation ({@code MapSimulation}): no player, no hideout, no portals. Its medals roll its modifiers, their tiers and its hot zone effect as at the device, in an arena of its tier picked at random (or the one named).
+	 * @param ownerId an id for the run's owner (the simulation's)
+	 * @param ownerName a name for it
+	 * @param arena where, {@code null} for one of the tier's arenas at random
+	 * @param tierId the tier
+	 * @param medals how many medals: as many modifiers (more than the device takes are allowed here)
+	 * @param forced modifiers to use instead of rolling them, {@code null} to roll
+	 * @param simulation what watches the run
+	 * @return the run
+	 */
+	public MapRun openSimulationRun(int ownerId, String ownerName, MapArena arena, int tierId, int medals, List<MapModifier> forced, MapRunListener simulation)
+	{
+		final MapTier tier = MapDeviceData.getInstance().getTier(tierId);
+		if (tier == null)
+		{
+			throw new IllegalArgumentException("No tier " + tierId + ".");
+		}
+		MapArena place = arena;
+		if (place == null)
+		{
+			final List<MapArena> arenas = MapDeviceData.getInstance().getArenas(tier.tier());
+			if (arenas.isEmpty())
+			{
+				throw new IllegalArgumentException("No arena takes a tier " + tierId + " map.");
+			}
+			place = arenas.get(Rnd.get(arenas.size()));
+		}
+		final List<NpcTemplate> pool = getArenaMonsters(place, tier);
+		if (pool.isEmpty())
+		{
+			throw new IllegalArgumentException("No monster fits a tier " + tierId + " map in " + place.name() + ".");
+		}
+		final List<MapModifier> modifiers = forced != null ? forced : rollModifiers(medals);
+		final Map<MapModifier, Integer> modifierTiers = rollModifierTiers(modifiers, tier.tier());
+		final HotzoneModifier hotzone = rollHotzoneEffect(tier);
+		final Location exit = new Location(place.getEntryX(), place.getEntryY(), place.z());
+		return createRun(ownerId, ownerName, exit, simulation, null, tier, medals, modifiers, modifierTiers, hotzone, place, pool, null, false);
+	}
+
+	/**
 	 * Opens a unique map at the device of the player's own hideout: takes the unique map item, and opens its map with its own modifiers (no medal, no hot zone effect), in its own arena.
 	 * @param player the hideout's owner
 	 * @param type the unique map
@@ -1788,10 +1833,22 @@ public class MapDeviceManager
 	 */
 	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, Map<MapModifier, Integer> modifierTiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique, boolean probe)
 	{
+		return createRun(player.getObjectId(), player.getName(), getReturnLocation(player), null, hideout, tier, medals, modifiers, modifierTiers, hotzone, arena, pool, unique, probe);
+	}
+
+	/**
+	 * @param ownerId whose run it is (a player's object id, or any id of a simulation)
+	 * @param ownerName the owner's name
+	 * @param exit where the instance sends out who is left in it
+	 * @param simulation what watches a run fought by fake players, {@code null} for a players' run: set before anything spawns
+	 */
+	private MapRun createRun(int ownerId, String ownerName, Location exit, MapRunListener simulation, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, Map<MapModifier, Integer> modifierTiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique, boolean probe)
+	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
-		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, modifierTiers, hotzone, arena, instance.getId(), unique);
+		final MapRun run = new MapRun(_runIds.incrementAndGet(), ownerId, ownerName, hideout, tier, medals, modifiers, modifierTiers, hotzone, arena, instance.getId(), unique);
 		run.setProbe(probe);
-		instance.setExitLoc(getReturnLocation(player));
+		run.setSimulation(simulation);
+		instance.setExitLoc(exit);
 		instance.setEjectTime(0);
 		instance.setAllowSummon(false);
 		instance.setDuration((int) Math.min(Integer.MAX_VALUE, (run.getClosesAt() - System.currentTimeMillis()) + 120000L));
@@ -3099,7 +3156,7 @@ public class MapDeviceManager
 		final int gems = Rnd.get(5, 15);
 		victim.dropOrAutoLoot(payee, new ItemHolder(MapDeviceConfig.MEDAL_ITEM_ID, medals));
 		victim.dropOrAutoLoot(payee, new ItemHolder(GEMSTONE_S, gems));
-		final boolean map = (Rnd.get(100) < COFFER_MAP_CHANCE) && dropRunMap(run, victim, payee, rollInMapTier(run));
+		final boolean map = (Rnd.get(100) < COFFER_MAP_CHANCE) && dropRunMap(run, victim, payee, rollInMapTier(run), "coffer");
 		sendScreenToMap(run, "A Sealed Coffer opens: " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s, " + gems + " " + getItemName(GEMSTONE_S) + (map ? " and a map!" : "!"));
 	}
 
@@ -3274,7 +3331,17 @@ public class MapDeviceManager
 		}
 	}
 
-	private static void addPlayerEffects(Player player, MapRun run)
+	/**
+	 * A fake player of a simulated run comes into its map: the players' side of the modifiers and the hot zone buff, as for a player (see {@link #onInstanceChanged}).
+	 * @param fighter the fake player
+	 * @param run the run
+	 */
+	public static void addFighterEffects(Creature fighter, MapRun run)
+	{
+		addPlayerEffects(fighter, run);
+	}
+
+	private static void addPlayerEffects(Creature player, MapRun run)
 	{
 		final Object owner = run.getPlayerFuncOwner();
 		player.removeStatsOwner(owner);
@@ -3312,7 +3379,7 @@ public class MapDeviceManager
 		ThreadPool.schedule(() -> refreshPlayer(player), 500);
 	}
 
-	private static void removePlayerEffects(Player player, MapRun run)
+	private static void removePlayerEffects(Creature player, MapRun run)
 	{
 		player.removeStatsOwner(run.getPlayerFuncOwner());
 		if (run.getCurses().remove(player.getObjectId()) != null)
@@ -3339,7 +3406,7 @@ public class MapDeviceManager
 		ThreadPool.schedule(() -> refreshPlayer(player), 500);
 	}
 
-	private static void applyHotzoneBuff(Player player, HotzoneModifier hotzone)
+	private static void applyHotzoneBuff(Creature player, HotzoneModifier hotzone)
 	{
 		if ((hotzone == null) || (hotzone.getPlayerBuffSkillId() <= 0) || player.isDead() || (player.getEffectList().getBuffInfoBySkillId(hotzone.getPlayerBuffSkillId()) != null))
 		{
@@ -3352,9 +3419,9 @@ public class MapDeviceManager
 		}
 	}
 
-	private static void refreshPlayer(Player player)
+	private static void refreshPlayer(Creature player)
 	{
-		if (!player.isOnline())
+		if (player.isPlayer() ? !player.asPlayer().isOnline() : !player.isSpawned())
 		{
 			return;
 		}
@@ -3362,7 +3429,7 @@ public class MapDeviceManager
 		{
 			player.setCurrentHp(player.getMaxHp());
 		}
-		player.broadcastUserInfo();
+		refreshInfo(player);
 	}
 
 	/**
@@ -3443,6 +3510,81 @@ public class MapDeviceManager
 	 * @param run a run
 	 * @return the players inside its map, alive or not
 	 */
+	/**
+	 * @param run a run
+	 * @return who fights in its map, alive or not: the players inside, and on a simulated run its fake players (see {@link MapRunListener})
+	 */
+	static List<Creature> getFightersInside(MapRun run)
+	{
+		final List<Creature> fighters = new ArrayList<>(getPlayersInside(run));
+		final MapRunListener simulation = run.getSimulation();
+		if (simulation != null)
+		{
+			for (Creature fighter : simulation.getFighters(run))
+			{
+				if ((fighter != null) && fighter.isSpawned() && (fighter.getInstanceId() == run.getInstanceId()))
+				{
+					fighters.add(fighter);
+				}
+			}
+		}
+		return fighters;
+	}
+
+	/**
+	 * @param run a run, may be {@code null}
+	 * @param creature anyone, may be {@code null}
+	 * @return {@code true} if it fights the map as a player: a player, a summon, or a fake player of a simulated run (and its servitor)
+	 */
+	private static boolean isMapFighter(MapRun run, Creature creature)
+	{
+		if (creature == null)
+		{
+			return false;
+		}
+		if (creature.isPlayable())
+		{
+			return true;
+		}
+		final MapRunListener simulation = run != null ? run.getSimulation() : null;
+		return (simulation != null) && simulation.isFighter(creature);
+	}
+
+	/**
+	 * @param creature anyone
+	 * @return {@code true} if it is a fake player (or its servitor) fighting a simulated map in its instance
+	 */
+	public static boolean isSimulatedFighter(Creature creature)
+	{
+		if ((creature == null) || creature.isPlayable() || RUNS_BY_INSTANCE.isEmpty())
+		{
+			return false;
+		}
+		final MapRun run = getRun(creature.getInstanceId());
+		return (run != null) && (run.getSimulation() != null) && run.getSimulation().isFighter(creature);
+	}
+
+	private static void refreshInfo(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			creature.asPlayer().broadcastUserInfo();
+		}
+		else
+		{
+			creature.broadcastInfo();
+		}
+	}
+
+	/**
+	 * @param objectId an object id
+	 * @return the creature of that id in the world, {@code null} for none
+	 */
+	private static Creature findCreature(int objectId)
+	{
+		return World.getInstance().findObject(objectId) instanceof Creature creature ? creature : null;
+	}
+
 	static List<Player> getPlayersInside(MapRun run)
 	{
 		final List<Player> players = new ArrayList<>();
@@ -3504,9 +3646,22 @@ public class MapDeviceManager
 				{
 					UniqueMapManager.getInstance().onFakePlayerDied(run, victim.asMonster(), player);
 				}
+				final MapRunListener simulation = run.getSimulation();
+				if ((simulation != null) && simulation.isFighter(victim))
+				{
+					simulation.onFighterDied(run, victim, killer);
+				}
 				return;
 			}
-			onMapMonsterDied(run, victim.asMonster(), player);
+			final MapRunListener simulation = run.getSimulation();
+			final Creature fighter = player != null ? player : simulation != null ? simulation.getCredited(killer) : null;
+			onMapMonsterDied(run, victim.asMonster(), player, fighter, killer);
+
+			// A simulated run's kill: the fake player gets the map drops a player would.
+			if ((player == null) && (fighter != null) && rewards)
+			{
+				rollMapDrop(victim, null, run);
+			}
 		}
 
 		if ((player != null) && rewards)
@@ -3557,15 +3712,35 @@ public class MapDeviceManager
 	 */
 	static boolean dropRunMap(MapRun run, Attackable victim, Player player, int tierId)
 	{
+		return dropRunMap(run, victim, player, tierId, "monster");
+	}
+
+	/**
+	 * @param player who gets it, {@code null} on a simulated run (the map is only counted: the fake players carry nothing)
+	 * @param source what dropped it, for the simulation's log: monster, completion, guardian, speedrun, coffer
+	 */
+	static boolean dropRunMap(MapRun run, Attackable victim, Player player, int tierId, String source)
+	{
+		if ((player == null) && (run.getSimulation() == null))
+		{
+			return false;
+		}
 		if (!run.claimMapDrop())
 		{
 			return false;
 		}
-		dropMap(victim, player, tierId);
+		if (player != null)
+		{
+			dropMap(victim, player, tierId);
+		}
+		if (run.getSimulation() != null)
+		{
+			run.getSimulation().onMapDropped(run, tierId, source);
+		}
 		return true;
 	}
 
-	private void onMapMonsterDied(MapRun run, Monster victim, Player player)
+	private void onMapMonsterDied(MapRun run, Monster victim, Player player, Creature fighter, Creature killer)
 	{
 		if (run.isClosed())
 		{
@@ -3577,6 +3752,11 @@ public class MapDeviceManager
 		{
 			run.addKill();
 		}
+		final MapRunListener simulation = run.getSimulation();
+		if (simulation != null)
+		{
+			simulation.onMonsterDied(run, victim, killer, counted);
+		}
 		if (BURSTING.get())
 		{
 			run.addChainKill();
@@ -3586,6 +3766,7 @@ public class MapDeviceManager
 			run.getGravityCooldowns().remove(victim.getObjectId());
 		}
 		final boolean killerInside = (player != null) && (player.getInstanceId() == run.getInstanceId());
+		final boolean fighterInside = (fighter != null) && (fighter.getInstanceId() == run.getInstanceId());
 		if (run.isNests())
 		{
 			final int heart = victim.getVariables().getInt(NEST_HEART_VAR, -1);
@@ -3619,9 +3800,9 @@ public class MapDeviceManager
 			sendScreenToMap(run, inTime ? "Bounty claimed: the " + victim.getName() + " drops triple!" : "The " + victim.getName() + " is slain, too late for its bounty.");
 		}
 
-		if (run.isDeathCurse() && (player != null) && (player.getInstanceId() == run.getInstanceId()))
+		if (run.isDeathCurse() && fighterInside)
 		{
-			curse(run, player);
+			curse(run, fighter);
 		}
 
 		if (run.isVolatileDeath())
@@ -3636,12 +3817,12 @@ public class MapDeviceManager
 
 		if (run.isChainReaction())
 		{
-			ThreadPool.schedule(() -> chainBurst(run, victim, corpse, killerInside ? player : null), CHAIN_DELAY);
+			ThreadPool.schedule(() -> chainBurst(run, victim, corpse, fighterInside ? fighter : null), CHAIN_DELAY);
 		}
 
-		if (run.isMomentum() && killerInside)
+		if (run.isMomentum() && fighterInside)
 		{
-			addMomentum(run, player);
+			addMomentum(run, fighter);
 		}
 
 		if (counted && (run.getStatus() == Status.OPEN))
@@ -3658,11 +3839,11 @@ public class MapDeviceManager
 			}
 		}
 
-		if (victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (player != null))
+		if (victim.getVariables().getBoolean(GUARDIAN_VAR, false) && ((player != null) || (fighter != null)))
 		{
 			for (int i = 0; i < MapDeviceConfig.GUARDIAN_EXTRA_MAPS; i++)
 			{
-				dropRunMap(run, victim, player, rollInMapTier(run));
+				dropRunMap(run, victim, player, rollInMapTier(run), "guardian");
 			}
 			sendScreenToMap(run, "The Map Guardian has fallen!");
 		}
@@ -3695,7 +3876,7 @@ public class MapDeviceManager
 			{
 				return;
 			}
-			completeRun(run, victim, player);
+			completeRun(run, victim, player, fighter);
 		}
 		else if (counted && !run.isUnique())
 		{
@@ -3847,7 +4028,7 @@ public class MapDeviceManager
 			return;
 		}
 		victim.broadcastPacket(new MagicSkillUse(victim, victim, VOLATILE_SKILL_ID, 1, 0, 0));
-		for (Player player : getPlayersInside(run))
+		for (Creature player : getFightersInside(run))
 		{
 			if (!player.isDead() && !player.isInvul() && (player.calculateDistance2D(corpse) <= VOLATILE_RADIUS))
 			{
@@ -3904,14 +4085,14 @@ public class MapDeviceManager
 	 * Chain Reaction: the corpse bursts, hurting the monsters round it (credited to the killer, so a monster it slays bursts in turn) and, less, the players.
 	 * @param killer the player credited with the burst's kills, {@code null} for none
 	 */
-	private static void chainBurst(MapRun run, Monster victim, Location corpse, Player killer)
+	private static void chainBurst(MapRun run, Monster victim, Location corpse, Creature killer)
 	{
 		if (run.isClosed())
 		{
 			return;
 		}
 		victim.broadcastPacket(new MagicSkillUse(victim, victim, VOLATILE_SKILL_ID, 1, 0, 0));
-		final Player credited = (killer != null) && !killer.isDead() && (killer.getInstanceId() == run.getInstanceId()) ? killer : null;
+		final Creature credited = (killer != null) && !killer.isDead() && (killer.getInstanceId() == run.getInstanceId()) ? killer : null;
 		int hit = 0;
 		BURSTING.set(Boolean.TRUE);
 		try
@@ -3930,7 +4111,7 @@ public class MapDeviceManager
 		{
 			BURSTING.set(Boolean.FALSE);
 		}
-		for (Player player : getPlayersInside(run))
+		for (Creature player : getFightersInside(run))
 		{
 			if (!player.isDead() && !player.isInvul() && (player.calculateDistance2D(corpse) <= CHAIN_RADIUS))
 			{
@@ -3950,7 +4131,7 @@ public class MapDeviceManager
 	{
 		final boolean already = run.isRampaging();
 		run.setRampageUntil(System.currentTimeMillis() + (RAMPAGE_SECONDS * 1000L));
-		for (Player player : getPlayersInside(run))
+		for (Creature player : getFightersInside(run))
 		{
 			if (!already)
 			{
@@ -3961,14 +4142,14 @@ public class MapDeviceManager
 		sendScreenToMap(run, "RAMPAGE! Double damage and +" + Math.round((RAMPAGE_SPEED - 1) * 100) + "% run speed for " + RAMPAGE_SECONDS + " seconds!");
 	}
 
-	private static void applyRampage(MapRun run, Player player)
+	private static void applyRampage(MapRun run, Creature player)
 	{
 		final Object owner = run.getRampageFuncOwner();
 		player.removeStatsOwner(owner);
 		final List<AbstractFunction> functions = new ArrayList<>();
 		mul(functions, Stat.MOVE_SPEED, RAMPAGE_SPEED, owner);
 		player.addStatFuncs(functions);
-		player.broadcastUserInfo();
+		refreshInfo(player);
 	}
 
 	/**
@@ -3977,10 +4158,10 @@ public class MapDeviceManager
 	private static void endRampage(MapRun run)
 	{
 		run.setRampageUntil(0);
-		for (Player player : getPlayersInside(run))
+		for (Creature player : getFightersInside(run))
 		{
 			player.removeStatsOwner(run.getRampageFuncOwner());
-			player.broadcastUserInfo();
+			refreshInfo(player);
 		}
 		sendToMap(run, "The rampage ends.");
 	}
@@ -3988,7 +4169,7 @@ public class MapDeviceManager
 	/**
 	 * Momentum: a kill adds a stack while the chain holds, else starts it again.
 	 */
-	private static void addMomentum(MapRun run, Player player)
+	private static void addMomentum(MapRun run, Creature player)
 	{
 		final long now = System.currentTimeMillis();
 		final long[] momentum = run.getMomentum().computeIfAbsent(player.getObjectId(), _ -> new long[2]);
@@ -4013,7 +4194,7 @@ public class MapDeviceManager
 		}
 	}
 
-	private static void applyMomentum(MapRun run, Player player, int stacks)
+	private static void applyMomentum(MapRun run, Creature player, int stacks)
 	{
 		final Object owner = run.getMomentumFuncOwner();
 		player.removeStatsOwner(owner);
@@ -4025,7 +4206,7 @@ public class MapDeviceManager
 			mul(functions, Stat.MAGIC_ATTACK_SPEED, 1.0 + (stacks * MOMENTUM_ATTACK_SPEED_PER_STACK), owner);
 			player.addStatFuncs(functions);
 		}
-		player.broadcastUserInfo();
+		refreshInfo(player);
 	}
 
 	/**
@@ -4046,7 +4227,7 @@ public class MapDeviceManager
 				stacks = (int) momentum[0];
 			}
 			run.getMomentum().remove(entry.getKey());
-			final Player player = World.getInstance().getPlayer(entry.getKey());
+			final Creature player = findCreature(entry.getKey());
 			if (player != null)
 			{
 				applyMomentum(run, player, 0);
@@ -4173,7 +4354,7 @@ public class MapDeviceManager
 	/**
 	 * Death Curse: one more stack on the killer, and the clock starts again.
 	 */
-	private static void curse(MapRun run, Player player)
+	private static void curse(MapRun run, Creature player)
 	{
 		final long[] curse = run.getCurses().computeIfAbsent(player.getObjectId(), _ -> new long[2]);
 		final int stacks;
@@ -4187,7 +4368,7 @@ public class MapDeviceManager
 		player.sendMessage("Death Curse: you are " + Math.round(stacks * CURSE_PER_STACK * 100) + "% weaker for " + CURSE_SECONDS + " seconds.");
 	}
 
-	private static void applyCurse(MapRun run, Player player, int stacks)
+	private static void applyCurse(MapRun run, Creature player, int stacks)
 	{
 		final Object owner = run.getCurseFuncOwner();
 		player.removeStatsOwner(owner);
@@ -4200,7 +4381,7 @@ public class MapDeviceManager
 			}
 			player.addStatFuncs(functions);
 		}
-		player.broadcastUserInfo();
+		refreshInfo(player);
 	}
 
 	/**
@@ -4215,7 +4396,7 @@ public class MapDeviceManager
 				continue;
 			}
 			run.getCurses().remove(entry.getKey());
-			final Player player = World.getInstance().getPlayer(entry.getKey());
+			final Creature player = findCreature(entry.getKey());
 			if (player != null)
 			{
 				applyCurse(run, player, 0);
@@ -4304,8 +4485,8 @@ public class MapDeviceManager
 		{
 			return;
 		}
-		final List<Player> players = getPlayersInside(run);
-		players.removeIf(Player::isDead);
+		final List<Creature> players = getFightersInside(run);
+		players.removeIf(Creature::isDead);
 		final List<NpcTemplate> pool = run.getMonsterKinds().isEmpty() ? getMonsterPool(run.getTier()) : run.getMonsterKinds();
 		if (players.isEmpty() || pool.isEmpty())
 		{
@@ -4313,7 +4494,7 @@ public class MapDeviceManager
 			return;
 		}
 
-		final Player target = players.get(Rnd.get(players.size()));
+		final Creature target = players.get(Rnd.get(players.size()));
 		final GeoEngine geo = GeoEngine.getInstance();
 		for (int i = 0; i < AMBUSH_SIZE; i++)
 		{
@@ -4353,6 +4534,14 @@ public class MapDeviceManager
 
 	void completeRun(MapRun run, Monster lastKill, Player player)
 	{
+		completeRun(run, lastKill, player, player);
+	}
+
+	/**
+	 * @param fighter who gets the completion's maps: the player, or on a simulated run its fake player ({@code null} for nobody)
+	 */
+	void completeRun(MapRun run, Monster lastKill, Player player, Creature fighter)
+	{
 		synchronized (run)
 		{
 			if (run.getStatus() != Status.OPEN)
@@ -4366,16 +4555,16 @@ public class MapDeviceManager
 
 		sendScreenToMap(run, run.isUnique() ? run.getUnique().name() + " is conquered!" : "Map complete!");
 		sendToMap(run, (run.getMonsters().isEmpty() ? "Every monster of the map is slain." : "The map is cleared: the few monsters left may still be hunted.") + " The map collapses in " + MapDeviceConfig.COMPLETED_CLOSE_DELAY + " seconds.");
-		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (player != null))
+		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (fighter != null))
 		{
-			dropRunMap(run, lastKill, player, rollInMapTier(run));
+			dropRunMap(run, lastKill, player, rollInMapTier(run), "completion");
 		}
 		UniqueMapManager.getInstance().onRunCompleted(run, lastKill, player);
 
 		// Speedrun: cleared in time, a bonus map (within the map budget).
-		if (run.isSpeedrunMade() && (lastKill != null) && (player != null))
+		if (run.isSpeedrunMade() && (lastKill != null) && (fighter != null))
 		{
-			sendScreenToMap(run, dropRunMap(run, lastKill, player, rollInMapTier(run)) ? "Speedrun! Cleared in time: a bonus map." : "Speedrun! Cleared in time, but the map has given all its maps.");
+			sendScreenToMap(run, dropRunMap(run, lastKill, player, rollInMapTier(run), "speedrun") ? "Speedrun! Cleared in time: a bonus map." : "Speedrun! Cleared in time, but the map has given all its maps.");
 		}
 
 		for (int objectId : run.getPlayersInside())
@@ -4385,6 +4574,11 @@ public class MapDeviceManager
 			{
 				MapQuestManager.getInstance().onMapCompleted(inside);
 			}
+		}
+
+		if (run.getSimulation() != null)
+		{
+			run.getSimulation().onCompleted(run);
 		}
 
 		final Player owner = World.getInstance().getPlayer(run.getOwnerId());
@@ -4404,7 +4598,11 @@ public class MapDeviceManager
 		{
 			return;
 		}
-		if ((MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE >= 0) && ((player.getLevel() - victim.getLevel()) > MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE))
+		if ((player == null) && ((run == null) || (run.getSimulation() == null)))
+		{
+			return;
+		}
+		if ((player != null) && (MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE >= 0) && ((player.getLevel() - victim.getLevel()) > MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE))
 		{
 			return;
 		}
@@ -4456,7 +4654,7 @@ public class MapDeviceManager
 		{
 			if (run != null)
 			{
-				dropRunMap(run, victim, player, tier);
+				dropRunMap(run, victim, player, tier, "monster");
 			}
 			else
 			{
@@ -4577,8 +4775,8 @@ public class MapDeviceManager
 
 			final List<Player> players = getPlayersInside(_run);
 
-			// Every portal used and nobody left inside: nobody can come back.
-			if (_run.getPortals().isEmpty() && players.isEmpty())
+			// Every portal used and nobody left inside: nobody can come back. (A simulated run has no portals: its fake players stay until it ends.)
+			if (_run.getPortals().isEmpty() && players.isEmpty() && !_run.isSimulated())
 			{
 				if (_noPortalsSince == 0)
 				{
@@ -4650,44 +4848,47 @@ public class MapDeviceManager
 				}
 			}
 
-			if (players.isEmpty())
+			// The players' side of the clock below: on a simulated run, its fake players take it too.
+			final List<Creature> fighters = _run.isSimulated() ? getFightersInside(_run) : List.of();
+			if (players.isEmpty() && fighters.isEmpty())
 			{
 				return;
 			}
 
-			if (_run.isBounty() && (_run.getStatus() == Status.OPEN))
+			if (_run.isBounty() && (_run.getStatus() == Status.OPEN) && !players.isEmpty())
 			{
 				updateBounty(_run, players, now);
 			}
 
-			if (((_tick % 2) == 0) && !_run.isUnique() && (_run.getStatus() == Status.OPEN))
+			if (((_tick % 2) == 0) && !_run.isUnique() && (_run.getStatus() == Status.OPEN) && !players.isEmpty())
 			{
 				updateLastHuntRadar(_run, players);
 			}
+			final List<Creature> hurtable = fighters.isEmpty() ? new ArrayList<>(players) : getFightersInside(_run);
 
 			final HotzoneModifier hotzone = _run.getHotzoneEffect();
 			if ((hotzone != null) && ((_tick % 10) == 0))
 			{
-				for (Player player : players)
+				for (Creature player : hurtable)
 				{
 					applyHotzoneBuff(player, hotzone); // Back on if a death or a cleanse took it.
 				}
 			}
 			if ((hotzone != null) && (hotzone.getPlayerHpDrainPctPerTick() > 0) && ((_tick % (HotzoneModifierManager.PLAYER_DRAIN_INTERVAL_MS / 1000)) == 0))
 			{
-				hurt(players, hotzone.getPlayerHpDrainPctPerTick() / 100.0, null);
+				hurt(hurtable, hotzone.getPlayerHpDrainPctPerTick() / 100.0, null);
 			}
 			if (_run.isBurningGround() && ((_tick % BURNING_INTERVAL) == 0))
 			{
-				hurt(players, BURNING_DAMAGE, null);
+				hurt(hurtable, BURNING_DAMAGE, null);
 			}
 			if (_run.isStorm() && ((_tick % STORM_INTERVAL) == 0))
 			{
-				final List<Player> alive = new ArrayList<>(players);
-				alive.removeIf(Player::isDead);
+				final List<Creature> alive = new ArrayList<>(hurtable);
+				alive.removeIf(Creature::isDead);
 				if (!alive.isEmpty())
 				{
-					final Player struck = alive.get(Rnd.get(alive.size()));
+					final Creature struck = alive.get(Rnd.get(alive.size()));
 					struck.broadcastPacket(new MagicSkillUse(struck, struck, STORM_SKILL_ID, 1, 0, 0));
 					hurt(List.of(struck), STORM_DAMAGE, "Lightning strikes you!");
 				}
@@ -4695,9 +4896,9 @@ public class MapDeviceManager
 		}
 	}
 
-	static void hurt(Collection<Player> players, double share, String message)
+	static void hurt(Collection<? extends Creature> players, double share, String message)
 	{
-		for (Player player : players)
+		for (Creature player : players)
 		{
 			if (player.isDead() || player.isInvul())
 			{
@@ -4780,6 +4981,18 @@ public class MapDeviceManager
 			if ((hideout != null) && (hideout.getRun() == run))
 			{
 				hideout.setRun(null);
+			}
+		}
+
+		if (run.getSimulation() != null)
+		{
+			try
+			{
+				run.getSimulation().onClosed(run, message);
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, MapDeviceManager.class.getSimpleName() + ": The simulation of instance " + run.getInstanceId() + " failed on close.", e);
 			}
 		}
 
@@ -4873,7 +5086,7 @@ public class MapDeviceManager
 	 * @param location a spot
 	 * @return the same spot on the ground
 	 */
-	static Location getGroundLocation(Location location)
+	public static Location getGroundLocation(Location location)
 	{
 		return new Location(location.getX(), location.getY(), GeoEngine.getInstance().getHeight(location.getX(), location.getY(), location.getZ()), location.getHeading());
 	}

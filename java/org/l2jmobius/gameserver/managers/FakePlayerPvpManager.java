@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.data.xml.TransformData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpFactory.Looks;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
+import org.l2jmobius.gameserver.managers.simulation.MapSimulation;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -79,6 +80,7 @@ import org.l2jmobius.gameserver.model.actor.transform.Transform;
 import org.l2jmobius.gameserver.model.actor.transform.TransformTemplate;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
@@ -3510,8 +3512,19 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
+		// Flaskless: no potion in that map, for a fake player that runs it as for a player.
+		if (MapDeviceManager.isSimulatedFighter(fake))
+		{
+			final MapRun run = MapDeviceManager.getRun(fake.getInstanceId());
+			if ((run != null) && run.isFlaskless())
+			{
+				return false;
+			}
+		}
+
 		profile.setNextPotionTime(now + FakePlayerPvpConfig.POTION_REUSE);
 		fake.setCurrentHp(Math.min(maxHp, fake.getCurrentHp() + ((maxHp * FakePlayerPvpConfig.POTION_HEAL_PERCENT) / 100.0)));
+		MapSimulation.onPotion(fake);
 		fake.broadcastPacket(new MagicSkillUse(fake, fake, POTION_SKILL_ID, 1, 0, 0));
 		return true;
 	}

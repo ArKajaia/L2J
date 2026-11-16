@@ -309,6 +309,7 @@ public class Attackable extends Npc
 		{
 			damage = FakePlayerPvpManager.getInstance().limitDamage(this, damage, attacker);
 			damage = FakePlayerPvpManager.getInstance().transferDamage(this, damage, attacker);
+			org.l2jmobius.gameserver.managers.simulation.MapSimulation.onDamaged(this, damage);
 		}
 		// A player hitting the monster a roaming fake player is fighting hears about it.
 		else if ((attacker != null) && attacker.isPlayable() && isMonster())
@@ -1809,7 +1810,7 @@ public class Attackable extends Npc
 	 * @param totalDamage The total damage done
 	 * @return
 	 */
-	private double[] calculateExpAndSp(int charLevel, long damage, long totalDamage)
+	public double[] calculateExpAndSp(int charLevel, long damage, long totalDamage)
 	{
 		final int levelDiff = charLevel - getLevel();
 		double xp = 0;
