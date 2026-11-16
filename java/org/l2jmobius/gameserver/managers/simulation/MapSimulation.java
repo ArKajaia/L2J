@@ -216,6 +216,20 @@ public final class MapSimulation
 	}
 
 	/**
+	 * @param npc a fake player
+	 * @return {@code true} if it is a runner of a batch with {@code brain=pvp}: it fights the map's monsters with its PvP brain (skill picks, long cooldowns, combos, debuffs, fight reading)
+	 */
+	public static boolean isPvpBrain(Npc npc)
+	{
+		if (RUNNERS.isEmpty())
+		{
+			return false;
+		}
+		final Job job = RUNNERS.get(npc.getObjectId());
+		return (job != null) && job._batch._pvpBrain;
+	}
+
+	/**
 	 * A runner sits resting (called on each of its thinks while it does).
 	 * @param npc the runner
 	 */
@@ -324,6 +338,7 @@ public final class MapSimulation
 		final int stuck = Math.max(1, Math.min(60, parseInt(params.get("stuck"), 6)));
 		final int respawn = Math.max(1, Math.min(120, parseInt(params.get("respawn"), 10)));
 		final int passives = Math.max(0, Math.min(1000, parseInt(params.get("passives"), 0)));
+		final boolean pvpBrain = "pvp".equalsIgnoreCase(params.getOrDefault("brain", "").trim());
 		MapArena arena = null;
 		final String arenaName = params.getOrDefault("arena", "").trim();
 		if (!arenaName.isEmpty())
@@ -336,6 +351,7 @@ public final class MapSimulation
 		}
 
 		final Batch batch = new Batch(build, fixedLevel, parallel, minutes, stuck, respawn, arena, passives);
+		batch._pvpBrain = pvpBrain;
 		int index = 0;
 		for (int tier : tiers)
 		{
@@ -428,6 +444,8 @@ public final class MapSimulation
 		final MapArena _arena;
 		/** The runners' passive tree points, 0 for the usual roll. */
 		final int _passives;
+		/** brain=pvp: the runners fight the monsters with their PvP brain. */
+		volatile boolean _pvpBrain;
 		final Deque<Job> _queue = new ArrayDeque<>();
 		final Set<Job> _active = ConcurrentHashMap.newKeySet();
 		final List<Job> _finished = new ArrayList<>();
@@ -458,7 +476,7 @@ public final class MapSimulation
 			Files.writeString(_dir.resolve("deaths.csv"), "batch,map,tier,medals,level,arena,minute,progress_pct,killer,killer_level,killer_champion,killer_kind,killer_variant,modifiers\n", StandardCharsets.UTF_8);
 			Files.writeString(_dir.resolve("kinds.csv"), "batch,map,tier,medals,arena,kind,npc_id,own_level,level,lifted,max_hp,killed,deaths_caused,exp\n", StandardCharsets.UTF_8);
 			Files.writeString(_dir.resolve("runs.jsonl"), "", StandardCharsets.UTF_8);
-			Files.writeString(_dir.resolve("settings.txt"), "build=" + _build.getName() + "\nlevel=" + (_fixedLevel > 0 ? _fixedLevel : "auto") + "\nparallel=" + _parallel + "\nminutes=" + _minutes + "\nstuck=" + _stuck + "\nrespawn=" + _respawn + "\narena=" + (_arena != null ? _arena.id() : "any") + "\npassives=" + (_passives > 0 ? _passives : "rolled") + "\n", StandardCharsets.UTF_8);
+			Files.writeString(_dir.resolve("settings.txt"), "build=" + _build.getName() + "\nlevel=" + (_fixedLevel > 0 ? _fixedLevel : "auto") + "\nparallel=" + _parallel + "\nminutes=" + _minutes + "\nstuck=" + _stuck + "\nrespawn=" + _respawn + "\narena=" + (_arena != null ? _arena.id() : "any") + "\npassives=" + (_passives > 0 ? _passives : "rolled") + "\nbrain=" + (_pvpBrain ? "pvp" : "pve") + "\n", StandardCharsets.UTF_8);
 		}
 
 		/**
@@ -1320,6 +1338,7 @@ public final class MapSimulation
 			line.put("batch", _batch._name).put("map", _index).put("tier", _tier).put("medals", _medals).put("level", _level).put("build", _batch._build.getName());
 			final Npc runner = _runner;
 			final FakePlayerPvpProfile profile = runner != null ? runner.getTemplate().getFakePlayerPvpProfile() : null;
+			line.put("brain", _batch._pvpBrain ? "pvp" : "pve");
 			line.put("passivePoints", (profile != null) && (profile.getPassives() != null) ? profile.getPassives().getPoints() : 0).put("passiveNodes", (profile != null) && (profile.getPassives() != null) ? profile.getPassives().getNodeCount() : 0);
 			line.put("arena", run != null ? run.getArena().name() : null).put("hotzone", run != null && run.getHotzoneEffect() != null ? run.getHotzoneEffect().name() : null);
 			final Map<String, Object> modifiers = new LinkedHashMap<>();

@@ -1044,7 +1044,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final Role role = profile.isTransformed() ? Role.FIGHTER : profile.isCasterHeld() ? Role.MAGE : profile.getRole();
 		final boolean mage = role == Role.MAGE;
 		_autoAttacker = !mage && !profile.getBuild().isSkillFighter() && !profile.isTransformed();
-		final boolean pvp = isPvpEnemy(target);
+		// A runner of the map simulation with brain=pvp fights the map's monsters with its PvP brain, as it would a player.
+		final boolean pvp = isPvpEnemy(target) || MapSimulation.isPvpBrain(npc);
 		final boolean canMove = !npc.isMovementDisabled();
 		
 		// Skill timing: what it sees of the fight (casts, cooldowns, icons, HP).
