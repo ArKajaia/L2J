@@ -138,7 +138,7 @@ public class MapDeviceConfig
 		MAX_MEDALS = Math.max(0, Math.min(50, config.getInt("MaxMedals", 8)));
 		XP_BONUS_PER_MEDAL = Math.max(0, config.getInt("XpBonusPerMedal", 20));
 		DROP_BONUS_PER_MEDAL = Math.max(0, config.getInt("DropBonusPerMedal", 20));
-		MONSTER_COUNT = Math.max(1, config.getInt("MonsterCount", 100));
+		MONSTER_COUNT = Math.max(1, config.getInt("MonsterCount", 50));
 		LIFTED_MIN_LEVEL = Math.max(1, config.getInt("LiftedMonsterMinLevel", 40));
 		LIFTED_KINDS_PER_MAP = Math.max(0, config.getInt("LiftedKindsPerMap", 3));
 		LIFTED_MAX_STRENGTH_GAIN = Math.max(1.0, config.getDouble("LiftedMaxStrengthGain", 2.0));
