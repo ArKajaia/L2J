@@ -734,7 +734,7 @@ public class MapDeviceManager
 	}
 
 	/**
-	 * A map is complete once {@link MapDeviceConfig#COMPLETION_PERCENT}% of its counted monsters are slain (all of them on a map of fewer than 100); a unique map needs every one, its waves and final encounter hang on it.
+	 * A map is complete once {@link MapDeviceConfig#COMPLETION_PERCENT}% of its counted monsters are slain (the monsters that may stay alive round down, so a small map needs all of them); a unique map needs every one, its waves and final encounter hang on it.
 	 * @param run a run
 	 * @return how many more of its counted monsters must die to complete it
 	 */
