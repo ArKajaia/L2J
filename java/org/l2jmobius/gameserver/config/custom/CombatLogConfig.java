@@ -38,6 +38,7 @@ public class CombatLogConfig
 	public static boolean RAID_SHOW_ON_KILL;
 	public static boolean RAID_CHAT_SUMMARY;
 	public static boolean PACKET_EXTENSION;
+	public static boolean RECAP_PACKETS;
 	
 	public static void load()
 	{
@@ -53,5 +54,6 @@ public class CombatLogConfig
 		RAID_SHOW_ON_KILL = config.getBoolean("RaidLogShowOnKill", true);
 		RAID_CHAT_SUMMARY = config.getBoolean("RaidLogChatSummary", true);
 		PACKET_EXTENSION = config.getBoolean("CombatLogPacketExtension", true);
+		RECAP_PACKETS = config.getBoolean("CombatLogRecapPackets", true);
 	}
 }

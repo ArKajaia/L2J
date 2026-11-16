@@ -36,7 +36,9 @@ public enum CustomClientPackets
 	REQUEST_EX2_PASSIVE_TREE_ALLOCATE(3, RequestEx2PassiveTreeAllocate::new),
 	REQUEST_EX2_PASSIVE_TREE_DEALLOCATE(4, RequestEx2PassiveTreeDeallocate::new),
 	REQUEST_EX2_PASSIVE_TREE_RESET(5, RequestEx2PassiveTreeReset::new),
-	REQUEST_EX2_PASSIVE_TREE_TEMPLATE(6, RequestEx2PassiveTreeTemplate::new);
+	REQUEST_EX2_PASSIVE_TREE_TEMPLATE(6, RequestEx2PassiveTreeTemplate::new),
+	// 7-14 are the bestiary's, registered by its script. The death recap's "Full details" (client/DeathRecap/PROTOCOL.txt).
+	REQUEST_EX2_COMBAT_REPORT(15, RequestEx2CombatReport::new);
 
 	/** Packets registered by the scripts, by sub-opcode. */
 	private static final Map<Integer, Supplier<ClientPacket>> REGISTERED = new ConcurrentHashMap<>();

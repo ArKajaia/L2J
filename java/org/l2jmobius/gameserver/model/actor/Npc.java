@@ -1255,6 +1255,12 @@ public class Npc extends Creature
 		
 		final Weapon weapon = (killer != null) ? killer.getActiveWeaponItem() : null;
 		_killingBlowWeaponId = (weapon != null) ? weapon.getId() : 0;
+
+		// The kill recap of whoever killed a fake player (a player's death sends it from Player#doDie).
+		if (_isFakePlayer)
+		{
+			org.l2jmobius.gameserver.managers.CombatLogManager.onFakePlayerDeath(this, killer);
+		}
 		// A class transfer challenge opponent is part of the trial: killing it is neither a PK nor a PvP kill. Nor is a kill in a PvP zone (a PvP instance, such as a Team vs Team match, or an arena), as for a player (see Player#onKillUpdatePvPKarma), unless it is an enemy of an event.
 		// An enemy of an event (Team vs Team, Deathmatch, Conquest, Race Wars) killed by a player of it: a PvP, never a PK, whatever its flag.
 		final boolean eventKill = _isFakePlayer && (killer != null) && killer.isPlayable() && TeamEventRules.isEventKill(killer, this);

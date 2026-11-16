@@ -5705,9 +5705,9 @@ public abstract class Creature extends WorldObject
 				try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_REFLECT, null, 0))
 				{
 					reduceCurrentHp(reflectedDamage, target, true, false, null);
+					// Inside the scope: the combat log of the one who reflected counts it as reflected damage.
+					notifyDamageReceived(reflectedDamage, target, null, crit, false);
 				}
-				
-				notifyDamageReceived(reflectedDamage, target, null, crit, false);
 			}
 			
 			if (!isBow) // Do not absorb if weapon is of type bow

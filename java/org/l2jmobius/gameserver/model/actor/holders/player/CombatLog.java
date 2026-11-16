@@ -42,6 +42,13 @@ public class CombatLog
 	public static final byte DEALT = 7;
 	public static final byte YOU_MISSED = 8;
 
+	// What a skill row is, for the client's death recap (client/DeathRecap/PROTOCOL.txt).
+	public static final byte CATEGORY_ATTACK = 0;
+	public static final byte CATEGORY_PHYSICAL_SKILL = 1;
+	public static final byte CATEGORY_MAGIC_SKILL = 2;
+	public static final byte CATEGORY_OVER_TIME = 3;
+	public static final byte CATEGORY_REFLECT = 4;
+
 	/**
 	 * One event of the fight. Ring entries are mutable and reused; the ones handed out in a {@link Report} are copies and never change.
 	 */
@@ -64,10 +71,13 @@ public class CombatLog
 		public int cpAfter;
 		/** Buffs cancelled. */
 		public int count;
+		/** The {@link SkillUse#key} of a {@link #HIT} or {@link #DOT}. */
+		public long useKey;
 
 		Entry copy()
 		{
 			final Entry e = new Entry();
+			e.useKey = useKey;
 			e.type = type;
 			e.time = time;
 			e.name = name;
@@ -93,6 +103,8 @@ public class CombatLog
 	 */
 	public static class Side
 	{
+		/** The object id of the attacker, or of the target you hit. */
+		public final int id;
 		public final String name;
 		public final boolean pvp;
 		public long damage;
@@ -108,9 +120,13 @@ public class CombatLog
 		public Skill biggestSkill;
 		public long first;
 		public long last;
+		/** Where the kill recap of this target last stopped: its damage then, and when (see {@link CombatLog#summarizeKill}). */
+		long reportedDamage;
+		long reportedAt;
 
-		Side(String name, boolean pvp, long now)
+		Side(int id, String name, boolean pvp, long now)
 		{
+			this.id = id;
 			this.name = name;
 			this.pvp = pvp;
 			first = now;
@@ -123,18 +139,67 @@ public class CombatLog
 	 */
 	public static class SkillUse
 	{
+		/** Attacker, skill and whether it is damage over time: what {@link Entry#useKey} names. */
+		public final long key;
+		public final int attackerId;
 		public final String source;
 		public final Skill skill;
+		/** One of the CATEGORY_ constants. */
+		public final byte category;
+		/** The attacker's WeaponType ordinal + 1, 0 when unknown. */
+		public final int weaponType;
 		public long damage;
 		public int hits;
 		public int crits;
 		public int biggest;
+		public boolean biggestCrit;
+		/** How long the longest debuff this skill left on you lasts, in milliseconds; 0 for none. */
+		public int effectMillis;
 
-		SkillUse(String source, Skill skill)
+		SkillUse(long key, int attackerId, String source, Skill skill, byte category, int weaponType)
 		{
+			this.key = key;
+			this.attackerId = attackerId;
 			this.source = source;
 			this.skill = skill;
+			this.category = category;
+			this.weaponType = weaponType;
 		}
+	}
+
+	/**
+	 * One thing the killer wore, for the client's death details.
+	 */
+	public static class Equipped
+	{
+		/** The paperdoll slot (Inventory.PAPERDOLL_*). */
+		public int slot;
+		public int itemId;
+		public int enchant;
+		/** The augmentation id, 0 for none. */
+		public int augmentation;
+		/** What the augmentation gives, a line each ("P. Atk. +24.5", "Chance on attack (5%): Stun Lv 1"). */
+		public List<String> augmentEffects = Collections.emptyList();
+		/** 0 none, else the attack element + 1 (1 fire, 2 water, 3 wind, 4 earth, 5 holy, 6 dark). */
+		public int attackElement;
+		public int attackElementValue;
+		/** Defence against fire, water, wind, earth, holy and dark. */
+		public final int[] defence = new int[6];
+	}
+
+	/**
+	 * What you did to one target up to its death, for the client's kill recap.
+	 */
+	public static class KillSummary
+	{
+		public long fightMillis;
+		public long dealt;
+		/** What the target, and anything of the same name's side given with it, dealt to you. */
+		public long taken;
+		/** Most damage first. */
+		public List<SkillUse> rows;
+		public int bestHit;
+		public Skill bestHitSkill;
 	}
 
 	/**
@@ -171,6 +236,24 @@ public class CombatLog
 		public int killerLevel;
 		public String killerClan;
 		public String killerWeapon;
+		/** For the client's death recap: the killer itself (a summon stays the summon), and the weapon of whoever is behind it. */
+		public int killerObjectId;
+		public boolean killerSummon;
+		public int killerWeaponItemId;
+		public int killerWeaponEnchant;
+		/** WeaponType ordinal + 1, 0 when unknown. */
+		public int killerWeaponType;
+		/** 0 none, else the attack element + 1 (1 fire, 2 water, 3 wind, 4 earth, 5 holy, 6 dark). */
+		public int killerElement;
+		public int killerElementValue;
+		/** What you dealt to the killer and to whoever is behind it. */
+		public long dealtToKiller;
+		/** What whoever is behind the killer wore, for the client's death details. */
+		public List<Equipped> killerEquipment = Collections.emptyList();
+		/** Their passive tree's allocated nodes, {@code null} when they have none (a fake player). */
+		public int[] killerTreeNodes;
+		public int killerTreeEarned;
+		public int killerTreeSpent;
 		public int killerHp;
 		public int killerMaxHp;
 		public int killerCp;
@@ -195,6 +278,10 @@ public class CombatLog
 	private final Map<Integer, Side> _attackers = new HashMap<>();
 	private final Map<Long, SkillUse> _skills = new HashMap<>();
 	private final Map<Integer, Side> _targets = new HashMap<>();
+	/** What you dealt since the last kill recap, by target and skill (the keys of {@link #addHit}, with the target for the attacker). */
+	private final Map<Long, SkillUse> _dealt = new HashMap<>();
+	/** The longest debuff a skill left, in milliseconds, by attacker and skill id. */
+	private final Map<Long, Integer> _effects = new HashMap<>();
 
 	private long _fightStart;
 	private long _lastPvp;
@@ -264,6 +351,8 @@ public class CombatLog
 		_attackers.clear();
 		_skills.clear();
 		_targets.clear();
+		_effects.clear();
+		_dealt.clear();
 		_damageTaken = 0;
 		_cpTaken = 0;
 		_healedHp = 0;
@@ -305,6 +394,7 @@ public class CombatLog
 		e.hpAfter = -1;
 		e.cpAfter = -1;
 		e.count = 0;
+		e.useKey = 0;
 		return e;
 	}
 
@@ -313,7 +403,7 @@ public class CombatLog
 		Side side = _attackers.get(id);
 		if (side == null)
 		{
-			side = new Side(name, pvp, now);
+			side = new Side(id, name, pvp, now);
 			_attackers.put(id, side);
 		}
 		side.last = now;
@@ -326,7 +416,7 @@ public class CombatLog
 		_pendingCrit = crit;
 	}
 
-	public synchronized void addHit(long now, int attackerId, String name, boolean pvp, Skill skill, boolean dot, int hp, int cp, int hpAfter, int cpAfter)
+	public synchronized void addHit(long now, int attackerId, String name, boolean pvp, Skill skill, boolean dot, byte category, int weaponType, int hp, int cp, int hpAfter, int cpAfter)
 	{
 		final boolean crit = !dot && _pendingCrit && (_pendingCritFrom == attackerId);
 		_pendingCrit = false;
@@ -364,11 +454,13 @@ public class CombatLog
 			side.biggestSkill = skill;
 		}
 
-		final long key = ((long) attackerId << 32) | (skill == null ? 0 : skill.getId());
+		// A skill's own hit and its damage over time are two rows; so are a normal attack and the damage it reflected.
+		final long key = ((long) attackerId << 32) | (dot ? 0x80000000L : 0) | ((category == CATEGORY_REFLECT) && (skill == null) ? 0x40000000L : 0) | (skill == null ? 0 : skill.getId());
+		e.useKey = key;
 		SkillUse use = _skills.get(key);
 		if (use == null)
 		{
-			use = new SkillUse(name, skill);
+			use = new SkillUse(key, attackerId, name, skill, category, weaponType);
 			_skills.put(key, use);
 		}
 		use.damage += total;
@@ -380,6 +472,7 @@ public class CombatLog
 		if (total > use.biggest)
 		{
 			use.biggest = total;
+			use.biggestCrit = crit;
 		}
 	}
 
@@ -396,8 +489,12 @@ public class CombatLog
 		_resists++;
 	}
 
-	public synchronized void addDebuff(long now, int attackerId, String name, boolean pvp, Skill skill)
+	public synchronized void addDebuff(long now, int attackerId, String name, boolean pvp, Skill skill, int millis)
 	{
+		if ((skill != null) && (millis > 0))
+		{
+			_effects.merge(((long) attackerId << 32) | skill.getId(), millis, Math::max);
+		}
 		nextEntry(DEBUFF, now, name, pvp, skill);
 		attacker(attackerId, name, pvp, now).debuffs++;
 		_debuffsTaken++;
@@ -422,8 +519,27 @@ public class CombatLog
 		_heals++;
 	}
 
-	public synchronized void addDealt(long now, int targetId, String name, boolean pvp, Skill skill, int damage, boolean crit, boolean dot, boolean timeline)
+	public synchronized void addDealt(long now, int targetId, String name, boolean pvp, Skill skill, int damage, boolean crit, boolean dot, byte category, int weaponType, boolean timeline)
 	{
+		final long key = ((long) targetId << 32) | (dot ? 0x80000000L : 0) | ((category == CATEGORY_REFLECT) && (skill == null) ? 0x40000000L : 0) | (skill == null ? 0 : skill.getId());
+		SkillUse use = _dealt.get(key);
+		if (use == null)
+		{
+			use = new SkillUse(key, targetId, name, skill, category, weaponType);
+			_dealt.put(key, use);
+		}
+		use.damage += damage;
+		use.hits++;
+		if (crit)
+		{
+			use.crits++;
+		}
+		if (damage > use.biggest)
+		{
+			use.biggest = damage;
+			use.biggestCrit = crit;
+		}
+
 		if (timeline)
 		{
 			final Entry e = nextEntry(DEALT, now, name, pvp, skill);
@@ -441,7 +557,7 @@ public class CombatLog
 		Side side = _targets.get(targetId);
 		if (side == null)
 		{
-			side = new Side(name, pvp, now);
+			side = new Side(targetId, name, pvp, now);
 			_targets.put(targetId, side);
 		}
 		side.last = now;
@@ -475,6 +591,64 @@ public class CombatLog
 	}
 
 	/**
+	 * What you dealt to a target since the fight began, or since its last kill recap, and what it dealt to you in that time. The next recap of the same target starts from here.
+	 * @param targetId the object id of who died
+	 * @param now the time of the kill
+	 * @return the summary, {@code null} if you dealt it nothing
+	 */
+	public synchronized KillSummary summarizeKill(int targetId, long now)
+	{
+		final List<SkillUse> rows = new ArrayList<>();
+		for (java.util.Iterator<SkillUse> it = _dealt.values().iterator(); it.hasNext();)
+		{
+			final SkillUse use = it.next();
+			if (use.attackerId == targetId)
+			{
+				rows.add(use);
+				it.remove();
+			}
+		}
+		if (rows.isEmpty())
+		{
+			return null;
+		}
+		rows.sort((a, b) -> Long.compare(b.damage, a.damage));
+
+		final KillSummary summary = new KillSummary();
+		summary.rows = rows;
+		for (SkillUse use : rows)
+		{
+			summary.dealt += use.damage;
+			if (use.biggest > summary.bestHit)
+			{
+				summary.bestHit = use.biggest;
+				summary.bestHitSkill = use.skill;
+			}
+		}
+
+		long since = _fightStart;
+		final Side target = _targets.get(targetId);
+		if (target != null)
+		{
+			since = target.reportedAt > 0 ? target.reportedAt : Math.max(_fightStart, target.first);
+			target.reportedAt = now;
+		}
+		final Side attacker = _attackers.get(targetId);
+		if (attacker != null)
+		{
+			summary.taken = attacker.damage - attacker.reportedDamage;
+			attacker.reportedDamage = attacker.damage;
+			if (attacker.first < since)
+			{
+				since = Math.max(_fightStart, attacker.reportedAt > 0 ? attacker.reportedAt : attacker.first);
+			}
+			attacker.reportedAt = now;
+		}
+		summary.fightMillis = Math.max(0, now - since);
+		return summary;
+	}
+
+	/**
 	 * Freezes the fight into a report, keeps it as the last report and starts over.
 	 * @param now the time of death
 	 * @return the report; the killer and "you" fields are left for the caller to fill in
@@ -499,6 +673,15 @@ public class CombatLog
 		report.attackers = attackers;
 
 		final List<SkillUse> skills = new ArrayList<>(_skills.values());
+		for (SkillUse use : skills)
+		{
+			// The debuff is the skill's, not its damage over time's.
+			final Integer millis = (use.skill == null) || ((use.key & 0x80000000L) != 0) ? null : _effects.get(((long) use.attackerId << 32) | use.skill.getId());
+			if (millis != null)
+			{
+				use.effectMillis = millis;
+			}
+		}
 		skills.sort((a, b) -> Long.compare(b.damage, a.damage));
 		report.skills = skills;
 
