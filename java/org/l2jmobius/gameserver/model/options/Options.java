@@ -77,6 +77,14 @@ public class Options
 		return funcs;
 	}
 	
+	/**
+	 * @return the stat functions of this option, as they were read
+	 */
+	public List<FuncTemplate> getFuncs()
+	{
+		return _funcs;
+	}
+
 	public void addFunc(FuncTemplate template)
 	{
 		_funcs.add(template);

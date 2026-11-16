@@ -1,0 +1,240 @@
+Death Recap - client window protocol
+====================================
+
+When a player dies in a PvP fight, the client (L2Source, l2DecompileTest)
+shows a death recap window: who killed them, how much damage they took in
+the fight, from which attacks and skills, and the last hits. The numbers
+are the PvP combat log's (managers/CombatLogManager, the fight frozen into
+a CombatLog.Report on death), sent in one packet.
+
+Server side: network/serverpackets/Ex2DeathRecap, sent by
+CombatLogManager.onDeath; network/clientpackets/custom/
+RequestEx2CombatReport. Only with CombatLogRecapPackets = True in
+config/Custom/CombatLog.ini (the default); the HTML window then no longer
+opens by itself on death, the client's "Full details" button asks for it.
+
+Framing
+-------
+EX2 server packets start with
+  byte  0xFE
+  short 0xFE
+  int   sub id
+(ServerPackets.writeId.) Client packets start with byte 0xD0, short 0xFE,
+int sub id.
+
+Types: byte = 1 byte, short = 2, int = 4, long = 8, little endian like
+every L2 packet. Strings (str) are UTF-16LE with a terminating 0.
+
+
+Ex2DeathRecap, sub id 0x1A (26)
+-------------------------------
+  byte  version              1
+  byte  flags                1 the killer is a PvP fighter (a player, a
+                               fake player, or a summon, trap or servitor
+                               of one)
+                             2 the killer is a summon, trap or servitor;
+                               summonName is its name
+                             4 no killer is known: the killer fields are
+                               empty or 0 (never with 1 or 2)
+  int   killerObjectId       the killer itself (the summon, for a summon)
+  str   killerName           <= 32: the player or fake player behind it
+  str   summonName           <= 32, "" unless flag 2
+  str   className            <= 32, "" when it has none
+  short level
+  int   weaponItemId         the weapon of whoever is behind the killer,
+                             0 for none
+  short enchant
+  byte  weaponType           as in the combat block (client/CombatLog/
+                             PROTOCOL.txt): WeaponType ordinal + 1,
+                             0 unknown
+  byte  element              0 none, 1 fire, 2 water, 3 wind, 4 earth,
+                             5 holy, 6 dark: the attack element
+  short elementValue
+  int   killerHp             right after the kill
+  int   killerMaxHp
+  int   fightMs              from the fight's first PvP event to the death
+  long  damageTaken          HP and CP, the whole fight
+  long  cpTaken              the CP part of it
+  long  dealtToKiller        what the player dealt to the killer and to
+                             whoever is behind it
+  byte  rows                 <= 16, most damage first
+  rows x {
+    byte  category           0 attack, 1 physical skill, 2 magic skill,
+                             3 damage over time, 4 reflect
+    int   skillId            display id, 0 for none (an attack, the
+                             Bloodletter bleed, reflected damage)
+    short skillLevel         display level
+    byte  weaponType         the attacker's, as above
+    str   attacker           <= 48, "" for the killer's own rows
+    long  damage
+    short hits
+    short crits
+    int   biggest            the largest single hit
+    byte  biggestCrit        0 or 1
+    int   effectMs           how long the longest debuff the skill left on
+                             the player lasts, 0 for none
+  }
+  byte  hits                 <= 48, oldest first: the newest damage events
+                             the log still holds
+  hits x {
+    int   msBeforeDeath
+    byte  row                index into the rows, 255 when its skill is
+                             not among them
+    int   damage             HP and CP
+    byte  flags              1 crit, 2 the killing blow (the last one)
+  }
+
+A row is one attack or skill of one attacker. A skill's own hits and its
+damage over time are two rows, and so are an attacker's normal attacks and
+the damage they reflected.
+
+The client rejects a packet with a version other than 1, a count over its
+limit, an unknown category, element or flag, a hit whose row is neither
+below rows nor 255, or anything after the last hit.
+
+
+Ex2KillRecap, sub id 0x1B (27)
+------------------------------
+Sent to the player behind the killer (the killer, or the owner of the summon,
+trap or servitor that killed) when a player or a fake player dies and the killer's side dealt
+them damage in a PvP fight still going on. The client shows it as a small
+toast. Server side: network/serverpackets/Ex2KillRecap, sent by
+CombatLogManager.onDeath from CombatLog.summarizeKill.
+
+  byte  version              1
+  str   victimName           <= 32
+  str   className            <= 32, "" when it has none
+  short level
+  int   weaponItemId         the victim's weapon, 0 for none
+  int   fightMs              from the first hit between the two (or their
+                             last kill recap) to the kill
+  long  dealt                what the recipient's side dealt to the victim
+                             in that time
+  long  taken                what the victim dealt to the recipient
+  byte  rows                 <= 8, most damage first
+  rows x {
+    byte  category           as in Ex2DeathRecap
+    int   skillId            display id, 0 for none
+    short skillLevel
+    byte  weaponType         the attacker's (the recipient's or their
+                             summon's)
+    long  damage
+    short hits
+    short crits
+    int   biggest            the largest single hit
+    byte  biggestCrit        0 or 1
+  }
+  int   bestHit              the largest single hit
+  int   bestHitSkillId       0 for an attack
+  short bestHitSkillLevel
+
+The numbers start over with each recap of the same victim, so a second kill
+of the same player shows only what was dealt since the first.
+
+
+Ex2DeathDetails, sub id 0x1C (28)
+---------------------------------
+The answer to RequestEx2CombatReport: the rest of the fight of the player's
+last PvP death, what Ex2DeathRecap leaves out, for the client's death
+details window. Server side: network/serverpackets/Ex2DeathDetails, sent by
+CombatLogManager.showDetails. The killer's equipment and passive tree are
+noted when the player dies (CombatLogManager.fillEquipment).
+
+  byte  version              1
+  str   clan                 <= 32: the killer's, "" for none
+  int   distance             between the two at the death
+  int   killerCp
+  int   killerMaxCp
+  int   maxHp                the player's
+  int   maxCp
+  long  healedHp
+  long  healedCp
+  int   heals
+  int   debuffsTaken
+  int   resists
+  int   cancelled            buffs
+  long  damageDealt          by the player, to everyone
+  int   hitsDealt
+  int   critsDealt
+  int   missesDealt
+  byte  attackers            <= 16, most damage first
+  attackers x {
+    str   name               <= 64
+    byte  pvp                0 or 1
+    long  damage
+    long  cpDamage           the CP part of it
+    short hits               ticks included
+    short crits
+    int   biggest
+    int   biggestSkillId     0 for an attack
+    short biggestSkillLevel
+    short evaded
+    short debuffs
+    short resisted
+    short cancels
+  }
+  byte  targets              <= 8: whom the player hit, most damage first
+  targets x {
+    str   name               <= 64
+    long  damage
+    short hits
+    short crits
+  }
+  byte  debuffs              <= 24: on the player when they died
+  debuffs x {
+    int   skillId            display id
+    short skillLevel
+    int   secondsLeft
+    str   caster             <= 64
+  }
+  byte  entries              <= 100: the timeline, oldest first
+  entries x {
+    byte  type               0 hit, 1 damage over time, 2 evaded, 3 resisted,
+                             4 debuff landed, 5 buffs cancelled, 6 heal,
+                             7 the player's hit, 8 the player's miss
+    int   msBeforeDeath
+    str   name               <= 64: who did it; for 7 and 8, whom the
+                             player hit or missed
+    byte  flags              1 a PvP fighter, 2 crit
+    int   skillId            0 for none
+    short skillLevel
+    int   hp                 HP lost (0, 1), healed (6) or dealt (7)
+    int   cp                 CP lost or healed
+    int   hpAfter            the player's after a hit or a heal, -1 unknown
+    int   cpAfter
+    short count              buffs cancelled (5)
+  }
+  int   droppedEntries       older events the log no longer had
+  byte  items                <= 32: what whoever is behind the killer wore
+  items x {
+    byte  slot               Inventory.PAPERDOLL_* (0..24); an item in two
+                             slots is told once
+    int   itemId
+    short enchant
+    int   augmentation       its id, 0 for none
+    byte  effects            <= 6: what the augmentation gives
+    effects x str            <= 80 each: "P. Atk. +24.5", "Passive: Shield
+                             Lv 3", "Chance on critical (5%): Stun Lv 1"
+    byte  attackElement      0 none, 1 fire .. 6 dark
+    short attackElementValue
+    6 x short                defence: fire, water, wind, earth, holy, dark
+  }
+  byte  hasTree              1: the killer has a passive tree (a player's, as
+                             it was at the death; a roaming fake player's,
+                             the one its template rolled); it follows
+  if hasTree {
+    int   earnedPoints
+    int   spentPoints
+    short nodes              <= 2048
+    nodes x int              allocated node ids
+  }
+
+A fake player's items are its template's, with the template's enchants and
+no augmentations.
+
+
+RequestEx2CombatReport, client sub id 15
+----------------------------------------
+No body. The server answers with Ex2DeathDetails for the player's last PvP
+death, at most once a second. With CombatLogRecapPackets off it opens the
+".combatlog" window instead.

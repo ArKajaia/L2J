@@ -19,18 +19,26 @@ package org.l2jmobius.gameserver.managers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
+import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
+import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.data.xml.ClassListData;
+import org.l2jmobius.gameserver.data.xml.OptionData;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.player.ClassInfoHolder;
 import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog;
 import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog.Entry;
+import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog.Equipped;
+import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog.KillSummary;
 import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog.Report;
 import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog.Side;
 import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog.SkillUse;
@@ -39,8 +47,19 @@ import org.l2jmobius.gameserver.model.actor.instance.Trap;
 import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.item.type.WeaponType;
+import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.model.options.OptionSkillHolder;
+import org.l2jmobius.gameserver.model.options.Options;
+import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2DeathDetails;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2DeathRecap;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2KillRecap;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
 /**
@@ -51,6 +70,8 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 public class CombatLogManager
 {
 	private static final int HTML_LIMIT = 16000;
+	/** How long after a death the killer's recap is made, in milliseconds. */
+	private static final long KILL_RECAP_DELAY = 150;
 	/** The width of the content: the NPC window is 294 wide, and its scroll bar takes some of it. */
 	private static final int WIDTH = 270;
 
@@ -194,8 +215,40 @@ public class CombatLogManager
 		if (log != null)
 		{
 			// Regeneration can change CP between the two reads.
-			log.addHit(now, attacker.getObjectId(), describe(attacker), isPvp(attacker, player), skill, dot, Math.max(0, hp), Math.max(0, cp), (int) player.getCurrentHp(), (int) player.getCurrentCp());
+			log.addHit(now, attacker.getObjectId(), describe(attacker), isPvp(attacker, player), skill, dot, categoryOf(skill, dot), weaponTypeOf(attacker), Math.max(0, hp), Math.max(0, cp), (int) player.getCurrentHp(), (int) player.getCurrentCp());
 		}
+	}
+
+	/**
+	 * @param skill the skill of a hit, {@code null} for none
+	 * @param dot damage over time
+	 * @return what kind of row the hit belongs to in the death recap
+	 */
+	private static byte categoryOf(Skill skill, boolean dot)
+	{
+		if (dot)
+		{
+			return CombatLog.CATEGORY_OVER_TIME;
+		}
+		if (CombatInfo.kindOf(skill) == CombatInfo.KIND_REFLECT)
+		{
+			return CombatLog.CATEGORY_REFLECT;
+		}
+		if (skill == null)
+		{
+			return CombatLog.CATEGORY_ATTACK;
+		}
+		return skill.isMagic() ? CombatLog.CATEGORY_MAGIC_SKILL : CombatLog.CATEGORY_PHYSICAL_SKILL;
+	}
+
+	/**
+	 * @param creature an attacker
+	 * @return its attack type as the combat block has it: WeaponType ordinal + 1, 0 when unknown
+	 */
+	private static int weaponTypeOf(Creature creature)
+	{
+		final WeaponType type = creature.getAttackType();
+		return type == null ? 0 : type.ordinal() + 1;
 	}
 
 	/**
@@ -243,7 +296,7 @@ public class CombatLogManager
 		final CombatLog log = owner.asPlayer().getCombatLog(true);
 		log.touchPvp(now, CombatLogConfig.FIGHT_MILLIS);
 		final String name = attacker == owner ? describe(target) : describe(target) + " (" + attacker.getName() + ")";
-		log.addDealt(now, target.getObjectId(), name, true, skill, (int) damage, crit, dot, CombatLogConfig.TIMELINE_OWN_HITS);
+		log.addDealt(now, target.getObjectId(), name, true, skill, (int) damage, crit, dot, categoryOf(skill, dot), weaponTypeOf(attacker), CombatLogConfig.TIMELINE_OWN_HITS);
 	}
 
 	/**
@@ -318,7 +371,7 @@ public class CombatLogManager
 		final CombatLog log = getLog(player, attacker, now);
 		if (log != null)
 		{
-			log.addDebuff(now, attacker.getObjectId(), describe(attacker), isPvp(attacker, player), info.getSkill());
+			log.addDebuff(now, attacker.getObjectId(), describe(attacker), isPvp(attacker, player), info.getSkill(), Math.min(86400, Math.max(0, info.getTime())) * 1000);
 		}
 	}
 
@@ -402,7 +455,7 @@ public class CombatLogManager
 	/**
 	 * Called just before a player dies, while they still have their debuffs.
 	 * @param player the player
-	 * @return the debuffs on the player ("name", "icon", "seconds left", "caster"), {@code null} if they are not in a PvP fight
+	 * @return the debuffs on the player ("name", "icon", "seconds left", "caster", "skill id", "skill level"), {@code null} if they are not in a PvP fight
 	 */
 	public static List<String[]> getDebuffs(Player player)
 	{
@@ -427,7 +480,9 @@ public class CombatLogManager
 				skill.getName(),
 				skill.getIcon(),
 				String.valueOf(Math.max(0, info.getTime())),
-				effector == null ? "" : effector.getName()
+				effector == null ? "" : effector.getName(),
+				String.valueOf(skill.getDisplayId()),
+				String.valueOf(skill.getDisplayLevel())
 			});
 		}
 		return debuffs;
@@ -446,8 +501,10 @@ public class CombatLogManager
 			return;
 		}
 
-		final CombatLog log = player.getCombatLog(false);
 		final long now = System.currentTimeMillis();
+		sendKillRecap(player, killer, now);
+
+		final CombatLog log = player.getCombatLog(false);
 		if ((log == null) || !log.isActive(now, CombatLogConfig.FIGHT_MILLIS))
 		{
 			return;
@@ -464,10 +521,73 @@ public class CombatLogManager
 		{
 			sendChatSummary(player, report);
 		}
-		if (CombatLogConfig.SHOW_ON_DEATH)
+		// The custom client shows the fight in its death recap window, whose "Full details" asks for the window below.
+		if (CombatLogConfig.RECAP_PACKETS)
+		{
+			player.sendPacket(new Ex2DeathRecap(report));
+		}
+		else if (CombatLogConfig.SHOW_ON_DEATH)
 		{
 			show(player, "summary");
 		}
+	}
+
+	/**
+	 * Called when a fake player died (a player's death comes through {@link #onDeath}): the player behind the killer gets their kill recap.
+	 * @param victim the fake player
+	 * @param killer who killed it
+	 */
+	public static void onFakePlayerDeath(Creature victim, Creature killer)
+	{
+		if (CombatLogConfig.ENABLED)
+		{
+			sendKillRecap(victim, killer, System.currentTimeMillis());
+		}
+	}
+
+	/**
+	 * Tells the player behind the killer what they did to the player or fake player they killed, for the custom client's kill recap.
+	 * @param victim who died
+	 * @param killer who killed them
+	 * @param now the time of the kill
+	 */
+	private static void sendKillRecap(Creature victim, Creature killer, long now)
+	{
+		if (!CombatLogConfig.RECAP_PACKETS)
+		{
+			return;
+		}
+
+		final Creature owner = getPvpOwner(killer);
+		if ((owner == null) || !owner.isPlayer() || (owner == victim))
+		{
+			return;
+		}
+
+		final Player player = owner.asPlayer();
+		final CombatLog log = player.getCombatLog(false);
+		if ((log == null) || !log.isActive(now, CombatLogConfig.FIGHT_MILLIS))
+		{
+			return;
+		}
+
+		// The victim as it is now: dying changes a fake player's weapon back.
+		final int victimId = victim.getObjectId();
+		final String name = victim.getName();
+		final String className = getClassName(victim);
+		final int level = victim.getLevel();
+		final Weapon weapon = victim.getActiveWeaponItem();
+		final int weaponId = weapon == null ? 0 : weapon.getId();
+
+		// The hit that killed is counted for its dealer only after the death (Creature#notifyDamageReceived follows the damage): the recap waits for it.
+		ThreadPool.schedule(() ->
+		{
+			final KillSummary summary = log.summarizeKill(victimId, now);
+			if (summary != null)
+			{
+				player.sendPacket(new Ex2KillRecap(name, className, level, weaponId, summary));
+			}
+		}, KILL_RECAP_DELAY);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -500,6 +620,22 @@ public class CombatLogManager
 		final Creature owner = getPvpOwner(killer);
 		final Creature who = owner != null ? owner : killer;
 		report.killerPvp = owner != null;
+		report.killerObjectId = killer.getObjectId();
+		report.killerSummon = (owner != null) && (owner != killer);
+		report.killerWeaponType = weaponTypeOf(who);
+		final byte element = who.getAttackElement();
+		if ((element >= 0) && (element <= 5))
+		{
+			report.killerElement = element + 1;
+			report.killerElementValue = who.getAttackElementValue(element);
+		}
+		for (Side target : report.targets)
+		{
+			if ((target.id == killer.getObjectId()) || (target.id == who.getObjectId()))
+			{
+				report.dealtToKiller += target.damage;
+			}
+		}
 		report.killerName = who.getName();
 		report.killerOwner = (owner != null) && (owner != killer) ? killer.getName() : null;
 		report.killerLevel = who.getLevel();
@@ -517,8 +653,244 @@ public class CombatLogManager
 		{
 			final Item item = who.getActiveWeaponInstance();
 			final int enchant = item == null ? 0 : item.getEnchantLevel();
+			report.killerWeaponItemId = weapon.getId();
+			report.killerWeaponEnchant = enchant;
 			report.killerWeapon = (enchant > 0 ? "+" + enchant + " " : "") + weapon.getName();
 		}
+		fillEquipment(report, who);
+	}
+
+	/**
+	 * Notes what a killer wears, and a player's passive tree, for the client's death details.
+	 * @param report the report
+	 * @param who the player or fake player behind the killer
+	 */
+	private static void fillEquipment(Report report, Creature who)
+	{
+		final List<Equipped> equipment = new ArrayList<>();
+		if (who.isPlayer())
+		{
+			final Player player = who.asPlayer();
+			final List<Item> seen = new ArrayList<>();
+			for (int slot = 0; slot < Inventory.PAPERDOLL_TOTALSLOTS; slot++)
+			{
+				final Item item = player.getInventory().getPaperdollItem(slot);
+				// A two-slot item (a full armor, a two-handed weapon) is told once.
+				if ((item == null) || seen.contains(item))
+				{
+					continue;
+				}
+				seen.add(item);
+
+				final Equipped e = new Equipped();
+				e.slot = slot;
+				e.itemId = item.getId();
+				e.enchant = item.getEnchantLevel();
+				e.augmentation = item.isAugmented() ? item.getAugmentation().getAugmentationId() : 0;
+				if (e.augmentation != 0)
+				{
+					e.augmentEffects = describeAugmentation(e.augmentation);
+				}
+				final byte element = item.getAttackElementType();
+				if ((element >= 0) && (element <= 5))
+				{
+					e.attackElement = element + 1;
+					e.attackElementValue = item.getAttackElementPower();
+				}
+				for (byte i = 0; i < 6; i++)
+				{
+					e.defence[i] = Math.max(0, item.getElementDefAttr(i));
+				}
+				equipment.add(e);
+			}
+
+			final PassiveTreeView tree = PassiveTreeView.of(player);
+			report.killerTreeNodes = tree.allocated().stream().mapToInt(Integer::intValue).toArray();
+			report.killerTreeEarned = tree.earnedPoints();
+			report.killerTreeSpent = tree.spentPoints();
+		}
+		else if (who.isNpc())
+		{
+			final Npc npc = (Npc) who;
+			final FakePlayerHolder fake = npc.getTemplate().getFakePlayerInfo();
+			if (fake != null)
+			{
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_UNDER, fake.getEquipShirt());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_HEAD, fake.getEquipHead());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_HAIR, fake.getEquipHair());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_HAIR2, fake.getEquipHair2());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_RHAND, npc.getRightHandItem() > 0 ? npc.getRightHandItem() : fake.getEquipRHand());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_CHEST, fake.getEquipChest());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_LHAND, npc.getLeftHandItem() > 0 ? npc.getLeftHandItem() : fake.getEquipLHand());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_GLOVES, fake.getEquipGloves());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_LEGS, fake.getEquipLegs());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_FEET, fake.getEquipFeet());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_CLOAK, fake.getEquipCloak());
+				addFakeItem(equipment, fake, Inventory.PAPERDOLL_BELT, fake.getEquipBelt());
+			}
+
+			// A roaming fake player rolled a passive tree with its template (FakePlayerPvpPassiveTree).
+			final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+			final FakePlayerPvpPassives passives = profile == null ? null : profile.getPassives();
+			if (passives != null)
+			{
+				// Only what is on the client's tree (an event's own nodes are not).
+				final Map<Integer, PassiveNode> tree = PassiveTreeData.getInstance().getAllNodes();
+				report.killerTreeNodes = passives.getNodeIds().stream().filter(tree::containsKey).mapToInt(Integer::intValue).toArray();
+				report.killerTreeEarned = Math.max(0, passives.getPoints());
+				report.killerTreeSpent = Math.max(0, passives.getPoints());
+			}
+		}
+		report.killerEquipment = equipment;
+	}
+
+	/**
+	 * @param augmentationId an augmentation's id: two option ids, the low and the high 16 bits
+	 * @return what it gives, a line each: the stats, then the skills
+	 */
+	private static List<String> describeAugmentation(int augmentationId)
+	{
+		final List<String> lines = new ArrayList<>();
+		for (int optionId : new int[]
+		{
+			augmentationId & 0xFFFF,
+			augmentationId >>> 16
+		})
+		{
+			final Options option = optionId == 0 ? null : OptionData.getInstance().getOptions(optionId);
+			if (option == null)
+			{
+				continue;
+			}
+			for (FuncTemplate func : option.getFuncs())
+			{
+				final double value = func.getValue();
+				if (func.isMultiplier())
+				{
+					lines.add(statLabel(func.getStat()) + " " + signed((value - 1) * 100) + "%");
+				}
+				else
+				{
+					lines.add(statLabel(func.getStat()) + " " + signed(value));
+				}
+			}
+			if (option.hasActiveSkill())
+			{
+				lines.add("Active: " + getSkillName(option.getActiveSkill()));
+			}
+			if (option.hasPassiveSkill())
+			{
+				lines.add("Passive: " + getSkillName(option.getPassiveSkill()));
+			}
+			for (OptionSkillHolder holder : option.getActivationSkills())
+			{
+				final String when = switch (holder.getSkillType())
+				{
+					case ATTACK -> "on attack";
+					case MAGIC -> "on magic";
+					case CRITICAL -> "on critical";
+				};
+				lines.add("Chance " + when + " (" + trimmed(holder.getChance()) + "%): " + getSkillName(holder.getSkill()));
+			}
+		}
+		return lines;
+	}
+
+	private static String signed(double value)
+	{
+		return (value >= 0 ? "+" : "") + trimmed(value);
+	}
+
+	/** One decimal at most, none when it is whole. */
+	private static String trimmed(double value)
+	{
+		final double rounded = Math.round(value * 10) / 10.0;
+		return rounded == Math.rint(rounded) ? String.valueOf((long) rounded) : String.valueOf(rounded);
+	}
+
+	/**
+	 * @param stat a stat
+	 * @return its name as the game's windows have it where there is one, else the enum's name in words
+	 */
+	private static String statLabel(Stat stat)
+	{
+		switch (stat.name())
+		{
+			case "POWER_ATTACK":
+				return "P. Atk.";
+			case "MAGIC_ATTACK":
+				return "M. Atk.";
+			case "POWER_DEFENCE":
+				return "P. Def.";
+			case "MAGIC_DEFENCE":
+				return "M. Def.";
+			case "MAX_HP":
+				return "Max HP";
+			case "MAX_MP":
+				return "Max MP";
+			case "MAX_CP":
+				return "Max CP";
+			case "ACCURACY_COMBAT":
+				return "Accuracy";
+			case "EVASION_RATE":
+				return "Evasion";
+			case "CRITICAL_RATE":
+				return "Critical rate";
+			case "REGENERATE_HP_RATE":
+				return "HP recovery";
+			case "REGENERATE_MP_RATE":
+				return "MP recovery";
+			case "REGENERATE_CP_RATE":
+				return "CP recovery";
+			default:
+			{
+				final String words = stat.name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
+				return Character.toUpperCase(words.charAt(0)) + words.substring(1);
+			}
+		}
+	}
+
+	private static void addFakeItem(List<Equipped> equipment, FakePlayerHolder fake, int slot, int itemId)
+	{
+		if (itemId <= 0)
+		{
+			return;
+		}
+		for (Equipped other : equipment)
+		{
+			if (other.itemId == itemId)
+			{
+				return;
+			}
+		}
+
+		final Equipped e = new Equipped();
+		e.slot = slot;
+		e.itemId = itemId;
+		e.enchant = Math.max(0, fake.getEnchantLevel(slot));
+		equipment.add(e);
+	}
+
+	/**
+	 * Answers the custom client's "Full details": the rest of the last PvP death's fight as a packet for its own window, or the HTML window when the recap packets are off.
+	 * @param player the player
+	 */
+	public static void showDetails(Player player)
+	{
+		if (!CombatLogConfig.RECAP_PACKETS)
+		{
+			show(player, "summary");
+			return;
+		}
+
+		final CombatLog log = player.getCombatLog(false);
+		final Report report = log == null ? null : log.getLastReport();
+		if (report == null)
+		{
+			player.sendMessage("You have no PvP death to show.");
+			return;
+		}
+		player.sendPacket(new Ex2DeathDetails(report));
 	}
 
 	/**
@@ -797,7 +1169,7 @@ public class CombatLogManager
 				break;
 			}
 			sb.append("<tr><td width=34 height=36>").append(use.skill == null ? "" : icon(use.skill.getIcon())).append("</td><td width=236>");
-			sb.append(escape(skillName(use.skill, false))).append(" <font color=\"808080\">- ").append(escape(use.source)).append("</font><br1>");
+			sb.append(escape(skillName(use.skill, use.category == CombatLog.CATEGORY_OVER_TIME))).append(use.category == CombatLog.CATEGORY_REFLECT ? " (reflected)" : (use.category == CombatLog.CATEGORY_OVER_TIME) && (use.skill != null) ? " (over time)" : "").append(" <font color=\"808080\">- ").append(escape(use.source)).append("</font><br1>");
 			sb.append("<font color=\"FF6666\">").append(use.damage).append("</font> <font color=\"A0A0A0\">(").append(percent(use.damage, r.damageTaken)).append("%) ").append(use.hits).append(use.hits == 1 ? " hit" : " hits");
 			if (use.crits > 0)
 			{

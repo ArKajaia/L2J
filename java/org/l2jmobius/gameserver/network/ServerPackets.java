@@ -541,7 +541,11 @@ public enum ServerPackets
 	// The team event strip (client/TeamEvents/PROTOCOL.txt) and the radar zones' capture sweep (client/RadarZones/README.txt).
 	EX2_TEAM_EVENT_STATE(0xFE, 0xFE, 0x17),
 	EX2_TEAM_EVENT_CLOSE(0xFE, 0xFE, 0x18),
-	EX2_RADAR_ZONE_PROGRESS(0xFE, 0xFE, 0x19);
+	EX2_RADAR_ZONE_PROGRESS(0xFE, 0xFE, 0x19),
+	// The death recap window and the kill recap toast (client/DeathRecap/PROTOCOL.txt).
+	EX2_DEATH_RECAP(0xFE, 0xFE, 0x1A),
+	EX2_KILL_RECAP(0xFE, 0xFE, 0x1B),
+	EX2_DEATH_DETAILS(0xFE, 0xFE, 0x1C);
 
 	private final int _id1;
 	private final int _id2;

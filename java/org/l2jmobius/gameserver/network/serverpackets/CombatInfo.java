@@ -115,6 +115,16 @@ public class CombatInfo
 		return of(attacker, target, skill, flags);
 	}
 
+	/**
+	 * @param skill the skill of a hit, {@code null} for none
+	 * @return the kind the open scope gives a hit with this skill, {@link #KIND_UNKNOWN} when no scope is about it
+	 */
+	public static int kindOf(Skill skill)
+	{
+		final Scope scope = CURRENT.get();
+		return (scope != null) && (scope._skill == skill) ? scope._kind : KIND_UNKNOWN;
+	}
+
 	private static boolean usedShots(Creature attacker, Skill skill)
 	{
 		if (attacker == null)

@@ -504,6 +504,7 @@ public class Player extends Playable
 	private long _onlineBeginTime;
 	private volatile SessionStats _sessionStats;
 	private volatile CombatLog _combatLog;
+	private volatile long _lastCombatReportRequest;
 	private volatile RaidLog _raidFight;
 	private volatile RaidLog.Report _lastRaidReport;
 	private long _lastAccess;
@@ -15238,6 +15239,19 @@ public class Player extends Playable
 		_lastRaidReport = report;
 	}
 	
+	/**
+	 * @return when the client last asked for the combat log window (RequestEx2CombatReport), 0 for never
+	 */
+	public long getLastCombatReportRequest()
+	{
+		return _lastCombatReportRequest;
+	}
+
+	public void setLastCombatReportRequest(long time)
+	{
+		_lastCombatReportRequest = time;
+	}
+
 	/**
 	 * @param create create it if the player has none yet
 	 * @return the PvP combat log (see {@link CombatLogManager}), {@code null} if the player has none and {@code create} is {@code false}
