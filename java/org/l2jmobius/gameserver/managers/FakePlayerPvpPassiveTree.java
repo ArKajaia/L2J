@@ -240,10 +240,16 @@ public class FakePlayerPvpPassiveTree
 	 * @param keystones the build's own keystone list (see {@link FakePlayerPvpBuild#getKeystones()}), {@code null} for its role's
 	 * @param hybrid {@code true} for a melee build whose M. Atk. counts too (see {@link FakePlayerPvpBuild#isHybrid()})
 	 * @param weights the build's own weight factors (see {@link FakePlayerPvpBuild#getWeights()}), {@code null} for none
+	 * @param maxPoints how many points its trees are grown to: a player's most, or more for a forced budget ({@link #FORCED_POINTS})
 	 */
-	private record PoolKey(int origin, Role role, int gear, String keystones, boolean hybrid, String weights)
+	private record PoolKey(int origin, Role role, int gear, String keystones, boolean hybrid, String weights, int maxPoints)
 	{
 	}
+
+	/**
+	 * A forced point budget for the fake players rolled on this thread (the map simulation's {@code passives}), {@code null} for the usual roll. It may go past what a player can have: the tree is then grown that far.
+	 */
+	public static final ThreadLocal<Integer> FORCED_POINTS = new ThreadLocal<>();
 
 	/**
 	 * A keystone a role may head for.
@@ -547,14 +553,16 @@ public class FakePlayerPvpPassiveTree
 			return null;
 		}
 
-		final Variant[] variants = _pools.computeIfAbsent(new PoolKey(origin, build.getRole(), gearKey(armorMask, wornMask), build.getKeystones(), build.isHybrid(), build.getWeights()), this::growPool);
+		final Integer forced = FORCED_POINTS.get();
+		final int maxPoints = forced != null ? Math.max(1, forced) : PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS;
+		final Variant[] variants = _pools.computeIfAbsent(new PoolKey(origin, build.getRole(), gearKey(armorMask, wornMask), build.getKeystones(), build.isHybrid(), build.getWeights(), maxPoints), this::growPool);
 		final Variant variant = variants[Rnd.get(variants.length)];
 		final boolean allSubclasses = (level >= FakePlayerPvpConfig.PASSIVE_TREE_SUBCLASS_MIN_LEVEL) && (elite || (pvpSpot && (level >= FakePlayerPvpConfig.PASSIVE_TREE_SPOT_SUBCLASS_LEVEL) && (Rnd.get(100) < FakePlayerPvpConfig.PASSIVE_TREE_SPOT_SUBCLASS_CHANCE)));
 		final int subclasses = allSubclasses ? FakePlayerPvpConfig.PASSIVE_TREE_MAX_SUBCLASSES : rollSubclasses(level);
 
 		// Whole steps, as long as they fit in its points; a step that hangs from one left out is left out too.
 		final boolean keystones = level >= FakePlayerPvpConfig.PASSIVE_TREE_KEYSTONE_MIN_LEVEL;
-		final int budget = Math.min(PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS, (subclasses * FakePlayerPvpConfig.PASSIVE_TREE_NODES_PER_SUBCLASS) + level);
+		final int budget = forced != null ? maxPoints : Math.min(PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS, (subclasses * FakePlayerPvpConfig.PASSIVE_TREE_NODES_PER_SUBCLASS) + level);
 		final int[] order = variant.order();
 		final boolean[] taken = new boolean[_nodes.length];
 		final List<Integer> nodeIds = new ArrayList<>();
@@ -739,7 +747,7 @@ public class FakePlayerPvpPassiveTree
 					}
 				}
 
-				pool[v] = new Growth(key.origin(), effectWeights, keystones, firstKeystones, keystoneWeights, (key.keystones() != null) && !addsToRole(key.keystones()), style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
+				pool[v] = new Growth(key.origin(), effectWeights, keystones, firstKeystones, keystoneWeights, (key.keystones() != null) && !addsToRole(key.keystones()), style, key.maxPoints()).grow();
 			}
 			return pool;
 		});
@@ -1304,7 +1312,7 @@ public class FakePlayerPvpPassiveTree
 	public NodeTaste rollTaste(Role role, boolean hybrid, String keystones, String weights, int armorMask, int wornMask, boolean random)
 	{
 		final int gear = gearKey(armorMask, wornMask);
-		final PoolKey key = new PoolKey(0, role, gear, keystones, hybrid, weights);
+		final PoolKey key = new PoolKey(0, role, gear, keystones, hybrid, weights, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS);
 		final Map<String, Double> buildWeights = parseWeights(key.weights());
 		final Style style = random ? Style.roll(key.role()) : Style.BALANCED;
 		final double groupJitter = random ? GROUP_JITTER : 0;

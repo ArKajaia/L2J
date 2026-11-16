@@ -1,0 +1,202 @@
+100 maps from maps-20261116-155511; builds {'Grand Khavatari': 100}; results {'stuck': 56, 'collapsed': 36, 'completed': 8}
+
+By tier (all medal counts):
+  tier maps  clear  slain   min deaths kills/min  dmg/min  srv%  exp/min  exp/map adena/min value/min maps/map
+--------------------------------------------------------------------------------------------------------------
+     1   10    50%    73%  40.1    1.2      2.83    61.0k    0%     2.4M    98.8M    104.7k    216.2k     0.80
+     2   10    10%    57%  49.9    4.7      1.65    47.0k    0%     1.8M    88.5M     73.7k    131.1k     0.50
+     3   10    20%    70%  44.4    1.7      2.34    33.9k    0%     1.6M    72.7M     53.8k    107.0k     1.00
+     4   10     0%    44%  35.4    3.6      1.76    48.4k    0%     1.8M    57.3M     23.1k     80.1k     0.00
+     5   10     0%    30%  37.4    3.3      0.91    61.1k    0%     2.2M   101.7M     44.2k    128.2k     0.20
+     6   10     0%    16%  34.6    5.0      0.47    41.0k    0%     1.9M    88.7M     41.4k    142.2k     0.10
+     7   10     0%    10%  38.6   12.9      0.41    52.9k    0%     3.2M   129.9M     54.0k    207.3k     0.00
+     8   10     0%     8%  39.7   13.0      0.30    38.7k    0%     4.1M   161.0M     49.4k    427.9k     0.00
+     9   10     0%     2%  17.7   12.0      0.09    49.0k    0%     3.7M    87.6M     49.2k      1.9M     0.00
+    10   10     0%     0%   9.9   11.4      0.02    53.0k    0%     2.1M    29.4M     13.3k     37.4k     0.00
+
+By medals (all tiers):
+medals maps  clear  slain   min deaths kills/min  dmg/min  srv%  exp/min  exp/map adena/min value/min maps/map
+--------------------------------------------------------------------------------------------------------------
+     1   10    20%    44%  37.1    5.1      1.18    56.3k    0%     1.5M    54.3M     49.8k    112.0k     0.50
+     2   10    20%    39%  40.5    6.1      1.18    49.3k    0%     2.3M   115.8M     56.7k    134.7k     0.50
+     3   10    10%    42%  40.1    6.0      1.26    51.9k    0%     1.9M    76.7M     60.9k    114.9k     0.30
+     4   10    10%    37%  36.5    5.6      1.00    55.2k    0%     1.6M    75.3M     47.2k    130.9k     0.30
+     5   10     0%    36%  39.7    8.3      1.20    50.8k    0%     2.9M   111.2M     73.9k      2.2M     0.10
+     6   10     0%    24%  32.0    7.0      0.74    38.2k    0%     2.4M    81.4M     35.6k    106.4k     0.10
+     7   10    10%    39%  41.1    8.6      1.37    55.4k    0%     3.6M   144.2M     59.2k    157.1k     0.50
+     8   10     0%    16%  28.6    8.8      0.88    42.4k    0%     2.3M    76.2M     36.9k    116.7k     0.00
+     9   10     0%    15%  29.9    7.6      0.84    33.2k    0%     2.2M    89.4M     31.8k    102.9k     0.20
+    10   10    10%    20%  22.3    5.7      1.13    53.4k    0%     4.0M    91.2M     54.8k    202.0k     0.10
+
+Share of the map slain (%), tier x medals:
+tier\medals     1     2     3     4     5     6     7     8     9    10
+          1    99    15    99    99    93    74    99    31    22    99
+          2    96    99    50    64    55    33    78    66    21     6
+          3    99    99    83    96    66    99    82     5     8    59
+          4    57    15    98    56    58    11    79    25    27    13
+          5    17    84    59     2    52     0    12    14    49     8
+          6    46    34    10    32    13     3    19     0     2     1
+          7    17    22     6     5     2     9    15    13     4     5
+          8     2     6    12    15    14     8     4     1    12     3
+          9     1    12     2     0     1     1     1     0     0     1
+         10     0     0     0     0     1     1     0     0     0     0
+
+Deaths, tier x medals:
+tier\medals     1     2     3     4     5     6     7     8     9    10
+          1   0.0   1.0   0.0   0.0   0.0   0.0   0.0  10.0   1.0   0.0
+          2   1.0   0.0  10.0   3.0   0.0  21.0   0.0   0.0   9.0   3.0
+          3   0.0   0.0   3.0   1.0   2.0   0.0   0.0   0.0   8.0   3.0
+          4   1.0   0.0   0.0   7.0  14.0   2.0   3.0   0.0   9.0   0.0
+          5   0.0   1.0   1.0   0.0   4.0   8.0   0.0  16.0   0.0   3.0
+          6   2.0   2.0  12.0   6.0   5.0   0.0  12.0   4.0   2.0   5.0
+          7   9.0  12.0   5.0   9.0  11.0  10.0  22.0  28.0   3.0  20.0
+          8  23.0   4.0  11.0  21.0  20.0  19.0  13.0   0.0  16.0   3.0
+          9   9.0  37.0   5.0   9.0  14.0   2.0  21.0   5.0  11.0   7.0
+         10   6.0   4.0  13.0   0.0  13.0   8.0  15.0  25.0  17.0  13.0
+
+Minutes to clear (cleared maps only), tier x medals:
+tier\medals     1     2     3     4     5     6     7     8     9    10
+          1  27.9   nan  35.3  47.4   nan   nan  34.9   nan   nan  37.9
+          2   nan  58.6   nan   nan   nan   nan   nan   nan   nan   nan
+          3  39.9  28.5   nan   nan   nan   nan   nan   nan   nan   nan
+          4   nan   nan   nan   nan   nan   nan   nan   nan   nan   nan
+          5   nan   nan   nan   nan   nan   nan   nan   nan   nan   nan
+          6   nan   nan   nan   nan   nan   nan   nan   nan   nan   nan
+          7   nan   nan   nan   nan   nan   nan   nan   nan   nan   nan
+          8   nan   nan   nan   nan   nan   nan   nan   nan   nan   nan
+          9   nan   nan   nan   nan   nan   nan   nan   nan   nan   nan
+         10   nan   nan   nan   nan   nan   nan   nan   nan   nan   nan
+
+Modifiers: maps that had it against the mean of their tier (positive deaths = deadlier, negative kill rate = slower).
+Each map carries several modifiers, so read the big ones; fewer than ~8 maps is mostly noise.
+modifier               maps  I/II/III kill rate deaths/10min   slain
+FRAGILE_PORTALS           7   3/2/2        -47%        +5.13     -2%
+BRUTAL                    5   1/4/0        -47%        +4.04     -9%
+ELEMENTAL_CHAOS           3   2/1/0        -51%        +3.96     -1%
+ARCANE_PRECISION          8   2/2/4        -21%        +2.87     +5%
+ELUSIVE                   3   0/3/0        -42%        +2.87     -4%
+DEATH_CURSE               5   2/1/2        -49%        +2.79    -16%
+FRENZIED                  5   1/1/3        -49%        +2.75     -1%
+WAYSTONES                 6   1/1/4         -7%        +2.50     +1%
+FLASKLESS                10   3/2/5        +14%        +2.24    -11%
+WAR_PRIESTS               8   3/4/1        -35%        +2.21    -16%
+REGENERATIVE              8   3/3/2        -54%        +2.15    -21%
+COVEN                     5   2/1/2        -30%        +1.81    -18%
+LINKED_SOULS              8   2/2/4        -38%        +1.67     -2%
+SPEEDRUN                  9   2/1/6         +0%        +1.61     +9%
+STORM_CALLER              6   1/3/2        -54%        +1.60    -20%
+ARMOURED                  6   0/3/3        -31%        +1.59     -7%
+TITANS                    6   2/3/1        -70%        +1.51    -11%
+CHAMPIONS_RALLY           9   2/3/4        -37%        +1.47    -14%
+WEAKENED_WILL             8   3/1/4        -12%        +1.46     +2%
+GLASS_CANNON              7   3/3/1         +3%        +1.35     -4%
+HORDE                    12   1/6/5         -9%        +1.24    -14%
+THICK_SKINNED            13   4/5/4         -6%        +1.21     -2%
+ENFEEBLED                 9   3/4/2        -38%        +1.14    -15%
+DEADLY                    8   3/4/1         +2%        +1.10     +1%
+SPLITTERS                 8   2/1/5         +9%        +1.06    -10%
+NESTS                     4   1/2/1         -7%        +0.99     +7%
+BURNING_GROUND            5   3/2/0        -35%        +0.99    -43%
+RISING_DREAD              7   4/2/1         -2%        +0.91     -6%
+FRAGILE                   8   1/3/4        -30%        +0.81     -6%
+EXPOSED                  10   2/4/4         +6%        +0.70    -10%
+CHAIN_REACTION            6   3/1/2        -19%        +0.69     +3%
+THIEVES_GUILD             4   1/1/2        -40%        +0.63    -16%
+GRAVITY_WELL              4   3/0/1        -27%        +0.61     -9%
+HUNTERS                   6   2/2/2         +5%        +0.55     +1%
+EMPOWERED                 6   3/2/1        -13%        +0.52     -8%
+FORTIFIED                 9   3/3/3        -23%        +0.44     -1%
+VENOMOUS                  6   2/2/2        -22%        +0.29    -20%
+UNDYING_LEGION            6   1/1/4         -6%        +0.27     -5%
+ELEMENTAL_AEGIS           6   3/2/1         -7%        +0.22    -16%
+ELEMENTAL_WEAKNESS        8   2/3/3        -34%        +0.20     -5%
+MOMENTUM                 10   2/5/3         +6%        +0.19     -3%
+HAIL_OF_ARROWS            9   1/4/4         +7%        +0.11     -9%
+RAMPAGE                  11   8/0/3         +5%        +0.07    -11%
+RISING_STAKES             7   1/2/4         +2%        +0.03     +7%
+PACK_HUNTERS              4   1/0/3        -14%        +0.01     +6%
+FLEET                     8   2/2/4        -21%        -0.04    -18%
+BLURRED_VISION            7   2/2/3         +7%        -0.04     +6%
+MANA_SIPHON               7   3/4/0         -7%        -0.09     +4%
+WITHERED                  7   3/1/3         -9%        -0.20     -3%
+BLOODLESS                11   4/4/3        -14%        -0.30     -9%
+AMBUSH                    8   2/2/4        +30%        -0.47     +1%
+MANA_STARVED              7   2/1/4        +11%        -0.51     -9%
+BERSERKERS               10   5/5/0        +18%        -0.52     -3%
+QUICKENED                11   5/3/3        +25%        -0.53     +8%
+VOLATILE                  9   6/2/1        -20%        -0.59    -12%
+VAMPIRIC                  7   3/1/3         -9%        -0.61     -2%
+GAUNTLET                  6   0/4/2        +43%        -0.64     +2%
+DESECRATED                5   2/1/2        +18%        -0.64     +2%
+LETHARGIC                 5   1/4/0        +90%        -0.68     +1%
+SKITTISH                 13   4/3/6        +16%        -0.96     -1%
+BOUNTY_MARK               7   1/4/2         -9%        -0.97     -7%
+TAXING                    9   2/3/4        -11%        -0.97     -2%
+UNSHAKABLE               12   3/4/5        +28%        -0.98     -1%
+SPELL_WARDED             10   8/1/1        +29%        -0.99     +8%
+HOURGLASS                 7   4/1/2         -4%        -1.04    -19%
+LACERATING               10   5/3/2         +5%        -1.04     +8%
+SOUL_EATERS               6   2/3/1        +43%        -1.21     -1%
+MAP_GUARDIAN              4   3/1/0        -21%        -1.23     -3%
+SHIELDBEARERS             8   2/1/5        +79%        -1.24     -1%
+SUMMONERS                 5   1/1/3        +47%        -1.32     +1%
+SEALED_COFFERS            8   2/4/2        +67%        -1.34     +6%
+SLUGGISH                  5   1/3/1        +23%        -1.37     -8%
+WARDED                    4   2/1/1        +65%        -1.56    +10%
+SPIKED                    5   2/2/1        +17%        -1.79     -4%
+HEXPROOF                  5   2/1/2         -4%        -2.70     -1%
+CARTOGRAPHERS_LENS        3   1/1/1        +82%        -2.73     -6%
+CULLING_STRIKE            3   0/2/1       +166%        -3.13     +3%
+
+What killed the runner (kind, tier):
+    28  (the map) (T2)
+    25  Maluk Princess (T8)
+    22  Dragon Guard (T9)
+    19  Divinity Manager (T7)
+    18  Kiriona (T10)
+    17  Divinity Magus (T8)
+    17  Dark Water Dragon (T7)
+    16  Maluk Hunter (T7)
+    14  (the map) (T4)
+    13  Elite Kiriona (T10)
+    13  Bloody Karik (T9)
+    13  Dragon Scout of the Valley (T7)
+    13  Drake Leader (T8)
+    12  Emerald Drake (T9)
+    12  Drake Mage (T9)
+By kind of monster: plain 406, champion 1 73, champion 2 57, champion 3 49, plain wave 36, plain mage 19, plain thief 14, champion 1 wave 9, champion 3 wave 6, champion 2 wave 4, plain infused 4, plain resonant 3, champion 1 mage 2, champion 2 mage 2, champion 1 thief 2, champion 1 resonant 2
+
+Kinds of monster that killed the runner most per kill (at least 3 deaths):
+  T10 Kiriona                          killed    0  deaths caused  18  deaths/kill 18.00  exp/kill 0
+  T10 Elite Kiriona                    killed    0  deaths caused  13  deaths/kill 13.00  exp/kill 0
+  T9  Bloody Karik                     killed    1  deaths caused  13  deaths/kill 13.00  exp/kill 56.7M
+  T9  Drake Mage                       killed    1  deaths caused  12  deaths/kill 12.00  exp/kill 144.5M  (lifted)
+  T10 Knoriks                          killed    0  deaths caused  10  deaths/kill 10.00  exp/kill 0
+  T10 Arcane Watchman                  killed    0  deaths caused   9  deaths/kill 9.00  exp/kill 0  (lifted)
+  T9  Foundry Mystic                   killed    0  deaths caused   9  deaths/kill 9.00  exp/kill 0  (lifted)
+  T9  Passageway Mystic                killed    1  deaths caused   9  deaths/kill 9.00  exp/kill 13.4M  (lifted)
+  T5  Hunter Gargoyle                  killed    0  deaths caused   8  deaths/kill 8.00  exp/kill 0  (lifted)
+  T7  Maluk Hunter                     killed    2  deaths caused  16  deaths/kill 8.00  exp/kill 16.3M
+  T10 Turtlelian                       killed    0  deaths caused   7  deaths/kill 7.00  exp/kill 0
+  T9  Labyrinth Captain                killed    1  deaths caused   7  deaths/kill 7.00  exp/kill 36.0M
+  T9  Master Festina                   killed    0  deaths caused   7  deaths/kill 7.00  exp/kill 0
+  T10 Tardyon                          killed    0  deaths caused   6  deaths/kill 6.00  exp/kill 0
+  T10 Maluk Banshee                    killed    1  deaths caused   6  deaths/kill 6.00  exp/kill 87.5M  (lifted)
+
+Most dropped items (per 100 kills, over 4666 kills):
+  4498528.40  57 Adena
+     1487.21  1344 Mithril Arrow
+     1366.27  1345 Shining Arrow
+      106.88  9599 Ancient Tome of the Demon
+       86.35  1868 Thread
+       67.36  1871 Charcoal
+       59.58  1872 Animal Bone
+       57.37  1866 Suede
+       57.16  1895 Metallic Fiber
+       27.50  1879 Cokes
+       25.83  1867 Animal Skin
+       23.64  1885 High-Grade Suede
+       23.19  1873 Silver Nugget
+       18.82  1869 Iron Ore
+       17.90  9628 Leonard
+Maps dropped by source: monster 19, completion 7; by tier: T1 7, T2 3, T3 7, T4 5, T5 3, T6 1
