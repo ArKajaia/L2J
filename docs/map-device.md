@@ -38,7 +38,34 @@ The first map a character gets starts the quest **A Map of Your Own** (see below
 | 9 | 18109 | 82-86 | 6.5-9.0 | Batwing Drake, Bloody Karik, the Lesser Giants, Hellbound masters (17) | x1.00 | x1.00 | x1.00 | x2.30 | level 82, strength 6.5 |
 | 10 | 18110 | 83-87 | 9.0+ | the Seed of Annihilation elites, Knoriks (11) | x1.05 | x1.03 | x1.02 | x2.70 | level 85, strength 9.0 |
 
-The monsters of a map are plain open world monsters of the tier's levels **and** strength, with a respawning world spawn (no quest, event, instance-only or raid monster, nothing that gives no experience or lies still like the cocoons). Exclude more with `<excludedNpcs>`: it holds the Isle of Prayer's Prison Guards (18367, 18368), the guards of Rignos's Race Event, which petrify instead of fighting. Tiers 1-5 are solo maps; from tier 6 the monsters are party monsters, whose own strength is the step up, so the tier multipliers stay near 1. `//mapdevice pool <tier>` lists a tier's monsters with their strength.
+The monsters of a map are plain open world monsters of the tier's levels **and** strength (and lifted ones from below, see *Lifted monsters*), with a respawning world spawn (no quest, event, instance-only or raid monster, nothing that gives no experience or lies still like the cocoons). Exclude more with `<excludedNpcs>`: it holds the Isle of Prayer's Prison Guards (18367, 18368), the guards of Rignos's Race Event, which petrify instead of fighting. Tiers 1-5 are solo maps; from tier 6 the monsters are party monsters, whose own strength is the step up, so the tier multipliers stay near 1. `//mapdevice pool <tier>` lists a tier's monsters with their strength.
+
+### Lifted monsters: more kinds for every tier
+
+A tier's own monsters are few (11 to 117 kinds, 11-23 for the party tiers), so a map also takes monsters from below the tier and **lifts** them (`MapLift`, `MapDeviceManager.liftFor`): 3 of a map's 6 kinds are lifted ones (`LiftedKindsPerMap`), the others the tier's own. A lifted monster:
+
+- **Is played at a level of the tier** (a random level of its range; `Monster.getLevel`), so the level gap, accuracy, critical and skill landing work as for the tier's own, and the map's level checks (no map drop from a monster 9 levels below you) see that level.
+- **Has its stats raised to that level's standard** as far as they stood from its own level's: HP, P./M. Atk., P./M. Def. and Atk. Spd. times the standard monster at the new level over the standard at its own (`MonsterStrength.getLiftFactor`). P. Atk. and the defences grow with the level modifier, M. Atk. with its square, and those come from playing it at the new level, so the base stats take only the standards' ratio. Its strength score (measured against its own level) holds: a Grave Priest of level 47 with strength 1.5 plays as a level 84 monster of strength 1.5.
+- **Is raised in strength** if it was a little too weak for the tier (its score below `minScore`, by at most `LiftedMaxStrengthGain` = 2.0): its HP, attack and defence (not its attack speed) grow until its score lands in the lowest quarter of the tier's strength range. This is what gives the party tiers their variety (a Drake Warrior of strength 4.8 fills a tier 10 map). Only on maps that drew their kinds from the tier; a place or unique map that names its monsters only lifts their level.
+- **Gives that level's experience and SP**: its own times its HP lift and how much more experience a point of HP is worth at the new level (the median per level, so the few elite templates don't sway it) (`MonsterStrength.getExpLiftFactor`).
+- **Drops a monster of the tier's own**: it rolls the drop and spoil lists of one of the map's native kinds (`Attackable.getDropTemplate`), so a level 45 spider in a tier 3 map drops what a Ragna Orc would.
+
+The candidates are open world monsters of `LiftedMonsterMinLevel` (40) and up, as for the tier's own, except one a script works on as it spawns (Hellbound's Remnants, which only die to Holy Water, monsters that move themselves to a spawn point of their own, spawners): those are made for their own place. Two scripts that read a monster's spawn point when it dies (the Forge of the Gods, Hellbound's Base Tower) and RandomSpawn now leave a map's monsters alone. Kinds of one name (the three Tyrannosaurus templates) count once. `//mapdevice pool <tier>` marks the lifted ones.
+
+| Tier | Own kinds | Lifted kinds | Their strength |
+|---|---|---|---|
+| 1 | 48 | 94 | 0.7-1.0 |
+| 2 | 117 | 442 | 0.5-1.5 |
+| 3 | 53 | 541 | 0.5-1.5 |
+| 4 | 41 | 572 | 0.5-1.5 |
+| 5 | 23 | 712 | 0.8-2.0 |
+| 6 | 11 | 232 | 1.3-3.6 |
+| 7 | 23 | 35 | 1.9-4.5 |
+| 8 | 21 | 34 | 2.6-5.4 |
+| 9 | 17 | 38 | 3.3-6.1 |
+| 10 | 11 | 27 | 4.5-8.8 |
+
+In live map probes (the `kinds` of the probe's answer: each kind's own level, the level it plays at, its live HP, attack, defence, experience and whose drops it rolls) the lifted kinds stood among the tier's own: in a tier 5 map a Gigantic Flyer of level 47 had 21,730 HP and 4,311 P. Atk. at level 84 against 10,445-18,122 HP and 3,929-4,732 P. Atk. for the tier's own, and gave 211,487 experience against 245,659-535,746. Sixty maps over the ten tiers cleared at full pace, nothing beyond the fence, no error. What they don't get: the power of their skills (a monster's skill levels are its own), so a lifted caster hits a little softer with spells than its M. Atk. says.
 
 ### Monster strength
 
@@ -415,7 +442,7 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 curl -X POST http://127.0.0.1:8788/api/mapdevice/probe -d 'tier=3&mods=CHAIN_REACTION,PACK_HUNTERS&kills=30&seconds=60&pace=100'
 ```
 
-Parameters: `arena` (default the tier's first), `tier` (3), `mods` (each with its tier after a colon if wanted, `BRUTAL:3`; else tier II), `unique` (a unique map's type, `COLISEUM`...`TOMB`: opens it in its own place, or in `arena`, with its twist; then `tier` and `mods` are its own), `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0); the answer also has the modifiers with their tiers and effects (`modifiers`), the monster count multiplier they bring (`monsterCountMultiplier`), the field (`field`), every npc alive at the start and at the end and how many stood beyond the fence (`npcsAtStart`, `npcsOutsideAtStart`, `outsideAtStart`, the same `AtEnd`), where the monsters stood at the start (`outsideFence`: how many beyond the fence, `farthestFromEntry`), the fence's wall count (`fenceWalls`), whether the arena is a path (`path`), when the probe's radar first pointed somewhere (`radarFirstAt`) and how many monsters Gravity Well pulled (`pulled`). Before it fights, `waystone=1` tries the waystones (from too far, then from beside one), `hearts=N` breaks N Nest Hearts (the answer then lists each nest: broken, monsters, multipliers, the heart's HP, and what 1,000 damage does to it), `coffer=1` opens the nearest Sealed Coffer and slays its waves, `invul` (0 to let the probe take damage), `keep`.
+Parameters: `arena` (default the tier's first), `tier` (3), `mods` (each with its tier after a colon if wanted, `BRUTAL:3`; else tier II), `unique` (a unique map's type, `COLISEUM`...`TOMB`: opens it in its own place, or in `arena`, with its twist; then `tier` and `mods` are its own), and the answer lists each kind of monster (`kinds`: own level, level played at, lifted or not, live stats, experience, whose drops), `kills` (30), `seconds` (60, at most 900), `pace` (ms between hits, 250), `hit` (share of a monster's max HP per hit, 0.3), `after` (seconds to wait at the end, 0); the answer also has the modifiers with their tiers and effects (`modifiers`), the monster count multiplier they bring (`monsterCountMultiplier`), the field (`field`), every npc alive at the start and at the end and how many stood beyond the fence (`npcsAtStart`, `npcsOutsideAtStart`, `outsideAtStart`, the same `AtEnd`), where the monsters stood at the start (`outsideFence`: how many beyond the fence, `farthestFromEntry`), the fence's wall count (`fenceWalls`), whether the arena is a path (`path`), when the probe's radar first pointed somewhere (`radarFirstAt`) and how many monsters Gravity Well pulled (`pulled`). Before it fights, `waystone=1` tries the waystones (from too far, then from beside one), `hearts=N` breaks N Nest Hearts (the answer then lists each nest: broken, monsters, multipliers, the heart's HP, and what 1,000 damage does to it), `coffer=1` opens the nearest Sealed Coffer and slays its waves, `invul` (0 to let the probe take damage), `keep`.
 
 ## Setup notes
 

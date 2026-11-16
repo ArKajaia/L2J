@@ -115,6 +115,10 @@ public class ForgeOfTheGods extends Script
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
+		if (npc.getSpawn() == null)
+		{
+			return; // Not one of the Forge's own (a Map Device map's).
+		}
 		final int rand = getRandom(100);
 		Npc mob = null;
 		_npcCount++;

@@ -38,12 +38,14 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.appearance.PlayerAppearance;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
+import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 
 /**
@@ -173,6 +175,32 @@ public final class MapProbe
 		extra.append(",\"path\":").append(placed.path() != null);
 		extra.append(",\"field\":").append(quote(placed.name() + (placed.path() != null ? ", path " + Math.round(placed.path().getLength()) + " long" : ", ellipse " + placed.radiusX() + " x " + placed.radiusY())));
 		extra.append(fenceReport(run, fence, "AtStart"));
+		// Each kind of monster: its own level, the level it is played at (lifted or not), and one of them's live stats, experience and whose drops it rolls.
+		extra.append(",\"kinds\":[");
+		boolean firstKind = true;
+		for (NpcTemplate kind : run.getMonsterKinds())
+		{
+			Monster sampleOf = null;
+			for (int objectId : run.getMonsters())
+			{
+				if ((World.getInstance().findObject(objectId) instanceof Monster monster) && (monster.getId() == kind.getId()) && (monster.getChampionTier() == 0) && !monster.isWaveChallenge())
+				{
+					sampleOf = monster;
+					break;
+				}
+			}
+			extra.append(firstKind ? "" : ",").append("{\"name\":").append(quote(kind.getName())).append(",\"ownLevel\":").append(kind.getLevel()).append(",\"score\":").append(MonsterStrength.format(MonsterStrength.getScore(kind)));
+			if (sampleOf != null)
+			{
+				extra.append(",\"level\":").append(sampleOf.getLevel()).append(",\"lifted\":").append(sampleOf.getMapLift() != null);
+				extra.append(",\"maxHp\":").append(sampleOf.getMaxHp()).append(",\"pAtk\":").append(Math.round(sampleOf.getPAtk(null))).append(",\"mAtk\":").append(Math.round(sampleOf.getMAtk(null, null)));
+				extra.append(",\"pDef\":").append(Math.round(sampleOf.getPDef(null))).append(",\"mDef\":").append(Math.round(sampleOf.getMDef(null, null))).append(",\"atkSpd\":").append(Math.round(sampleOf.getPAtkSpd()));
+				extra.append(",\"exp\":").append(sampleOf.getExpReward(sampleOf.getLevel())).append(",\"drops\":").append(quote(sampleOf.getDropTemplate().getName() + " Lv. " + sampleOf.getDropTemplate().getLevel()));
+			}
+			extra.append('}');
+			firstKind = false;
+		}
+		extra.append(']');
 
 		// Waystones: from too far, then from beside the first, to the third.
 		if ("1".equals(params.get("waystone")) && (run.getWaystones().size() >= 3))

@@ -89,6 +89,10 @@ public class BaseTower extends Script
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
+		if (npc.getSpawn() == null)
+		{
+			return; // Not one of the Base Tower's own (a Map Device map's).
+		}
 		switch (npc.getId())
 		{
 			case GUZEN:

@@ -215,7 +215,7 @@ public class AdminMapDevice implements IAdminCommandHandler
 				activeChar.sendSysMessage("== Tier " + tier.tier() + ": levels " + tier.minLevel() + "-" + tier.maxLevel() + ", strength " + tier.scoreRange() + " (" + MonsterStrength.describe(tier.minScore()) + "), " + pool.size() + " kind(s) ==");
 				for (NpcTemplate template : pool)
 				{
-					activeChar.sendSysMessage(template.getId() + " " + template.getName() + " Lv. " + template.getLevel() + ": strength " + MonsterStrength.format(MonsterStrength.getScore(template)) + " (" + relativeStats(template) + ")");
+					activeChar.sendSysMessage(template.getId() + " " + template.getName() + " Lv. " + template.getLevel() + (tier.isLifted(template) ? " (lifted" + (template.getLevel() < tier.minLevel() ? " to Lv. " + tier.minLevel() + "-" + tier.maxLevel() : "") + (MonsterStrength.getScore(template) < tier.minScore() ? " and to strength " + MonsterStrength.format(tier.minScore()) + "+" : "") + ")" : "") + ": strength " + MonsterStrength.format(MonsterStrength.getScore(template)) + " (" + relativeStats(template) + ")");
 				}
 				break;
 			}

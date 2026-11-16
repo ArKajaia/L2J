@@ -55,6 +55,12 @@ public class MapDeviceConfig
 	public static int XP_BONUS_PER_MEDAL;
 	public static int DROP_BONUS_PER_MEDAL;
 	public static int MONSTER_COUNT;
+	/** The lowest level of a monster a map lifts to its tier's levels. */
+	public static int LIFTED_MIN_LEVEL;
+	/** How many of a map's kinds of monster are lifted from lower levels. */
+	public static int LIFTED_KINDS_PER_MAP;
+	/** How much stronger a lifted monster may be made, at most, to reach its tier's strength. */
+	public static double LIFTED_MAX_STRENGTH_GAIN;
 	/** How strong a number modifier is at modifier tier I, II and III (index 0-2), as a share of its listed effect. */
 	public static double[] MODIFIER_TIER_SCALE = new double[]
 	{
@@ -133,6 +139,9 @@ public class MapDeviceConfig
 		XP_BONUS_PER_MEDAL = Math.max(0, config.getInt("XpBonusPerMedal", 20));
 		DROP_BONUS_PER_MEDAL = Math.max(0, config.getInt("DropBonusPerMedal", 20));
 		MONSTER_COUNT = Math.max(1, config.getInt("MonsterCount", 100));
+		LIFTED_MIN_LEVEL = Math.max(1, config.getInt("LiftedMonsterMinLevel", 40));
+		LIFTED_KINDS_PER_MAP = Math.max(0, config.getInt("LiftedKindsPerMap", 3));
+		LIFTED_MAX_STRENGTH_GAIN = Math.max(1.0, config.getDouble("LiftedMaxStrengthGain", 2.0));
 		MODIFIER_TIER_SCALE = parseThree(config.getString("ModifierTierScale", "0.6,1.0,1.4"), new double[]
 		{
 			0.6,

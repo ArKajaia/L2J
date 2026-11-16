@@ -357,6 +357,14 @@ public final class MonsterStrength
 	}
 
 	/**
+	 * @return the weight of each stat in the score, by {@link Stat} ordinal ({@code <strength>} of data/MapDevice.xml)
+	 */
+	public static double[] getWeights()
+	{
+		return MapDeviceData.getInstance().getStrengthWeights().clone();
+	}
+
+	/**
 	 * Forgets every standard and score, so they are worked out again (after a reload of the npcs or of data/MapDevice.xml).
 	 */
 	public static void clear()
@@ -364,9 +372,103 @@ public final class MonsterStrength
 		synchronized (MonsterStrength.class)
 		{
 			_ownQuartiles = null;
+			_expQuartiles = null;
 		}
 		REFERENCES.clear();
 		SCORES.clear();
+	}
+
+	// =========================================================================
+	// Lifting a monster to a higher level (the Map Device's lifted monsters)
+	// =========================================================================
+
+	/** level -> the median experience per point of HP of its monsters (NaN: too few). Built once. */
+	private static volatile Map<Integer, double[]> _expQuartiles;
+
+	/**
+	 * How much a stat of a monster of one level must be multiplied so that, played at another level, it stands as far from that level's standard as it stood from its own:
+	 * the standard at the new level over the standard at its own. The level's own share of the stat (P. Atk., P. Def. and M. Def. grow with the level modifier, M. Atk. with
+	 * its square) comes from playing it at the new level, so the base value takes only this.
+	 * @param fromLevel its own level
+	 * @param toLevel the level it is played at
+	 * @param stat a stat
+	 * @return the multiplier, 1 if either level has no standard
+	 */
+	public static double getLiftFactor(int fromLevel, int toLevel, Stat stat)
+	{
+		if (fromLevel >= toLevel)
+		{
+			return 1.0;
+		}
+		final double from = getReference(fromLevel)[stat.ordinal()];
+		final double to = getReference(toLevel)[stat.ordinal()];
+		return (from > 1) && (to > 1) ? to / from : 1.0;
+	}
+
+	/**
+	 * How much more experience and SP a monster gives played at a higher level: as much more HP as it gets ({@link #getLiftFactor} of HP), times how much more experience a
+	 * point of HP is worth at the new level (the median over the monsters of each level, so a few elite or raid templates don't sway it).
+	 * @param fromLevel its own level
+	 * @param toLevel the level it is played at
+	 * @return the multiplier, 1 if unknown
+	 */
+	public static double getExpLiftFactor(int fromLevel, int toLevel)
+	{
+		if (fromLevel >= toLevel)
+		{
+			return 1.0;
+		}
+		final Map<Integer, double[]> perHp = getExpQuartiles();
+		final double from = referenceOf(perHp, fromLevel, 0);
+		final double to = referenceOf(perHp, toLevel, 0);
+		final double perHpFactor = (from > 0) && (to > 0) && !Double.isNaN(from) && !Double.isNaN(to) ? to / from : 1.0;
+		return getLiftFactor(fromLevel, toLevel, Stat.HP) * perHpFactor;
+	}
+
+	private static Map<Integer, double[]> getExpQuartiles()
+	{
+		Map<Integer, double[]> exp = _expQuartiles;
+		if (exp == null)
+		{
+			synchronized (MonsterStrength.class)
+			{
+				exp = _expQuartiles;
+				if (exp == null)
+				{
+					// Experience per point of HP (its effective HP, passives included).
+					final Map<Integer, List<Double>> values = new HashMap<>();
+					for (NpcTemplate template : NpcData.getInstance().getTemplates(t -> t.isType("Monster") && (t.getExp() > 0)))
+					{
+						final double hp = Stat.HP.getValue(template);
+						if (hp > 1)
+						{
+							values.computeIfAbsent((int) template.getLevel(), _ -> new ArrayList<>()).add(template.getExp() / hp);
+						}
+					}
+					final Map<Integer, double[]> quartiles = new TreeMap<>();
+					for (Map.Entry<Integer, List<Double>> entry : values.entrySet())
+					{
+						final List<Double> list = entry.getValue();
+						if (list.size() < MIN_SAMPLES)
+						{
+							quartiles.put(entry.getKey(), new double[]
+							{
+								Double.NaN
+							});
+							continue;
+						}
+						Collections.sort(list);
+						quartiles.put(entry.getKey(), new double[]
+						{
+							list.get((list.size() - 1) / 2)
+						});
+					}
+					exp = Collections.unmodifiableMap(quartiles);
+					_expQuartiles = exp;
+				}
+			}
+		}
+		return exp;
 	}
 
 	/**

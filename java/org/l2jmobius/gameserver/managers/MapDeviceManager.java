@@ -84,6 +84,7 @@ import org.l2jmobius.gameserver.model.item.type.EtcItemType;
 import org.l2jmobius.gameserver.model.mapdevice.ArenaPath;
 import org.l2jmobius.gameserver.model.mapdevice.Hideout;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
+import org.l2jmobius.gameserver.model.mapdevice.MapLift;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
@@ -344,6 +345,20 @@ public class MapDeviceManager
 		}
 
 		double multiplier = run.getMonsterMultiplier(stat);
+		final MapLift lift = monster.getMapLift();
+		if (lift != null)
+		{
+			multiplier *= switch (stat)
+			{
+				case HP -> lift.factor(MonsterStrength.Stat.HP);
+				case P_ATK -> lift.factor(MonsterStrength.Stat.P_ATK);
+				case M_ATK -> lift.factor(MonsterStrength.Stat.M_ATK);
+				case P_DEF -> lift.factor(MonsterStrength.Stat.P_DEF);
+				case M_DEF -> lift.factor(MonsterStrength.Stat.M_DEF);
+				case ATK_SPD -> lift.factor(MonsterStrength.Stat.P_ATK_SPD);
+				default -> 1.0;
+			};
+		}
 		if (run.isUnique())
 		{
 			multiplier *= UniqueMapManager.getEncounterMultiplier(run, monster, stat);
@@ -423,7 +438,8 @@ public class MapDeviceManager
 	public static double getXpMultiplier(Monster monster)
 	{
 		final MapRun run = getMonsterRun(monster);
-		return run != null ? run.getXpMultiplier() * getSpawnlingReward(run, monster) * getStakesReward(run) : 1.0;
+		final MapLift lift = monster.getMapLift();
+		return run != null ? run.getXpMultiplier() * getSpawnlingReward(run, monster) * getStakesReward(run) * (lift != null ? lift.expFactor() : 1.0) : 1.0;
 	}
 
 	/**
@@ -1883,15 +1899,32 @@ public class MapDeviceManager
 	{
 		final List<NpcTemplate> ofLevel = new ArrayList<>();
 		final List<NpcTemplate> pool = new ArrayList<>();
+		final List<NpcTemplate> lifted = new ArrayList<>();
 		for (NpcTemplate template : getWorldMonsters())
 		{
+			final double score = MonsterStrength.getScore(template);
 			if (tier.allowsLevel(template.getLevel()))
 			{
 				ofLevel.add(template);
-				if (tier.allowsScore(MonsterStrength.getScore(template)))
+				if (tier.allowsScore(score))
 				{
 					pool.add(template);
+					continue;
 				}
+			}
+			// A lower monster as strong for its level as the tier wants: lifted to the tier when it fills a map (MapLift). Its score is against its own level, so it holds.
+			// One a script works on as it spawns (Hellbound's Remnants that only die to Holy Water, monsters that move themselves to a spawn point of their own, spawners) is left out:
+			// it is made for its own place.
+			if ((MapDeviceConfig.LIFTED_KINDS_PER_MAP <= 0) || (template.getLevel() < MapDeviceConfig.LIFTED_MIN_LEVEL) || (template.getLevel() > tier.maxLevel()) || template.hasListener(EventType.ON_NPC_SPAWN))
+			{
+				continue;
+			}
+			// Of a lower level and as strong for its level as the tier wants, or a little too weak (raised in strength too, LiftedMaxStrengthGain).
+			final boolean strongEnough = tier.allowsScore(score);
+			final boolean liftableStrength = (tier.minScore() > 0) && (score < tier.minScore()) && ((score * MapDeviceConfig.LIFTED_MAX_STRENGTH_GAIN) >= tier.minScore());
+			if (((template.getLevel() < tier.minLevel()) && strongEnough) || liftableStrength)
+			{
+				lifted.add(template);
 			}
 		}
 
@@ -1905,6 +1938,11 @@ public class MapDeviceManager
 		else
 		{
 			LOGGER.info(MapDeviceManager.class.getSimpleName() + ": " + pool.size() + " of " + ofLevel.size() + " monsters can fill a tier " + tier.tier() + " map (levels " + tier.minLevel() + "-" + tier.maxLevel() + ", strength " + tier.scoreRange() + (pool.isEmpty() ? "" : ": " + describeScores(pool)) + ").");
+		}
+		if (!lifted.isEmpty())
+		{
+			LOGGER.info(MapDeviceManager.class.getSimpleName() + ": " + lifted.size() + " lower or weaker monsters (levels " + MapDeviceConfig.LIFTED_MIN_LEVEL + "-" + tier.maxLevel() + ") can be lifted into a tier " + tier.tier() + " map (" + describeScores(lifted) + ").");
+			pool.addAll(lifted);
 		}
 		pool.sort(Comparator.comparingDouble(MonsterStrength::getScore));
 		return Collections.unmodifiableList(pool);
@@ -2025,6 +2063,39 @@ public class MapDeviceManager
 		_monsterPools.clear();
 	}
 
+	/**
+	 * A map's kinds of monster: {@code MonsterTypesPerMap} of them, {@code LiftedKindsPerMap} of those lifted from lower levels and the rest of the tier's own levels, as far as the
+	 * pool has them (one kind short is made up from the other).
+	 * @param shuffled the pool, shuffled
+	 * @param tier the map's tier
+	 * @return the kinds
+	 */
+	private static List<NpcTemplate> pickKinds(List<NpcTemplate> shuffled, MapTier tier)
+	{
+		final List<NpcTemplate> natives = new ArrayList<>();
+		final List<NpcTemplate> lifted = new ArrayList<>();
+		final Set<String> names = new HashSet<>();
+		for (NpcTemplate template : shuffled)
+		{
+			if (names.add(template.getName())) // Several templates of one name (the Tyrannosauruses) are one kind.
+			{
+				(tier.isLifted(template) ? lifted : natives).add(template);
+			}
+		}
+		final int total = Math.min(MapDeviceConfig.MONSTER_TYPES, natives.size() + lifted.size());
+		final int liftedCount = Math.min(lifted.size(), Math.max(MapDeviceConfig.LIFTED_KINDS_PER_MAP, total - natives.size()));
+		final List<NpcTemplate> kinds = new ArrayList<>(lifted.subList(0, Math.min(liftedCount, total)));
+		for (NpcTemplate template : natives)
+		{
+			if (kinds.size() >= total)
+			{
+				break;
+			}
+			kinds.add(template);
+		}
+		return kinds;
+	}
+
 	private void spawnMonsters(MapRun run, List<NpcTemplate> pool)
 	{
 		// A map has a theme: a few kinds of monster, not a hundred. A map of the event map page, or a unique map, that names its monsters keeps them all.
@@ -2032,7 +2103,7 @@ public class MapDeviceManager
 		final List<NpcTemplate> shuffled = new ArrayList<>(pool);
 		Collections.shuffle(shuffled);
 		final boolean named = !arena.monsters().isEmpty() || (run.isUnique() && !run.getUnique().npcs().isEmpty());
-		final List<NpcTemplate> kinds = named ? shuffled : new ArrayList<>(shuffled.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, shuffled.size())));
+		final List<NpcTemplate> kinds = named ? shuffled : pickKinds(shuffled, run.getTier());
 		run.setMonsterKinds(kinds);
 		
 		// A unique map that fills itself (the Coliseum's waves).
@@ -2431,7 +2502,56 @@ public class MapDeviceManager
 	}
 
 	/**
-	 * Spawns one monster of a map: no spawn point (nothing respawns), its map's stat functions, tracked by the run.
+	 * @param run a map
+	 * @param template one of its kinds of monster
+	 * @return how it is lifted to the map's tier if it is of a lower level ({@link MapLift}), {@code null} if it is of the tier's levels or no kind of the map (a twist's own npcs)
+	 */
+	private MapLift liftFor(MapRun run, NpcTemplate template)
+	{
+		final MapTier tier = run.getTier();
+		if (!tier.isLifted(template) || !run.getMonsterKinds().contains(template))
+		{
+			return null;
+		}
+		// Raised in strength only on a map that drew its kinds from the tier's pool; one that names its monsters chose them as they are.
+		final boolean named = !run.getArena().monsters().isEmpty() || (run.isUnique() && !run.getUnique().npcs().isEmpty());
+		final double score = MonsterStrength.getScore(template);
+		double strengthGain = 1.0;
+		if (!named && (tier.minScore() > 0) && (score > 0) && (score < tier.minScore()))
+		{
+			// Into the lowest quarter of the tier's strength range (10% above its minimum if it has no maximum).
+			final double top = tier.maxScore() > 0 ? tier.minScore() + ((tier.maxScore() - tier.minScore()) * 0.25) : tier.minScore() * 1.1;
+			strengthGain = (tier.minScore() + (Rnd.nextDouble() * (top - tier.minScore()))) / score;
+		}
+		if ((template.getLevel() >= tier.minLevel()) && (strengthGain <= 1.0))
+		{
+			return null; // Named, of the tier's levels: nothing to lift.
+		}
+		// Drops of a monster of the tier's own levels: one of the map's, else one of the tier's.
+		final List<NpcTemplate> donors = new ArrayList<>();
+		for (NpcTemplate kind : run.getMonsterKinds())
+		{
+			if (!tier.isLifted(kind))
+			{
+				donors.add(kind);
+			}
+		}
+		if (donors.isEmpty())
+		{
+			for (NpcTemplate candidate : getMonsterPool(tier))
+			{
+				if (!tier.isLifted(candidate))
+				{
+					donors.add(candidate);
+				}
+			}
+		}
+		final int level = template.getLevel() < tier.minLevel() ? Rnd.get(tier.minLevel(), tier.maxLevel()) : template.getLevel();
+		return MapLift.of(template.getLevel(), level, strengthGain, donors.isEmpty() ? null : donors.get(Rnd.get(donors.size())));
+	}
+
+	/**
+	 * Spawns one monster of a map: no spawn point (nothing respawns), its map's stat functions, tracked by the run. A kind of a lower level than the map's tier is lifted to it.
 	 */
 	Monster spawnMapMonster(MapRun run, NpcTemplate template, Location spot)
 	{
@@ -2440,8 +2560,14 @@ public class MapDeviceManager
 			final Monster monster = new Monster(template);
 			monster.setInstanceId(run.getInstanceId());
 			monster.setHeading(Rnd.get(65536));
+			final MapLift lift = liftFor(run, template);
+			monster.setMapLift(lift);
 			monster.spawnMe(spot.getX(), spot.getY(), spot.getZ());
 			addMonsterFunctions(run, monster);
+			if (lift != null)
+			{
+				monster.setCurrentHpMp(monster.getMaxHp(), monster.getMaxMp());
+			}
 			run.getMonsters().add(monster.getObjectId());
 			return monster;
 		}
