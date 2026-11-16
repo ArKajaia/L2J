@@ -8054,9 +8054,10 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 
-		// Hurt after a fight: sits down until HP is back, as a player does between pulls.
+		// Hurt or out of mana after a fight: sits down until both are back, as a player does between pulls.
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		if (hpRatio < (_resting ? MapSimulation.REST_UNTIL : MapSimulation.REST_BELOW))
+		final double mpRatio = npc.getCurrentMp() / Math.max(1, npc.getMaxMp());
+		if ((hpRatio < (_resting ? MapSimulation.REST_UNTIL : MapSimulation.REST_BELOW)) || (mpRatio < (_resting ? MapSimulation.MP_REST_UNTIL : MapSimulation.MP_REST_BELOW)))
 		{
 			_resting = true;
 			if (!npc.isMoving() && !npc.isMovementDisabled())

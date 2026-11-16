@@ -46,6 +46,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.AttackableAI;
+import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
@@ -103,6 +104,12 @@ public final class MapSimulation
 	/** The runner sits down to rest below this share of its HP when nothing is on it, and stands up again at the other. */
 	public static final double REST_BELOW = 0.45;
 	public static final double REST_UNTIL = 0.9;
+	/** The same for its MP: below this it rests (nothing on it) until the other. */
+	public static final double MP_REST_BELOW = 0.12;
+	public static final double MP_REST_UNTIL = 0.7;
+	/** A monster it gets no closer to and doesn't hurt for this long is out of its reach (across water, a cliff, the fence): it leaves it aside for a while. */
+	private static final long NO_PROGRESS_MILLIS = 30000;
+	private static final long SKIP_MILLIS = 180000;
 
 	private static final int WATCH_INTERVAL = 5000;
 	private static final int DEFAULT_PARALLEL = 100;
@@ -171,8 +178,14 @@ public final class MapSimulation
 		}
 		Monster best = null;
 		double bestDistance = Double.MAX_VALUE;
+		final long now = System.currentTimeMillis();
 		for (int objectId : run.getMonsters())
 		{
+			final Long skipUntil = job._skipped.get(objectId);
+			if ((skipUntil != null) && (now < skipUntil))
+			{
+				continue;
+			}
 			if ((World.getInstance().findObject(objectId) instanceof Monster monster) && !monster.isDead() && (monster.getInstanceId() == npc.getInstanceId()))
 			{
 				final double distance = npc.calculateDistance2D(monster);
@@ -692,6 +705,13 @@ public final class MapSimulation
 		final List<Long> _killTimes = new ArrayList<>();
 		final Map<Integer, KindStats> _kinds = new LinkedHashMap<>();
 		final Map<Integer, Long> _items = new TreeMap<>();
+		/** Monsters out of its reach: object id -> until when it leaves them aside. */
+		final Map<Integer, Long> _skipped = new ConcurrentHashMap<>();
+		int _watchTargetId;
+		double _watchDistance;
+		double _watchHp;
+		long _watchSince;
+		int _skips;
 		int _killsAll;
 		int _uncredited;
 		double _exp;
@@ -807,6 +827,7 @@ public final class MapSimulation
 			{
 				batch.keepAwake(runner);
 				trackServitor();
+				checkProgress(runner, now);
 				// A dead runner whose wake-up was lost (it decayed): back at the entry.
 				if (runner.isDead() && !_respawnScheduled && ((now - _diedAt) > ((batch._respawn + 10) * 1000L)))
 				{
@@ -821,6 +842,44 @@ public final class MapSimulation
 			if ((now - _lastKillAt) >= (batch._stuck * 60000L))
 			{
 				end("stuck");
+			}
+		}
+
+		/**
+		 * The monster it goes for: when it got no closer and the monster lost no HP for a while, the monster is out of its reach; it leaves it aside and turns to another.
+		 */
+		private void checkProgress(Npc runner, long now)
+		{
+			if (runner.isDead())
+			{
+				_watchTargetId = 0;
+				return;
+			}
+			final Creature next = findTarget(runner);
+			if (next == null)
+			{
+				_watchTargetId = 0;
+				return;
+			}
+			final double distance = runner.calculateDistance2D(next);
+			if ((next.getObjectId() != _watchTargetId) || (distance < (_watchDistance - 150)) || (next.getCurrentHp() < (_watchHp - 1)))
+			{
+				_watchTargetId = next.getObjectId();
+				_watchDistance = distance;
+				_watchHp = next.getCurrentHp();
+				_watchSince = now;
+				return;
+			}
+			if ((now - _watchSince) >= NO_PROGRESS_MILLIS)
+			{
+				_skipped.put(next.getObjectId(), now + SKIP_MILLIS);
+				_skips++;
+				_watchTargetId = 0;
+				if ((runner.getTarget() == next) && runner.hasAI())
+				{
+					runner.setTarget(null);
+					runner.getAI().setIntention(Intention.ACTIVE);
+				}
 			}
 		}
 
@@ -1204,7 +1263,7 @@ public final class MapSimulation
 			line.put("modifiers", modifiers);
 			line.put("monsters", run != null ? run.getMonsterTotal() : _monsterTotal).put("monstersAtOpen", _monsterTotal);
 			line.put("result", _result).ratio("minutes", minutes()).ratio("minutesTo50", minutesTo(0.5)).ratio("minutesTo90", minutesTo(0.9));
-			line.put("kills", _killTimes.size()).put("killsAll", _killsAll).put("killsUncredited", _uncredited).put("chainKills", run != null ? run.getChainKills() : 0);
+			line.put("kills", _killTimes.size()).put("killsAll", _killsAll).put("killsUncredited", _uncredited).put("chainKills", run != null ? run.getChainKills() : 0).put("unreachableSkips", _skips);
 			line.put("deaths", _deaths.size()).put("potions", _potions.get()).ratio("restMinutes", _restMillis / 60000.0).put("damageTaken", Math.round(_damageTaken)).put("damageDealt", Math.round(_damageDealt)).put("servitorDamage", Math.round(_servitorDamage));
 			line.put("exp", Math.round(_exp)).put("sp", Math.round(_sp)).put("adena", _adena).put("itemValue", Math.round(_itemValue));
 			final Map<String, Object> items = new LinkedHashMap<>();

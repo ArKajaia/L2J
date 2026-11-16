@@ -13,6 +13,7 @@ build/server/game/log/simulation-maps/ and prints, for balancing the maps:
 
   python3 tools/simulation/map_report.py <batch folder> [<batch folder>...]
   python3 tools/simulation/map_report.py --latest          (the newest batch)
+  --with-stopped also counts the maps a stop cut short (they end as 'stopped').
 """
 import csv
 import glob
@@ -198,7 +199,7 @@ def main(argv):
             return 1
         folders = [candidates[-1]]
     runs, deaths = load(folders)
-    runs = [r for r in runs if ok(r)]
+    runs = [r for r in runs if ok(r) or ('--with-stopped' in argv and r.get('result') == 'stopped')]
     if not runs:
         print('No finished map.')
         return 1
