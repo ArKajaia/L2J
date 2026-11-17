@@ -47,6 +47,8 @@ public class DynamicQuestConfig
 	public static boolean ONE_REWARD_PER_COMPUTER;
 	public static double MAX_REWARD_MULTIPLIER;
 	public static double EXP_RATE;
+	public static double LEVEL_HUNT_MINUTES;
+	public static double HUNT_KILLS_PER_MINUTE;
 	public static double ADENA_RATE;
 	public static int OPTIONAL_BONUS_PERCENT;
 	public static int CHAIN_BONUS_PERCENT;
@@ -78,6 +80,8 @@ public class DynamicQuestConfig
 		ONE_REWARD_PER_COMPUTER = config.getBoolean("DynamicQuestOneRewardPerComputer", true);
 		MAX_REWARD_MULTIPLIER = Math.max(1, config.getDouble("DynamicQuestMaxRewardMultiplier", 2.5));
 		EXP_RATE = Math.max(0, config.getDouble("DynamicQuestExpRate", 1));
+		LEVEL_HUNT_MINUTES = Math.max(0, config.getDouble("DynamicQuestLevelHuntMinutes", 180));
+		HUNT_KILLS_PER_MINUTE = Math.max(0.1, config.getDouble("DynamicQuestHuntKillsPerMinute", 2));
 		ADENA_RATE = Math.max(0, config.getDouble("DynamicQuestAdenaRate", 1));
 		OPTIONAL_BONUS_PERCENT = Math.max(0, config.getInt("DynamicQuestOptionalBonusPercent", 15));
 		CHAIN_BONUS_PERCENT = Math.max(0, config.getInt("DynamicQuestChainBonusPercent", 10));
