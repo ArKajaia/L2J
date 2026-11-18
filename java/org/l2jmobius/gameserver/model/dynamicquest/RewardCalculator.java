@@ -24,15 +24,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
 import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
+import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 
 /**
  * Works out what a dynamic quest pays a participant.
  * <p>
- * EXP is a share of the EXP needed to pass the quest's level, so it pays the same effort at every level; SP follows the EXP and adena the level. All of it is multiplied by the tier, the optional objectives done and the follow-up chain (capped by
+ * EXP is a share of the EXP needed to pass the quest's level, but that EXP is never more than DynamicQuestLevelHuntMinutes of hunting monsters of the level (see {@link #getLevelExp}), so a quest pays like the same time of hunting at high levels too; SP follows the EXP and adena the level. All of it is multiplied by the tier, the optional objectives done and the follow-up chain (capped by
  * DynamicQuestMaxRewardMultiplier), then by the participant's own factors: repeats of the quest today, its level against the quest's, and its contribution to a world quest.
  * </p>
  * @author Mobius
@@ -230,9 +233,7 @@ public final class RewardCalculator
 			return payout;
 		}
 
-		final ExperienceData experience = ExperienceData.getInstance();
-		final int safeLevel = Math.max(1, Math.min(experience.getMaxLevel() - 1, Math.min(level, expLevel)));
-		final long levelExp = Math.max(0, experience.getExpForLevel(safeLevel + 1) - experience.getExpForLevel(safeLevel));
+		final long levelExp = getLevelExp(Math.min(level, expLevel));
 		final double exp = (levelExp * reward.getExpPercent() * multiplier * expFactor) / 100;
 		payout._exp = (long) (exp * DynamicQuestConfig.EXP_RATE);
 		payout._sp = (long) (exp * reward.getSpRatio());
@@ -265,6 +266,87 @@ public final class RewardCalculator
 			}
 		}
 		return payout;
+	}
+
+	/**
+	 * The EXP a reward's {@code exp} is a percent of. It is the EXP from the level to the next, but never more than DynamicQuestLevelHuntMinutes of nonstop hunting at the level (DynamicQuestHuntKillsPerMinute kills a minute of a typical
+	 * monster of the level, at RateXp). A level takes about 70 kills at level 10 and 50,000 at 80: without the limit a quest paying a few percent of a level would be worth many hours of hunting at high levels, even one that
+	 * only asks for a delivery or a walk.
+	 * @param level a level
+	 * @return the EXP a reward's {@code exp} percent is taken of
+	 */
+	public static long getLevelExp(int level)
+	{
+		final ExperienceData experience = ExperienceData.getInstance();
+		final int safeLevel = Math.max(1, Math.min(experience.getMaxLevel() - 1, level));
+		final long levelExp = Math.max(0, experience.getExpForLevel(safeLevel + 1) - experience.getExpForLevel(safeLevel));
+		if (DynamicQuestConfig.LEVEL_HUNT_MINUTES <= 0)
+		{
+			return levelExp;
+		}
+		final long monsterExp = getTypicalMonsterExp(safeLevel);
+		if (monsterExp <= 0)
+		{
+			return levelExp;
+		}
+		final double huntExp = monsterExp * RatesConfig.RATE_XP * DynamicQuestConfig.HUNT_KILLS_PER_MINUTE * DynamicQuestConfig.LEVEL_HUNT_MINUTES;
+		return (long) Math.min(levelExp, huntExp);
+	}
+
+	/** The share of a level's monsters (by EXP) that give less than a typical one: under the median, as the strongest are party monsters. */
+	private static final double TYPICAL_MONSTER_PERCENTILE = 0.4;
+	/** Levels on each side whose monsters count for a level, so a level with few monsters doesn't stand out. */
+	private static final int TYPICAL_MONSTER_LEVEL_SPREAD = 2;
+	private static volatile long[] _typicalMonsterExp;
+
+	/**
+	 * @param level a level
+	 * @return the EXP of a typical monster of the level (before rates): the 40th percentile of the monsters within two levels of it, never less than a lower level's; 0 if unknown
+	 */
+	public static long getTypicalMonsterExp(int level)
+	{
+		long[] table = _typicalMonsterExp;
+		if (table == null)
+		{
+			table = buildTypicalMonsterExp();
+			_typicalMonsterExp = table;
+		}
+		return table[Math.max(0, Math.min(table.length - 1, level))];
+	}
+
+	private static long[] buildTypicalMonsterExp()
+	{
+		final int maxLevel = ExperienceData.getInstance().getMaxLevel();
+		final List<List<Long>> byLevel = new ArrayList<>();
+		for (int i = 0; i <= maxLevel; i++)
+		{
+			byLevel.add(new ArrayList<>());
+		}
+		for (NpcTemplate template : NpcData.getInstance().getTemplates(t -> t.isType("Monster") && (t.getExp() > 0)))
+		{
+			if ((template.getLevel() >= 1) && (template.getLevel() <= maxLevel))
+			{
+				byLevel.get(template.getLevel()).add((long) template.getExp());
+			}
+		}
+
+		final long[] table = new long[maxLevel + 1];
+		long previous = 0;
+		for (int level = 1; level <= maxLevel; level++)
+		{
+			final List<Long> pool = new ArrayList<>();
+			for (int other = Math.max(1, level - TYPICAL_MONSTER_LEVEL_SPREAD); other <= Math.min(maxLevel, level + TYPICAL_MONSTER_LEVEL_SPREAD); other++)
+			{
+				pool.addAll(byLevel.get(other));
+			}
+			if (!pool.isEmpty())
+			{
+				pool.sort(null);
+				previous = Math.max(previous, pool.get((int) (pool.size() * TYPICAL_MONSTER_PERCENTILE)));
+			}
+			table[level] = previous;
+		}
+		return table;
 	}
 
 	/**

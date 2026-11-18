@@ -79,7 +79,7 @@
 	               event = SUCCESS | FAILURE | TIMEOUT, action = NEXT | STAGE (target) | COMPLETE | FAIL | FOLLOW_UP (target template) |
 	               ESCALATE (max, extraTime), chance (percent; the first rule that rolls is taken), text, maxChain (skipped once the chain
 	               is that long). Without a rule: SUCCESS goes on, the rest fail.
-	  reward       exp (percent of the EXP from the quest's level to the next) sp (SP per EXP) adenaPerLevel table + its own items,
+	  reward       exp (percent of the EXP from the quest's level to the next, but that EXP never more than DynamicQuestLevelHuntMinutes of hunting) sp (SP per EXP) adenaPerLevel table + its own items,
 	               title + minChain (a title for the owner at that chain length), treasuryPercent (the town's castle pays that share on top),
 	               distanceScale (EXP and SP by the road's length of its REACH: exp is paid for a road this long, 0.4x-2.5x of it otherwise).
 	               EXP and adenaPerLevel are multiplied by DynamicQuestExpRate and DynamicQuestAdenaRate (config/Custom/DynamicQuests.ini).
@@ -802,9 +802,9 @@
 			<objective type="REACH" dest="TOWN_FAR" minDistance="8000" maxDistance="40000" radius="400" noTeleport="true" ambushEvery="70-110" ambushCount="2" ambushTitle="Highwayman||Road Bandit||Cutthroat" bonus="HP_ABOVE:50" teleportText="The seal shatters as you pass through the ether - the package is ruined." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<!-- Pays by the road's length: exp at a 20000 road (0.4x-2.5x of it for shorter or longer roads). exp and sp are four times the
-		     other quests' share, so the courier keeps the EXP it paid before DynamicQuestExpRate went from 10 to 2.5, with the same SP. -->
-		<reward exp="8" sp="0.025" adenaPerLevel="2000" table="supplies" distanceScale="20000" />
+		<!-- Pays by the road's length: exp at a 20000 road (0.4x-2.5x of it for shorter or longer roads). A walk with a few highwaymen, so
+		     about a Normal bounty's EXP for an average road (it was four times that), the same SP. -->
+		<reward exp="2" sp="0.1" adenaPerLevel="2000" table="supplies" distanceScale="20000" />
 		<text key="title">Urgent Courier</text>
 		<text key="offer">A sealed package must reach another town, and it can't go through the gatekeepers - the seal breaks in the ether. Carry it on foot, and watch the roads.</text>
 		<text key="success">The package arrives, seal unbroken. The recipient pays the courier's fee.</text>
